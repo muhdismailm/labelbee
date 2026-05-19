@@ -319,30 +319,7 @@ export default function Home() {
           </div>
 
           <nav className="flex items-center gap-4">
-            {/* Developer testing tools */}
-            {user && process.env.NODE_ENV === "development" && (
-              <div className="hidden sm:flex items-center gap-1.5 border-r border-slate-200 pr-3">
-                <button
-                  onClick={async () => {
-                    const newTotal = credits + 5;
-                    await setDoc(doc(db, "users", user.uid), { credits: newTotal }, { merge: true });
-                  }}
-                  className="text-[10px] text-slate-400 hover:text-indigo-600 px-2 py-1 rounded border border-slate-100 hover:border-indigo-100 transition-all font-mono cursor-pointer"
-                  title="Dev Tool: Give 5 test credits instantly"
-                >
-                  +5 Credits
-                </button>
-                <button
-                  onClick={async () => {
-                    await setDoc(doc(db, "users", user.uid), { credits: 0 }, { merge: true });
-                  }}
-                  className="text-[10px] text-slate-400 hover:text-rose-600 px-2 py-1 rounded border border-slate-100 hover:border-rose-100 transition-all font-mono cursor-pointer"
-                  title="Dev Tool: Reset credits balance to 0"
-                >
-                  Clear Credits
-                </button>
-              </div>
-            )}
+
 
             {/* Authenticated user UI */}
             {authLoaded && (
