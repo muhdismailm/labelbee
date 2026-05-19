@@ -22,7 +22,7 @@ import { db, auth } from "@/utils/firebase";
 
 const loadRazorpayScript = (): Promise<boolean> => {
   return new Promise((resolve) => {
-    if (typeof (window as any).Razorpay !== "undefined") {
+    if (typeof (window as unknown as { Razorpay: unknown }).Razorpay !== "undefined") {
       resolve(true);
       return;
     }
@@ -80,6 +80,7 @@ export default function Home() {
         console.error("Firestore credits sync error:", error);
       });
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCredits(0);
     }
     return () => {
@@ -120,10 +121,11 @@ export default function Home() {
         setAuthPassword("");
         setAuthName("");
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Authentication error:", err);
+      const error = err as Error;
       // Simplify Firebase error messages for standard parent/teacher view
-      let msg = err.message || "An authentication error occurred.";
+      let msg = error.message || "An authentication error occurred.";
       if (msg.includes("auth/invalid-credential") || msg.includes("auth/wrong-password") || msg.includes("auth/user-not-found")) {
         msg = "Invalid email or password. Please try again.";
       } else if (msg.includes("auth/email-already-in-use")) {
@@ -157,9 +159,10 @@ export default function Home() {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       setIsAuthModalOpen(false);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Google Auth error:", err);
-      let msg = err.message || "Failed to sign in with Google.";
+      const error = err as Error;
+      let msg = error.message || "Failed to sign in with Google.";
       if (msg.includes("auth/popup-closed-by-user")) {
         msg = "Sign in popup was closed. Please try again.";
       } else if (msg.includes("auth/operation-not-allowed")) {
@@ -182,9 +185,10 @@ export default function Home() {
     try {
       await sendPasswordResetEmail(auth, authEmail);
       setAuthSuccess("Password reset link has been sent to your email! Please check your inbox.");
-    } catch (err: any) {
+    } catch (err) {
       console.error("Reset error:", err);
-      let msg = err.message || "Failed to send reset email.";
+      const error = err as Error;
+      let msg = error.message || "Failed to send reset email.";
       if (msg.includes("auth/user-not-found")) {
         msg = "No user found with this email address.";
       } else if (msg.includes("auth/invalid-email")) {
@@ -218,7 +222,7 @@ export default function Home() {
       setCredits(newCredits);
 
       await exportToPdf("print-container", `${data.studentName.replace(/\s+/g, '-').toLowerCase()}-slips.pdf`);
-    } catch (error) {
+    } catch {
       alert("Failed to generate PDF. Please try again.");
     }
   };
@@ -262,7 +266,7 @@ export default function Home() {
         }`,
         image: "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=128&auto=format&fit=crop", 
         order_id: orderData.id,
-        handler: async function (response: any) {
+        handler: async function () {
           try {
             // We no longer update credits here locally, the webhook will do it securely
             setLoadingPayment(false);
@@ -292,11 +296,12 @@ export default function Home() {
         },
       };
 
-      const rzp = new (window as any).Razorpay(options);
+      const rzp = new (window as unknown as { Razorpay: new (options: unknown) => { open: () => void } }).Razorpay(options);
       rzp.open();
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      alert(err.message || "An unexpected error occurred launching Razorpay checkout.");
+      const error = err as Error;
+      alert(error.message || "An unexpected error occurred launching Razorpay checkout.");
       setLoadingPayment(false);
     }
   };
@@ -594,7 +599,7 @@ export default function Home() {
             <div className="text-center text-xs font-bold text-slate-400 mt-2">
               {authMode === 'login' ? (
                 <span>
-                  Don't have an account?{' '}
+                  Don&apos;t have an account?{' '}
                   <button 
                     onClick={() => { setAuthMode('signup'); setAuthError(null); }}
                     className="text-indigo-600 font-bold hover:underline cursor-pointer bg-transparent border-none p-0"
@@ -729,7 +734,7 @@ export default function Home() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <span>Securing transaction with Razorpay... Please don't close this window.</span>
+                <span>Securing transaction with Razorpay... Please don&apos;t close this window.</span>
               </div>
             )}
           </div>

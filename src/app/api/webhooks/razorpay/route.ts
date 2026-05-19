@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { adminDb } from "@/utils/firebaseAdmin";
-import * as admin from "firebase-admin";
 
 export async function POST(req: Request) {
   try {
@@ -55,7 +54,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ status: "ok" });
-  } catch (err: any) {
+  } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
     console.error("Webhook error:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

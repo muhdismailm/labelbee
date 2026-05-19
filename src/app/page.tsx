@@ -80,7 +80,7 @@ export default function LandingPage() {
               </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-3">Institution</h3>
               <p className="text-slate-600 mb-8 leading-relaxed">
-                Streamline your administration by generating hundreds of standardized name slips at once. Maintain your school's brand identity effortlessly.
+                Streamline your administration by generating hundreds of standardized name slips at once. Maintain your school&apos;s brand identity effortlessly.
               </p>
 
               <ul className="space-y-4 mb-8">

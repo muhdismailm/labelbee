@@ -23,7 +23,7 @@ export async function POST(req: Request) {
       if (body.userId) {
         userId = body.userId;
       }
-    } catch (e) {
+    } catch {
       // Default to pack_1 if body is empty or unparsable
     }
 
@@ -81,7 +81,7 @@ export async function POST(req: Request) {
       currency: data.currency,
       keyId: keyId, // Send keyId so frontend knows which public key to use
     });
-  } catch (error: any) {
+  } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
     console.error("API error creating Razorpay order:", error);
     return NextResponse.json(
       { error: error.message || "Internal server error" },

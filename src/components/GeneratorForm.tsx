@@ -84,7 +84,7 @@ export default function GeneratorForm({ data, onChange }: Props) {
       }
 
       onChange({ aiBackgroundUrl: result.imageUrl });
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       console.error(err);
       setAiError(err.message || "An error occurred generating AI background.");
     } finally {
@@ -413,7 +413,7 @@ export default function GeneratorForm({ data, onChange }: Props) {
               name="template"
               value={data.template}
               onChange={(e) => {
-                const val = e.target.value as any;
+                const val = e.target.value as SlipData['template'];
                 // Enforce fallback if value is unsupported
                 if (['classic', 'modern', 'playful', 'unicorn', 'doodle'].includes(val)) {
                   onChange({ template: val });
