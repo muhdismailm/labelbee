@@ -436,7 +436,7 @@ export default function Home() {
             <button 
               onClick={() => { if (!loadingAuthSubmit) setIsAuthModalOpen(false); }}
               disabled={loadingAuthSubmit}
-              className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors disabled:opacity-50"
+              className="absolute top-4 right-4 bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 p-2 rounded-full transition-colors disabled:opacity-50 z-10 cursor-pointer"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
@@ -621,7 +621,7 @@ export default function Home() {
             <button 
               onClick={() => { if (!loadingPayment) setIsPackModalOpen(false); }}
               disabled={loadingPayment}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors disabled:opacity-50 cursor-pointer"
+              className="absolute top-4 right-4 bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 p-2 rounded-full transition-colors disabled:opacity-50 z-10 cursor-pointer"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
