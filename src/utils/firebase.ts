@@ -16,4 +16,12 @@ const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+if (typeof window !== "undefined" && firebaseConfig.apiKey === "mock-api-key") {
+  console.warn(
+    "⚠️ WARNING: Firebase is running with MOCK CREDENTIALS!\n" +
+    "Google Authentication and database sync will fail.\n" +
+    "Please define your NEXT_PUBLIC_FIREBASE_* environment variables in your .env.local file (for local development) or your hosting provider settings (for deployment)."
+  );
+}
+
 export { app, auth, db };
