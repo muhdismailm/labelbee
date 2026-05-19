@@ -29,7 +29,7 @@ export async function POST(req: Request) {
 
       if (userId && packageId && adminDb) {
         let addedCredits = 0;
-        if (packageId === "pack_1") addedCredits = 1;
+        if (packageId === "pack_1") addedCredits = 2;
         if (packageId === "pack_4") addedCredits = 4;
         if (packageId === "pack_10") addedCredits = 10;
 

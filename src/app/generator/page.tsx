@@ -261,8 +261,8 @@ export default function Home() {
         amount: orderData.amount,
         currency: orderData.currency,
         name: "LabelBee Credits",
-        description: `Unlock ${
-          packageId === 'pack_1' ? '1 Download' : packageId === 'pack_4' ? '4 Downloads' : '10 Downloads'
+        description: `${
+          packageId === 'pack_1' ? '2 Downloads' : packageId === 'pack_4' ? '4 Downloads' : '10 Downloads'
         }`,
         image: "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=128&auto=format&fit=crop", 
         order_id: orderData.id,
@@ -642,8 +642,8 @@ export default function Home() {
                   Starter Pack
                 </span>
                 <div className="my-1">
-                  <div className="text-3xl font-black text-slate-800">1</div>
-                  <div className="text-xs text-slate-400 uppercase font-bold tracking-wider">Download Credit</div>
+                  <div className="text-3xl font-black text-slate-800">2</div>
+                  <div className="text-xs text-slate-400 uppercase font-bold tracking-wider">Download Credits</div>
                 </div>
                 <div className="text-2xl font-extrabold text-slate-800">
                   ₹11 <span className="text-sm font-normal text-slate-400">INR</span>
