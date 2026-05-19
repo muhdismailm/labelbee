@@ -320,7 +320,7 @@ export default function Home() {
 
           <nav className="flex items-center gap-4">
             {/* Developer testing tools */}
-            {user && (
+            {user && process.env.NODE_ENV === "development" && (
               <div className="hidden sm:flex items-center gap-1.5 border-r border-slate-200 pr-3">
                 <button
                   onClick={async () => {
