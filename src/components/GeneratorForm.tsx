@@ -22,7 +22,7 @@ const THEMES = [
 
 export default function GeneratorForm({ data, onChange }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   // AI State
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
@@ -38,7 +38,7 @@ export default function GeneratorForm({ data, onChange }: Props) {
     if (file) {
       const url = URL.createObjectURL(file);
       // Save directly to photoUrl and reset alignment offsets
-      onChange({ 
+      onChange({
         photoUrl: url,
         photoZoom: 100,
         photoTilt: 0,
@@ -51,7 +51,7 @@ export default function GeneratorForm({ data, onChange }: Props) {
   };
 
   const removePhoto = () => {
-    onChange({ 
+    onChange({
       photoUrl: null,
       photoZoom: 100,
       photoTilt: 0,
@@ -64,10 +64,10 @@ export default function GeneratorForm({ data, onChange }: Props) {
   // Call API route to generate background via Stable Diffusion / Pollinations
   const generateAiBackground = async () => {
     if (!aiPrompt.trim()) return;
-    
+
     setAiLoading(true);
     setAiError(null);
-    
+
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
@@ -76,13 +76,13 @@ export default function GeneratorForm({ data, onChange }: Props) {
         },
         body: JSON.stringify({ prompt: aiPrompt }),
       });
-      
+
       const result = await res.json();
-      
+
       if (!res.ok) {
         throw new Error(result.error || "Failed to generate image.");
       }
-      
+
       onChange({ aiBackgroundUrl: result.imageUrl });
     } catch (err: any) {
       console.error(err);
@@ -111,22 +111,22 @@ export default function GeneratorForm({ data, onChange }: Props) {
             <Sparkles className="w-5 h-5 text-indigo-500 animate-pulse" />
             <h3>AI Magic Background</h3>
           </div>
-          
+
           <div className="space-y-3">
             <p className="text-xs text-indigo-700 font-medium">
               Create a custom background using AI instantly!
             </p>
-            
+
             <div className="flex flex-col gap-2">
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={aiPrompt}
                 onChange={(e) => setAiPrompt(e.target.value)}
                 placeholder="e.g. pastel rainbow clouds, cute space pattern..."
                 className="w-full px-3 py-2 border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-800 text-sm bg-white"
                 disabled={aiLoading}
               />
-              
+
               {aiError && (
                 <p className="text-xs text-red-500 font-medium bg-red-50 p-2 rounded-lg border border-red-100">{aiError}</p>
               )}
@@ -158,7 +158,7 @@ export default function GeneratorForm({ data, onChange }: Props) {
                 )}
               </div>
             </div>
-            
+
             {data.aiBackgroundUrl && (
               <div className="relative w-full h-16 rounded-lg overflow-hidden border border-indigo-200 shadow-inner">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -180,21 +180,21 @@ export default function GeneratorForm({ data, onChange }: Props) {
           <div className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">School Name</label>
-              <input 
+              <input
                 type="text" name="schoolName" value={data.schoolName} onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-800"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Motto / Tagline <span className="text-slate-400 font-normal">(optional)</span></label>
-              <input 
+              <input
                 type="text" name="schoolMotto" value={data.schoolMotto} onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-800"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Academic Year</label>
-              <input 
+              <input
                 type="text" name="academicYear" value={data.academicYear} onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-800"
               />
@@ -211,7 +211,7 @@ export default function GeneratorForm({ data, onChange }: Props) {
           <div className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
-              <input 
+              <input
                 type="text" name="studentName" value={data.studentName} onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-800"
               />
@@ -220,7 +220,7 @@ export default function GeneratorForm({ data, onChange }: Props) {
               <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1.5">
                 <BookOpen className="w-4 h-4 text-slate-500" /> Subject
               </label>
-              <input 
+              <input
                 type="text" name="subject" value={data.subject} onChange={handleInputChange}
                 placeholder="e.g. Mathematics, Science, English..."
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-800"
@@ -229,7 +229,7 @@ export default function GeneratorForm({ data, onChange }: Props) {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Class / Std</label>
-                <input 
+                <input
                   type="text" name="grade" value={data.grade} onChange={handleInputChange}
                   placeholder="e.g. V or Grade 5"
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-800"
@@ -237,7 +237,7 @@ export default function GeneratorForm({ data, onChange }: Props) {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Sec / Div</label>
-                <input 
+                <input
                   type="text" name="section" value={data.section} onChange={handleInputChange}
                   placeholder="e.g. A"
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-800"
@@ -245,14 +245,14 @@ export default function GeneratorForm({ data, onChange }: Props) {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Roll No.</label>
-                <input 
+                <input
                   type="text" name="rollNo" value={data.rollNo} onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-800"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Blood Group</label>
-                <select 
+                <select
                   name="bloodGroup" value={data.bloodGroup} onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-800 bg-white"
                 >
@@ -273,7 +273,7 @@ export default function GeneratorForm({ data, onChange }: Props) {
             <ImageIcon className="w-5 h-5" />
             <h3>Student Photo</h3>
           </div>
-          
+
           {data.photoUrl ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-200">
@@ -282,7 +282,7 @@ export default function GeneratorForm({ data, onChange }: Props) {
                   <img src={data.photoUrl} alt="Preview" className="w-12 h-12 rounded-full object-cover border border-slate-200" />
                   <span className="text-sm text-slate-600 font-medium">Photo Uploaded</span>
                 </div>
-                <button 
+                <button
                   onClick={removePhoto}
                   className="text-red-500 text-xs font-semibold hover:text-red-600 hover:bg-red-50 px-2.5 py-1.5 rounded-lg transition-all"
                 >
@@ -293,7 +293,7 @@ export default function GeneratorForm({ data, onChange }: Props) {
               {/* LIVE SLIDERS FOR NAMESLIP ADJUSTMENT */}
               <div className="bg-indigo-50/30 border border-indigo-100/50 p-4 rounded-xl space-y-4 shadow-sm">
                 <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider block mb-1">Live Nameslip Image Adjustments</span>
-                
+
                 {/* 0. Photo Frame Size */}
                 <div>
                   <div className="flex justify-between text-xs font-medium text-slate-500 mb-1.5">
@@ -381,7 +381,7 @@ export default function GeneratorForm({ data, onChange }: Props) {
               </div>
             </div>
           ) : (
-            <div 
+            <div
               onClick={() => fileInputRef.current?.click()}
               className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 transition-all group"
             >
@@ -392,7 +392,7 @@ export default function GeneratorForm({ data, onChange }: Props) {
               <p className="text-xs text-slate-500 mt-1">PNG, JPG up to 5MB</p>
             </div>
           )}
-          <input 
+          <input
             type="file" ref={fileInputRef} onChange={handlePhotoUpload} accept="image/*" className="hidden"
           />
         </section>
@@ -407,7 +407,7 @@ export default function GeneratorForm({ data, onChange }: Props) {
           {/* Design Selection Dropdown (Only classic, modern, playful, unicorn) */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
-               <Layers className="w-4 h-4" /> Select Design Template
+              <Layers className="w-4 h-4" /> Select Design Template
             </label>
             <select
               name="template"
@@ -415,7 +415,7 @@ export default function GeneratorForm({ data, onChange }: Props) {
               onChange={(e) => {
                 const val = e.target.value as any;
                 // Enforce fallback if value is unsupported
-                if (['classic', 'modern', 'playful', 'unicorn'].includes(val)) {
+                if (['classic', 'modern', 'playful', 'unicorn', 'doodle'].includes(val)) {
                   onChange({ template: val });
                 } else {
                   onChange({ template: 'unicorn' });
@@ -430,6 +430,7 @@ export default function GeneratorForm({ data, onChange }: Props) {
               </optgroup>
               <optgroup label="Premium Themes">
                 <option value="unicorn">🦄 Rainbow Unicorn</option>
+                <option value="doodle">🎨 Rainbow Doodles</option>
               </optgroup>
             </select>
           </div>
@@ -437,19 +438,18 @@ export default function GeneratorForm({ data, onChange }: Props) {
           {!data.aiBackgroundUrl && (
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-3 flex items-center gap-2">
-                 <Grid3X3 className="w-4 h-4" /> Background Pattern
+                <Grid3X3 className="w-4 h-4" /> Background Pattern
               </label>
               <div className="flex flex-wrap gap-2">
                 {(['none', 'dots', 'waves', 'grid', 'confetti'] as const).map((pat) => (
                   <button
                     key={pat}
-                    onChange={() => {}} 
+                    onChange={() => { }}
                     onClick={() => onChange({ pattern: pat })}
-                    className={`py-1.5 px-3 rounded-full border text-xs font-medium capitalize transition-all ${
-                      data.pattern === pat 
-                        ? 'border-indigo-500 bg-indigo-500 text-white shadow-sm' 
+                    className={`py-1.5 px-3 rounded-full border text-xs font-medium capitalize transition-all ${data.pattern === pat
+                        ? 'border-indigo-500 bg-indigo-500 text-white shadow-sm'
                         : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
-                    }`}
+                      }`}
                   >
                     {pat}
                   </button>
@@ -467,9 +467,8 @@ export default function GeneratorForm({ data, onChange }: Props) {
                 <button
                   key={theme.id}
                   onClick={() => onChange({ colorTheme: theme.id })}
-                  className={`w-8 h-8 rounded-full shadow-sm border-2 transition-transform ${
-                    data.colorTheme === theme.id ? 'border-slate-800 scale-110' : 'border-white hover:scale-110'
-                  }`}
+                  className={`w-8 h-8 rounded-full shadow-sm border-2 transition-transform ${data.colorTheme === theme.id ? 'border-slate-800 scale-110' : 'border-white hover:scale-110'
+                    }`}
                   style={{ backgroundColor: theme.id }}
                   title={theme.name}
                 />
@@ -479,10 +478,10 @@ export default function GeneratorForm({ data, onChange }: Props) {
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center justify-between">
-              Slip Size 
+              Slip Size
               <span className="text-xs font-normal text-slate-500">Determines slips per page</span>
             </label>
-            <select 
+            <select
               name="slipSize" value={data.slipSize} onChange={handleInputChange}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-800 bg-white"
             >

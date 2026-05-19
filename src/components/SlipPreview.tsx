@@ -23,7 +23,7 @@ export default function SlipPreview({ data }: Props) {
   }
 
   // Enforce A5/medium layout for Unicorn when in small layout to preserve design readability
-  const isPremium = data.template === 'unicorn';
+  const isPremium = ['unicorn', 'doodle'].includes(data.template);
   const actualWidth = isPremium && data.slipSize === 'small' ? '85mm' : slipWidth;
   const actualHeight = isPremium && data.slipSize === 'small' ? '50mm' : slipHeight;
   const actualCopies = isPremium && data.slipSize === 'small' ? 10 : copiesCount;
@@ -39,12 +39,10 @@ export default function SlipPreview({ data }: Props) {
   const renderBackground = () => {
     if (data.aiBackgroundUrl) {
       return (
-        <div 
-          className="absolute inset-0 w-full h-full pointer-events-none bg-cover bg-center z-0" 
+        <div
+          className="absolute inset-0 w-full h-full pointer-events-none bg-cover bg-center z-0"
           style={{ backgroundImage: `url(${data.aiBackgroundUrl})` }}
-        >
-          <div className="absolute inset-0 bg-white/75 backdrop-blur-[0.5px]" />
-        </div>
+        />
       );
     }
 
@@ -63,7 +61,7 @@ export default function SlipPreview({ data }: Props) {
       case 'waves':
         return (
           <svg className="absolute inset-0 w-full h-full opacity-5 pointer-events-none z-0" xmlns="http://www.w3.org/2000/svg">
-             <defs>
+            <defs>
               <pattern id="waves" width="40" height="40" patternUnits="userSpaceOnUse">
                 <path d="M0 20 Q 10 10, 20 20 T 40 20" fill="none" stroke={themeColor} strokeWidth="2" />
                 <path d="M0 40 Q 10 30, 20 40 T 40 40" fill="none" stroke={themeColor} strokeWidth="2" />
@@ -107,9 +105,9 @@ export default function SlipPreview({ data }: Props) {
     return (
       <div className="w-full h-full relative overflow-hidden bg-white">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img 
-          src={data.photoUrl} 
-          alt="Student" 
+        <img
+          src={data.photoUrl}
+          alt="Student"
           className="w-full h-full object-cover"
           style={{
             transform: `scale(${data.photoZoom / 100}) rotate(${data.photoTilt}deg) translate(${data.photoX}px, ${data.photoY}px)`,
@@ -134,7 +132,7 @@ export default function SlipPreview({ data }: Props) {
       </div>
 
       {/* A4 Paper Container */}
-      <div 
+      <div
         id="print-container"
         className="bg-white shadow-xl rounded-sm flex flex-wrap content-start justify-center"
         style={{
@@ -147,8 +145,8 @@ export default function SlipPreview({ data }: Props) {
         }}
       >
         {slips.map((index) => (
-          <div 
-            key={index} 
+          <div
+            key={index}
             className="break-inside-avoid relative"
             style={{ width: actualWidth, height: actualHeight }}
           >
@@ -156,13 +154,13 @@ export default function SlipPreview({ data }: Props) {
             {data.template === 'unicorn' && (
               <div className="w-full h-full rounded-2xl overflow-hidden border border-slate-200 relative bg-gradient-to-br from-pink-100/60 via-purple-50/40 to-blue-100/60 p-2 flex gap-3 shadow-md z-10">
                 <div className="absolute top-1 right-2 w-1.5 h-1.5 bg-yellow-300 rounded-full animate-ping opacity-75"></div>
-                
+
                 {/* Left Side: Circular Rainbow Photo Frame */}
-                <div 
+                <div
                   className="relative shrink-0 flex items-center justify-center z-20 transition-all"
                   style={{ width: `${data.photoFrameSize + 20}px`, height: '100%' }}
                 >
-                  <div 
+                  <div
                     className="rounded-full p-[4.5px] bg-gradient-to-tr from-rose-400 via-yellow-300 via-emerald-400 via-blue-400 to-indigo-400 shadow-md flex items-center justify-center transition-all"
                     style={{ width: `${data.photoFrameSize + 14}px`, height: `${data.photoFrameSize + 14}px` }}
                   >
@@ -172,18 +170,18 @@ export default function SlipPreview({ data }: Props) {
                   </div>
 
                   {/* Cute Cartoon Unicorn SVG */}
-                  <div 
+                  <div
                     className="absolute z-30 drop-shadow-md transition-all"
-                    style={{ 
-                      width: `${(data.photoFrameSize + 14) * 0.65}px`, 
+                    style={{
+                      width: `${(data.photoFrameSize + 14) * 0.65}px`,
                       height: `${(data.photoFrameSize + 14) * 0.65}px`,
-                      bottom: '-4px', 
-                      left: '-4px' 
+                      bottom: '-4px',
+                      left: '-4px'
                     }}
                   >
                     <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-                      <path d="M20 70 C 20 40, 45 40, 55 50 C 65 60, 60 80, 50 85 C 40 90, 20 85, 20 70 Z" fill="#ffffff" stroke="#ffb2d9" strokeWidth="2.5"/>
-                      <path d="M45 50 C 45 35, 55 25, 65 25 C 75 25, 85 30, 80 45 C 75 55, 55 60, 45 50 Z" fill="#ffffff" stroke="#ffb2d9" strokeWidth="2.5"/>
+                      <path d="M20 70 C 20 40, 45 40, 55 50 C 65 60, 60 80, 50 85 C 40 90, 20 85, 20 70 Z" fill="#ffffff" stroke="#ffb2d9" strokeWidth="2.5" />
+                      <path d="M45 50 C 45 35, 55 25, 65 25 C 75 25, 85 30, 80 45 C 75 55, 55 60, 45 50 Z" fill="#ffffff" stroke="#ffb2d9" strokeWidth="2.5" />
                       <path d="M72 38 C 72 32, 85 32, 80 43 C 78 47, 72 43, 72 38 Z" fill="#ffe3ee" />
                       <circle cx="76" cy="38" r="1.5" fill="#4a5568" />
                       <ellipse cx="64" cy="35" rx="3" ry="4" fill="#4a5568" />
@@ -202,7 +200,7 @@ export default function SlipPreview({ data }: Props) {
                 <div className="flex-1 border border-pink-200 bg-white rounded-xl p-2 relative flex flex-col justify-between shadow-inner">
                   <div className="absolute top-1 right-2 text-[10px] text-pink-400 font-bold opacity-75">⭐</div>
                   <div className="absolute top-6 right-1 text-[8px] text-indigo-400 font-bold opacity-70">🎵</div>
-                  
+
                   {/* School Name Top Header */}
                   <div className="text-center pb-0.5 border-b border-pink-100/60 mb-0.5 shrink-0">
                     <span className="text-[10px] font-black text-pink-500 uppercase tracking-wider truncate block leading-tight">
@@ -258,7 +256,7 @@ export default function SlipPreview({ data }: Props) {
               <div className="w-full h-full rounded-lg overflow-hidden flex border border-slate-200 relative shadow-sm bg-white z-10">
                 {renderBackground()}
                 <div className="w-2 h-full shrink-0 z-10" style={{ backgroundColor: themeColor }} />
-                
+
                 <div className="flex-1 p-2.5 flex flex-col h-full relative z-10">
                   <div className="mb-1.5 border-b border-slate-100 pb-1 flex justify-between items-center">
                     <h4 className="font-bold text-[11px] leading-tight text-slate-800 truncate uppercase tracking-wide" style={{ color: themeColor }}>
@@ -267,11 +265,11 @@ export default function SlipPreview({ data }: Props) {
                   </div>
 
                   <div className="flex gap-2.5 flex-1 items-center">
-                    <div 
+                    <div
                       className="bg-slate-100 rounded overflow-hidden border border-slate-200 shrink-0 flex items-center justify-center relative bg-white shadow-inner transition-all"
-                      style={{ 
-                        width: `${data.photoFrameSize}px`, 
-                        height: `${data.photoFrameSize * 1.15}px` 
+                      style={{
+                        width: `${data.photoFrameSize}px`,
+                        height: `${data.photoFrameSize * 1.15}px`
                       }}
                     >
                       {renderPhoto()}
@@ -330,15 +328,15 @@ export default function SlipPreview({ data }: Props) {
                       <span className="text-[9px] font-extrabold ml-1 leading-none truncate" style={{ color: themeColor }}>{data.subject}</span>
                     </div>
                   </div>
-                  
-                  <div 
+
+                  <div
                     className="border border-slate-300 shrink-0 flex items-center justify-center p-0.5 bg-white shadow-sm overflow-hidden transition-all"
-                    style={{ 
-                      width: `${data.photoFrameSize}px`, 
-                      height: `${data.photoFrameSize * 1.25}px` 
+                    style={{
+                      width: `${data.photoFrameSize}px`,
+                      height: `${data.photoFrameSize * 1.25}px`
                     }}
                   >
-                     {renderPhoto()}
+                    {renderPhoto()}
                   </div>
                 </div>
               </div>
@@ -348,7 +346,7 @@ export default function SlipPreview({ data }: Props) {
             {data.template === 'playful' && (
               <div className="w-full h-full bg-white rounded-xl overflow-hidden border border-slate-200 relative shadow-sm z-10">
                 {renderBackground()}
-                
+
                 <div className="h-7 relative z-10 flex items-center px-3" style={{ backgroundColor: themeColor }}>
                   <h4 className="font-black text-[12px] text-white tracking-wide truncate" style={{ textShadow: '1px 1px 0px rgba(0,0,0,0.2)' }}>
                     {data.schoolName || 'School Name'}
@@ -359,30 +357,87 @@ export default function SlipPreview({ data }: Props) {
                 </svg>
 
                 <div className="p-2 pt-3 flex gap-2.5 h-[calc(100%-28px)] relative z-10 items-center">
-                   <div 
-                     className="rounded-full border-2 bg-white overflow-hidden shrink-0 shadow-md z-20 flex items-center justify-center transition-all"
-                     style={{ 
-                       width: `${data.photoFrameSize}px`, 
-                       height: `${data.photoFrameSize}px`,
-                       borderColor: themeColor 
-                     }}
-                   >
-                     {renderPhoto()}
-                   </div>
+                  <div
+                    className="rounded-full border-2 bg-white overflow-hidden shrink-0 shadow-md z-20 flex items-center justify-center transition-all"
+                    style={{
+                      width: `${data.photoFrameSize}px`,
+                      height: `${data.photoFrameSize}px`,
+                      borderColor: themeColor
+                    }}
+                  >
+                    {renderPhoto()}
+                  </div>
 
-                   <div className="flex-1 min-w-0 z-20">
-                     <div className="bg-white/85 backdrop-blur-sm border border-slate-100 rounded-lg p-1.5 relative shadow-sm space-y-1">
+                  <div className="flex-1 min-w-0 z-20">
+                    <div className="bg-white/85 backdrop-blur-sm border border-slate-100 rounded-lg p-1.5 relative shadow-sm space-y-1">
+                      <div>
+                        <p className="text-[5.5px] font-bold text-slate-400 uppercase leading-none mb-0.5">Student</p>
+                        <p className="font-black text-[10.5px] text-slate-800 leading-none truncate">{data.studentName}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-1 text-[7.5px] font-extrabold font-sans">
+                        <span className="bg-indigo-50 px-1 py-0.5 rounded text-indigo-600 truncate max-w-[85px]">Sub: {data.subject}</span>
+                        <span className="bg-rose-50 px-1 py-0.5 rounded text-rose-500">Std {data.grade}-{data.section}</span>
+                        <span className="bg-emerald-50 px-1 py-0.5 rounded text-emerald-600">Roll {data.rollNo}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ===== DOODLE TEMPLATE ===== */}
+            {data.template === 'doodle' && (
+              <div className="w-full h-full relative overflow-hidden z-10 bg-yellow-50 rounded-xl shadow-sm border-[3px] border-dashed border-rose-300" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                {/* Doodles & Rainbows */}
+                <svg className="absolute -top-3 -left-3 w-16 h-16 opacity-80 z-0" viewBox="0 0 60 60">
+                  <path d="M10,40 Q30,10 50,40" fill="none" stroke="#f87171" strokeWidth="3" strokeLinecap="round" />
+                  <path d="M10,45 Q30,15 50,45" fill="none" stroke="#fbbf24" strokeWidth="3" strokeLinecap="round" />
+                  <path d="M10,50 Q30,20 50,50" fill="none" stroke="#34d399" strokeWidth="3" strokeLinecap="round" />
+                  <path d="M10,55 Q30,25 50,55" fill="none" stroke="#60a5fa" strokeWidth="3" strokeLinecap="round" />
+                  <circle cx="15" cy="45" r="8" fill="white" />
+                  <circle cx="25" cy="40" r="10" fill="white" />
+                  <circle cx="35" cy="40" r="9" fill="white" />
+                  <circle cx="45" cy="45" r="7" fill="white" />
+                </svg>
+
+                <div className="absolute top-2 right-4 text-2xl animate-pulse drop-shadow-md">⭐</div>
+                <div className="absolute bottom-2 left-2 text-xl opacity-80">✏️</div>
+                <div className="absolute bottom-5 right-2 text-xl opacity-80">🎨</div>
+                <div className="absolute top-1/2 left-1 text-sm opacity-60">✨</div>
+                
+                {/* Center Content Box */}
+                <div className="absolute inset-0 m-3 bg-white/95 backdrop-blur-sm rounded-xl shadow-sm border-2 border-indigo-200 flex flex-col p-1.5 z-10">
+                  <div className="text-center mb-1 pb-1 border-b-2 border-dotted border-amber-300 shrink-0">
+                    <span className="text-rose-500 font-black text-[9px] uppercase tracking-widest leading-none block truncate px-2">{data.schoolName || 'My Awesome School'}</span>
+                  </div>
+                  
+                  <div className="flex flex-1 gap-2 items-center px-1">
+                    <div className="shrink-0 rounded-2xl overflow-hidden border-4 border-white shadow-sm rotate-[-2deg] bg-blue-50" style={{width:`${data.photoFrameSize}px`,height:`${data.photoFrameSize}px`}}>
+                      {renderPhoto()}
+                    </div>
+                    
+                    <div className="flex-1 flex flex-col justify-evenly h-full py-0.5 space-y-1">
+                      <div className="flex flex-col">
+                        <span className="text-[6px] font-bold text-slate-400 uppercase leading-none mb-0.5">My Name is:</span>
+                        <span className="text-[11px] font-black text-indigo-600 leading-none truncate block">{data.studentName || 'Student Name'}</span>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-x-1 gap-y-1 mt-0.5">
+                        <div className="col-span-2">
+                          <span className="text-[5.5px] font-bold text-slate-400 uppercase block mb-0.5">Subject</span>
+                          <span className="text-[9px] font-bold text-rose-500 bg-rose-50 px-1 py-0.5 rounded block truncate leading-none">{data.subject || '-'}</span>
+                        </div>
                         <div>
-                          <p className="text-[5.5px] font-bold text-slate-400 uppercase leading-none mb-0.5">Student</p>
-                          <p className="font-black text-[10.5px] text-slate-800 leading-none truncate">{data.studentName}</p>
+                          <span className="text-[5.5px] font-bold text-slate-400 uppercase block mb-0.5">Class & Div</span>
+                          <span className="text-[8.5px] font-bold text-amber-600 bg-amber-50 px-1 py-0.5 rounded block truncate leading-none">{data.grade} - {data.section}</span>
                         </div>
-                        <div className="flex flex-wrap gap-1 text-[7.5px] font-extrabold font-sans">
-                          <span className="bg-indigo-50 px-1 py-0.5 rounded text-indigo-600 truncate max-w-[85px]">Sub: {data.subject}</span>
-                          <span className="bg-rose-50 px-1 py-0.5 rounded text-rose-500">Std {data.grade}-{data.section}</span>
-                          <span className="bg-emerald-50 px-1 py-0.5 rounded text-emerald-600">Roll {data.rollNo}</span>
+                        <div>
+                          <span className="text-[5.5px] font-bold text-slate-400 uppercase block mb-0.5">Roll No</span>
+                          <span className="text-[8.5px] font-bold text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded block truncate leading-none">{data.rollNo || '-'}</span>
                         </div>
-                     </div>
-                   </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

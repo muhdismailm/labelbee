@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SchoolSlip - Student Name Slip Generator",
+  title: "LabelBee - Student Name Slip Generator",
   description: "Create and print beautiful notebook name slips & labels.",
 };
 

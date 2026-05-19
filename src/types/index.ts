@@ -16,7 +16,7 @@ export interface SlipData {
   photoX: number; // Horizontal pan offset (-100 to 100 px)
   photoY: number; // Vertical pan offset (-100 to 100 px)
   photoFrameSize: number; // Size of the photo frame container (45 to 95)
-  template: 'classic' | 'modern' | 'playful' | 'unicorn';
+  template: 'classic' | 'modern' | 'playful' | 'unicorn' | 'bookcard' | 'space' | 'sunshine' | 'science' | 'garden';
   colorTheme: string;
   pattern: 'none' | 'dots' | 'waves' | 'grid' | 'confetti'; // Added for background materials
   aiBackgroundUrl: string | null; // Added for Gemini AI background image
