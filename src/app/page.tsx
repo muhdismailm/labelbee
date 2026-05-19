@@ -19,7 +19,7 @@ export default function LandingPage() {
             <a href="#features" className="hidden sm:flex text-slate-600 hover:text-slate-900 text-sm font-semibold px-4 py-2 transition-colors">
               Features
             </a>
-            <Link href="/generator" className="hidden sm:flex text-slate-600 hover:text-slate-900 text-sm font-semibold px-4 py-2 transition-colors">
+            <Link href="/generator" className="hidden sm:flex text-slate-700 bg-slate-100 hover:bg-slate-200 text-sm font-semibold px-5 py-2.5 rounded-full transition-all">
               Login
             </Link>
             <Link href="/generator" className="bg-slate-900 hover:bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-all shadow-md shadow-slate-200 flex items-center gap-2">
