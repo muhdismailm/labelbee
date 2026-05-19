@@ -5,7 +5,6 @@ import { SlipData, defaultSlipData } from "@/types";
 import GeneratorForm from "@/components/GeneratorForm";
 import SlipPreview from "@/components/SlipPreview";
 import { exportToPdf } from "@/utils/exportPdf";
-import { auth } from "@/utils/firebase";
 import { 
   onAuthStateChanged, 
   User, 
@@ -17,6 +16,8 @@ import {
   signInWithPopup,
   sendPasswordResetEmail
 } from "firebase/auth";
+import { doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { db, auth } from "@/utils/firebase";
 
 
 const loadRazorpayScript = (): Promise<boolean> => {
@@ -63,23 +64,25 @@ export default function Home() {
     return () => unsubscribe();
   }, []);
 
-  // Sync credits balance for the active Firebase user from localStorage
+  // Sync credits balance for the active Firebase user from Firestore
   useEffect(() => {
+    let unsubscribeFirestore: () => void;
     if (user) {
-      try {
-        const storedCredits = localStorage.getItem(`schoolslip_credits_${user.uid}`);
-        if (storedCredits !== null) {
-          setCredits(parseInt(storedCredits, 10));
+      const userRef = doc(db, "users", user.uid);
+      unsubscribeFirestore = onSnapshot(userRef, (docSnap) => {
+        if (docSnap.exists()) {
+          setCredits(docSnap.data().credits || 0);
         } else {
-          // New authenticated users start with 0 credits
-          localStorage.setItem(`schoolslip_credits_${user.uid}`, "0");
           setCredits(0);
         }
-      } catch (e) {
-        console.error("Local storage credits sync error:", e);
-      }
+      }, (error) => {
+        console.error("Firestore credits sync error:", error);
+      });
     } else {
       setCredits(0);
+    }
+    return () => {
+      if (unsubscribeFirestore) unsubscribeFirestore();
     }
   }, [user]);
 
@@ -207,7 +210,7 @@ export default function Home() {
     // 3. Deduct credit, update state/local storage and trigger download
     try {
       const newCredits = credits - 1;
-      localStorage.setItem(`schoolslip_credits_${user.uid}`, newCredits.toString());
+      await updateDoc(doc(db, "users", user.uid), { credits: newCredits });
       setCredits(newCredits);
 
       await exportToPdf("print-container", `${data.studentName.replace(/\s+/g, '-').toLowerCase()}-slips.pdf`);
@@ -257,20 +260,11 @@ export default function Home() {
         order_id: orderData.id,
         handler: async function (response: any) {
           try {
-            // Determine credit amount to grant
-            let addedCredits = 1;
-            if (packageId === 'pack_4') addedCredits = 4;
-            if (packageId === 'pack_10') addedCredits = 10;
-
-            const currentBalance = localStorage.getItem(`schoolslip_credits_${user.uid}`) || "0";
-            const newTotal = parseInt(currentBalance, 10) + addedCredits;
-
-            localStorage.setItem(`schoolslip_credits_${user.uid}`, newTotal.toString());
-            setCredits(newTotal);
+            // We no longer update credits here locally, the webhook will do it securely
             setLoadingPayment(false);
             setIsPackModalOpen(false);
 
-            alert(`🎉 Success! Added ${addedCredits} download credits to your account. Your new balance is ${newTotal} credits!`);
+            alert(`🎉 Success! Your payment was received. Your credits will be updated shortly once verified.`);
           } catch (error) {
             console.error("PDF generation after checkout failed:", error);
             setLoadingPayment(false);
@@ -320,10 +314,9 @@ export default function Home() {
             {user && (
               <div className="hidden sm:flex items-center gap-1.5 border-r border-slate-200 pr-3">
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     const newTotal = credits + 5;
-                    localStorage.setItem(`schoolslip_credits_${user.uid}`, newTotal.toString());
-                    setCredits(newTotal);
+                    await updateDoc(doc(db, "users", user.uid), { credits: newTotal });
                   }}
                   className="text-[10px] text-slate-400 hover:text-indigo-600 px-2 py-1 rounded border border-slate-100 hover:border-indigo-100 transition-all font-mono cursor-pointer"
                   title="Dev Tool: Give 5 test credits instantly"
@@ -331,9 +324,8 @@ export default function Home() {
                   +5 Credits
                 </button>
                 <button
-                  onClick={() => {
-                    localStorage.setItem(`schoolslip_credits_${user.uid}`, "0");
-                    setCredits(0);
+                  onClick={async () => {
+                    await updateDoc(doc(db, "users", user.uid), { credits: 0 });
                   }}
                   className="text-[10px] text-slate-400 hover:text-rose-600 px-2 py-1 rounded border border-slate-100 hover:border-rose-100 transition-all font-mono cursor-pointer"
                   title="Dev Tool: Reset credits balance to 0"
@@ -438,20 +430,20 @@ export default function Home() {
       {/* Custom Glassmorphic Firebase Auth Modal */}
       {isAuthModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[32px] p-8 sm:p-10 max-w-md w-full shadow-2xl relative flex flex-col gap-6 animate-scale-up">
+          <div className="bg-white border border-slate-100 rounded-[32px] p-6 sm:p-8 max-h-[95vh] overflow-y-auto max-w-md w-full shadow-2xl relative flex flex-col gap-4 animate-scale-up">
             
             {/* Close Button */}
             <button 
               onClick={() => { if (!loadingAuthSubmit) setIsAuthModalOpen(false); }}
               disabled={loadingAuthSubmit}
-              className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors disabled:opacity-50"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
 
             {/* Custom Premium Brand Logo Badge */}
             <div className="flex justify-start">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-sm border border-indigo-100/50 dark:border-indigo-900/30">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100/50">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg>
               </div>
             </div>
@@ -459,20 +451,20 @@ export default function Home() {
             {/* Modal Title with decorative crescent shape inspired by the screenshot */}
             <div className="relative text-left w-full mt-2">
               {/* Crescent Semicircle Graphic Accent */}
-              <div className="absolute -top-1.5 left-[155px] w-7 h-3.5 bg-amber-400/90 dark:bg-amber-500 rounded-t-full rotate-[15deg]"></div>
+              <div className="absolute -top-1.5 left-[155px] w-7 h-3.5 bg-amber-400/90 rounded-t-full rotate-[15deg]"></div>
               
-              <h3 className="text-[32px] font-black text-slate-900 dark:text-white leading-[1.12] tracking-tight">
+              <h3 className="text-[32px] font-black text-slate-900 leading-[1.12] tracking-tight">
                 Welcome<br/>
                 To {authMode === 'login' ? 'SchoolSlip!' : 'Register!'}
               </h3>
-              <p className="text-[13px] font-semibold text-slate-400 dark:text-slate-500 mt-2.5">
+              <p className="text-[13px] font-semibold text-slate-400 mt-2.5">
                 {authMode === 'login' ? 'Login into your account to access the site' : 'Create your account to access the site'}
               </p>
             </div>
 
             {/* Error Notification Badge */}
             {authError && (
-              <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center gap-2 animate-shake">
+              <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-100 text-rose-600 text-xs font-bold flex items-center gap-2 animate-shake">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-rose-500 flex-shrink-0"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                 <span>{authError}</span>
               </div>
@@ -483,7 +475,7 @@ export default function Home() {
               type="button"
               disabled={loadingAuthSubmit}
               onClick={handleGoogleSignIn}
-              className="w-full py-3 rounded-full border border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700 bg-white dark:bg-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-slate-700 dark:text-white text-sm font-extrabold shadow-sm flex items-center justify-center gap-2.5 transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 rounded-full border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-sm font-extrabold shadow-sm flex items-center justify-center gap-2.5 transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -496,9 +488,9 @@ export default function Home() {
 
             {/* Separator */}
             <div className="flex items-center gap-3">
-              <div className="flex-grow h-px bg-slate-100 dark:bg-slate-800"></div>
+              <div className="flex-grow h-px bg-slate-100"></div>
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">or</span>
-              <div className="flex-grow h-px bg-slate-100 dark:bg-slate-800"></div>
+              <div className="flex-grow h-px bg-slate-100"></div>
             </div>
 
             {/* Auth Form */}
@@ -514,7 +506,7 @@ export default function Home() {
                     placeholder="Enter your name"
                     value={authName}
                     onChange={(e) => setAuthName(e.target.value)}
-                    className="w-full px-5 py-3 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm transition-all text-slate-900 dark:text-white font-medium"
+                    className="w-full px-5 py-3 rounded-full border border-slate-200 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm transition-all text-slate-900 font-medium"
                   />
                 </div>
               )}
@@ -528,7 +520,7 @@ export default function Home() {
                   placeholder="parent@gmail.com"
                   value={authEmail}
                   onChange={(e) => setAuthEmail(e.target.value)}
-                  className="w-full px-5 py-3 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm transition-all text-slate-900 dark:text-white font-medium"
+                  className="w-full px-5 py-3 rounded-full border border-slate-200 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm transition-all text-slate-900 font-medium"
                 />
               </div>
 
@@ -541,25 +533,25 @@ export default function Home() {
                   placeholder="Enter password"
                   value={authPassword}
                   onChange={(e) => setAuthPassword(e.target.value)}
-                  className="w-full px-5 py-3 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm transition-all text-slate-900 dark:text-white font-medium"
+                  className="w-full px-5 py-3 rounded-full border border-slate-200 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm transition-all text-slate-900 font-medium"
                 />
               </div>
 
               {/* Remember Me & Forgot Password Row (Login Mode Only) */}
               {authMode === 'login' && (
-                <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5 px-2">
+                <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 mt-0.5 px-2">
                   <label className="flex items-center gap-1.5 cursor-pointer select-none hover:text-slate-600 transition-colors">
                     <input 
                       type="checkbox" 
                       defaultChecked 
-                      className="w-3.5 h-3.5 rounded border-slate-300 dark:border-slate-800 text-indigo-600 focus:ring-indigo-500 cursor-pointer" 
+                      className="w-3.5 h-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" 
                     />
                     <span>Remember me</span>
                   </label>
                   <button 
                     type="button" 
                     onClick={handleForgotPassword}
-                    className="text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer bg-transparent border-none p-0 font-bold"
+                    className="text-indigo-600 hover:underline cursor-pointer bg-transparent border-none p-0 font-bold"
                   >
                     Forgot password?
                   </button>
@@ -570,7 +562,7 @@ export default function Home() {
               <button
                 type="submit"
                 disabled={loadingAuthSubmit}
-                className="w-full py-3.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-extrabold hover:scale-[1.01] active:scale-[0.99] transition-all shadow-md shadow-indigo-100 dark:shadow-none flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-2 cursor-pointer"
+                className="w-full py-3.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-extrabold hover:scale-[1.01] active:scale-[0.99] transition-all shadow-md shadow-indigo-100 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-2 cursor-pointer"
               >
                 {loadingAuthSubmit ? (
                   <>
@@ -587,13 +579,13 @@ export default function Home() {
             </form>
 
             {/* Toggle Sign In / Sign Up Mode Link */}
-            <div className="text-center text-xs font-bold text-slate-400 dark:text-slate-500 mt-2">
+            <div className="text-center text-xs font-bold text-slate-400 mt-2">
               {authMode === 'login' ? (
                 <span>
                   Don't have an account?{' '}
                   <button 
                     onClick={() => { setAuthMode('signup'); setAuthError(null); }}
-                    className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline cursor-pointer bg-transparent border-none p-0"
+                    className="text-indigo-600 font-bold hover:underline cursor-pointer bg-transparent border-none p-0"
                   >
                     Create here
                   </button>
@@ -603,7 +595,7 @@ export default function Home() {
                   Already have an account?{' '}
                   <button 
                     onClick={() => { setAuthMode('login'); setAuthError(null); }}
-                    className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline cursor-pointer bg-transparent border-none p-0"
+                    className="text-indigo-600 font-bold hover:underline cursor-pointer bg-transparent border-none p-0"
                   >
                     Log In
                   </button>
@@ -612,7 +604,7 @@ export default function Home() {
             </div>
 
             {/* Copyright Footer */}
-            <p className="text-[10px] font-bold text-slate-300 dark:text-slate-700 text-center tracking-wide mt-2">
+            <p className="text-[10px] font-bold text-slate-300 text-center tracking-wide mt-2">
               Copyright by SchoolSlip 2026. All Rights Reserved.
             </p>
 
@@ -623,26 +615,26 @@ export default function Home() {
       {/* Credit Package Selector Modal */}
       {isPackModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 max-w-3xl w-full shadow-2xl relative flex flex-col gap-6 animate-scale-up">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-h-[95vh] overflow-y-auto max-w-3xl w-full shadow-2xl relative flex flex-col gap-5 animate-scale-up">
             
             {/* Close Button */}
             <button 
               onClick={() => { if (!loadingPayment) setIsPackModalOpen(false); }}
               disabled={loadingPayment}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 cursor-pointer"
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors disabled:opacity-50 cursor-pointer"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
 
             {/* Modal Header */}
             <div className="text-center">
-              <span className="px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 text-xs font-bold uppercase tracking-wider">
+              <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold uppercase tracking-wider">
                 Credits Required
               </span>
-              <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight mt-2">
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight mt-2">
                 Choose a Print Package
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
+              <p className="text-sm text-slate-500 mt-1 max-w-md mx-auto">
                 Deduct 1 credit for each high-resolution A4 name slips sheet. Purchase a pack to unlock instant downloads.
               </p>
             </div>
@@ -651,36 +643,36 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-2">
               
               {/* Pack 1 */}
-              <div className="border border-slate-200 dark:border-slate-800 rounded-2xl p-5 flex flex-col items-center text-center gap-4 bg-white dark:bg-slate-800/40 relative hover:shadow-md transition-all duration-300">
-                <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-semibold">
+              <div className="border border-slate-200 rounded-2xl p-5 flex flex-col items-center text-center gap-4 bg-white relative hover:shadow-md transition-all duration-300">
+                <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold">
                   Starter Pack
                 </span>
                 <div className="my-1">
-                  <div className="text-3xl font-black text-slate-800 dark:text-white">1</div>
+                  <div className="text-3xl font-black text-slate-800">1</div>
                   <div className="text-xs text-slate-400 uppercase font-bold tracking-wider">Download Credit</div>
                 </div>
-                <div className="text-2xl font-extrabold text-slate-800 dark:text-white">
+                <div className="text-2xl font-extrabold text-slate-800">
                   ₹11 <span className="text-sm font-normal text-slate-400">INR</span>
                 </div>
                 <button
                   onClick={() => handleBuyPack('pack_1')}
                   disabled={loadingPayment}
-                  className="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-white text-sm font-bold transition-all cursor-pointer"
+                  className="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold transition-all cursor-pointer"
                 >
                   Buy Starter
                 </button>
               </div>
 
               {/* Pack 4 */}
-              <div className="border-2 border-indigo-500 dark:border-indigo-500 rounded-2xl p-5 flex flex-col items-center text-center gap-4 bg-indigo-50/25 dark:bg-indigo-950/20 relative shadow-indigo-100 dark:shadow-none shadow-lg hover:shadow-xl transition-all duration-300">
+              <div className="border-2 border-indigo-500 rounded-2xl p-5 flex flex-col items-center text-center gap-4 bg-indigo-50/25 relative shadow-indigo-100 shadow-lg hover:shadow-xl transition-all duration-300">
                 <span className="px-2.5 py-0.5 rounded-full bg-indigo-600 text-white text-xs font-bold uppercase tracking-wide">
                   Save 25%
                 </span>
                 <div className="my-1">
-                  <div className="text-3xl font-black text-indigo-600 dark:text-indigo-400">4</div>
+                  <div className="text-3xl font-black text-indigo-600">4</div>
                   <div className="text-xs text-indigo-400 uppercase font-bold tracking-wider">Download Credits</div>
                 </div>
-                <div className="text-2xl font-extrabold text-slate-800 dark:text-white">
+                <div className="text-2xl font-extrabold text-slate-800">
                   ₹33 <span className="text-sm font-normal text-slate-400">INR</span>
                 </div>
                 <button
@@ -696,15 +688,15 @@ export default function Home() {
               </div>
 
               {/* Pack 10 */}
-              <div className="border border-amber-300 dark:border-amber-900 rounded-2xl p-5 flex flex-col items-center text-center gap-4 bg-amber-50/10 dark:bg-amber-950/10 relative hover:shadow-md transition-all duration-300">
-                <span className="px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400 text-xs font-semibold">
+              <div className="border border-amber-300 rounded-2xl p-5 flex flex-col items-center text-center gap-4 bg-amber-50/10 relative hover:shadow-md transition-all duration-300">
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold">
                   Best Value
                 </span>
                 <div className="my-1">
                   <div className="text-3xl font-black text-amber-500">10</div>
                   <div className="text-xs text-amber-400 uppercase font-bold tracking-wider">Download Credits</div>
                 </div>
-                <div className="text-2xl font-extrabold text-slate-800 dark:text-white">
+                <div className="text-2xl font-extrabold text-slate-800">
                   ₹99 <span className="text-sm font-normal text-slate-400">INR</span>
                 </div>
                 <button
@@ -720,7 +712,7 @@ export default function Home() {
 
             {/* Modal Footer loading indicator */}
             {loadingPayment && (
-              <div className="flex items-center justify-center gap-2 text-indigo-600 dark:text-indigo-400 text-xs font-semibold py-2 animate-pulse">
+              <div className="flex items-center justify-center gap-2 text-indigo-600 text-xs font-semibold py-2 animate-pulse">
                 <svg className="animate-spin h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -734,3 +726,4 @@ export default function Home() {
     </div>
   );
 }
+

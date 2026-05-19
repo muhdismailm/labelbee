@@ -13,12 +13,15 @@ export async function POST(req: Request) {
       );
     }
 
-    // Read packageId from client request body
     let packageId = "pack_1";
+    let userId = "";
     try {
       const body = await req.json();
       if (body.packageId) {
         packageId = body.packageId;
+      }
+      if (body.userId) {
+        userId = body.userId;
       }
     } catch (e) {
       // Default to pack_1 if body is empty or unparsable
@@ -55,6 +58,10 @@ export async function POST(req: Request) {
         amount,
         currency,
         receipt,
+        notes: {
+          packageId,
+          userId,
+        },
       }),
     });
 
