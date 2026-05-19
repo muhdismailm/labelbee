@@ -24,10 +24,10 @@ export interface SlipData {
 }
 
 export const defaultSlipData: SlipData = {
-  schoolName: "Sunrise International School",
+  schoolName: "School Name",
   schoolMotto: "Knowledge is Power",
   academicYear: "2026 - 2027",
-  studentName: "Ahmad Zaid bin Abdullah",
+  studentName: "Student Name",
   grade: "Grade 5",
   section: "A",
   rollNo: "12",

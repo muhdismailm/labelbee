@@ -16,7 +16,7 @@ import {
   signInWithPopup,
   sendPasswordResetEmail
 } from "firebase/auth";
-import { doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { doc, onSnapshot, setDoc } from "firebase/firestore";
 import { db, auth } from "@/utils/firebase";
 
 
@@ -47,6 +47,7 @@ export default function Home() {
   const [authPassword, setAuthPassword] = useState<string>("");
   const [authName, setAuthName] = useState<string>("");
   const [authError, setAuthError] = useState<string | null>(null);
+  const [authSuccess, setAuthSuccess] = useState<string | null>(null);
   const [loadingAuthSubmit, setLoadingAuthSubmit] = useState<boolean>(false);
 
   // Standard functional states
@@ -94,6 +95,7 @@ export default function Home() {
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
+    setAuthSuccess(null);
     setLoadingAuthSubmit(true);
 
     try {
@@ -149,6 +151,7 @@ export default function Home() {
 
   const handleGoogleSignIn = async () => {
     setAuthError(null);
+    setAuthSuccess(null);
     setLoadingAuthSubmit(true);
     try {
       const provider = new GoogleAuthProvider();
@@ -169,15 +172,16 @@ export default function Home() {
   };
 
   const handleForgotPassword = async () => {
-
     if (!authEmail.trim()) {
       setAuthError("Please enter your email address first to reset your password.");
+      setAuthSuccess(null);
       return;
     }
     setAuthError(null);
+    setAuthSuccess(null);
     try {
       await sendPasswordResetEmail(auth, authEmail);
-      alert("Password reset email sent! Please check your inbox.");
+      setAuthSuccess("Password reset link has been sent to your email! Please check your inbox.");
     } catch (err: any) {
       console.error("Reset error:", err);
       let msg = err.message || "Failed to send reset email.";
@@ -210,7 +214,7 @@ export default function Home() {
     // 3. Deduct credit, update state/local storage and trigger download
     try {
       const newCredits = credits - 1;
-      await updateDoc(doc(db, "users", user.uid), { credits: newCredits });
+      await setDoc(doc(db, "users", user.uid), { credits: newCredits }, { merge: true });
       setCredits(newCredits);
 
       await exportToPdf("print-container", `${data.studentName.replace(/\s+/g, '-').toLowerCase()}-slips.pdf`);
@@ -316,7 +320,7 @@ export default function Home() {
                 <button
                   onClick={async () => {
                     const newTotal = credits + 5;
-                    await updateDoc(doc(db, "users", user.uid), { credits: newTotal });
+                    await setDoc(doc(db, "users", user.uid), { credits: newTotal }, { merge: true });
                   }}
                   className="text-[10px] text-slate-400 hover:text-indigo-600 px-2 py-1 rounded border border-slate-100 hover:border-indigo-100 transition-all font-mono cursor-pointer"
                   title="Dev Tool: Give 5 test credits instantly"
@@ -325,7 +329,7 @@ export default function Home() {
                 </button>
                 <button
                   onClick={async () => {
-                    await updateDoc(doc(db, "users", user.uid), { credits: 0 });
+                    await setDoc(doc(db, "users", user.uid), { credits: 0 }, { merge: true });
                   }}
                   className="text-[10px] text-slate-400 hover:text-rose-600 px-2 py-1 rounded border border-slate-100 hover:border-rose-100 transition-all font-mono cursor-pointer"
                   title="Dev Tool: Reset credits balance to 0"
@@ -467,6 +471,14 @@ export default function Home() {
               <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-100 text-rose-600 text-xs font-bold flex items-center gap-2 animate-shake">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-rose-500 flex-shrink-0"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                 <span>{authError}</span>
+              </div>
+            )}
+
+            {/* Success Notification Badge */}
+            {authSuccess && (
+              <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-600 text-xs font-bold flex items-center gap-2 animate-fade-in">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500 flex-shrink-0"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                <span>{authSuccess}</span>
               </div>
             )}
 
