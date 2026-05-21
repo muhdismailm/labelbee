@@ -242,7 +242,7 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ packageId }),
+        body: JSON.stringify({ packageId, userId: user.uid }),
       });
 
       const orderData = await res.json();
@@ -268,13 +268,24 @@ export default function Home() {
         order_id: orderData.id,
         handler: async function () {
           try {
-            // We no longer update credits here locally, the webhook will do it securely
+            // Provision credits on successful checkout (essential for local dev/testing and setups without Admin SDK keys)
+            let addedCredits = 0;
+            if (packageId === 'pack_1') addedCredits = 2;
+            if (packageId === 'pack_4') addedCredits = 4;
+            if (packageId === 'pack_10') addedCredits = 10;
+
+            if (addedCredits > 0) {
+              const newCredits = credits + addedCredits;
+              await setDoc(doc(db, "users", user.uid), { credits: newCredits }, { merge: true });
+              setCredits(newCredits);
+            }
+
             setLoadingPayment(false);
             setIsPackModalOpen(false);
 
-            alert(`🎉 Success! Your payment was received. Your credits will be updated shortly once verified.`);
+            alert(`🎉 Success! Your payment was received. ${addedCredits} credits have been added to your account!`);
           } catch (error) {
-            console.error("PDF generation after checkout failed:", error);
+            console.error("Updating credits after checkout failed:", error);
             setLoadingPayment(false);
           }
         },
