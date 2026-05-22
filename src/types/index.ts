@@ -34,7 +34,7 @@ export const defaultSlipData: SlipData = {
   busNo: "",
   bloodGroup: "",
   contactNo: "",
-  subject: "Mathematics",
+  subject: "",
   photoUrl: null,
   photoZoom: 100,
   photoTilt: 0,
