@@ -175,13 +175,14 @@ export default function GeneratorForm({ data, onChange }: Props) {
         <section className="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-100">
           <div className="flex items-center gap-2 text-indigo-600 font-semibold mb-2">
             <School className="w-5 h-5" />
-            <h3>School Information</h3>
+            <h3>School / College Information</h3>
           </div>
           <div className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">School Name</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">School / College Name</label>
               <input
                 type="text" name="schoolName" value={data.schoolName} onChange={handleInputChange}
+                placeholder="e.g. Sunrise International School"
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-800"
               />
             </div>
@@ -189,6 +190,7 @@ export default function GeneratorForm({ data, onChange }: Props) {
               <label className="block text-sm font-medium text-slate-700 mb-1">Motto / Tagline <span className="text-slate-400 font-normal">(optional)</span></label>
               <input
                 type="text" name="schoolMotto" value={data.schoolMotto} onChange={handleInputChange}
+                placeholder="e.g. Knowledge is Power"
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-800"
               />
             </div>
@@ -196,6 +198,7 @@ export default function GeneratorForm({ data, onChange }: Props) {
               <label className="block text-sm font-medium text-slate-700 mb-1">Academic Year</label>
               <input
                 type="text" name="academicYear" value={data.academicYear} onChange={handleInputChange}
+                placeholder="e.g. 2026 - 2027"
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-800"
               />
             </div>
@@ -213,17 +216,18 @@ export default function GeneratorForm({ data, onChange }: Props) {
               <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
               <input
                 type="text" name="studentName" value={data.studentName} onChange={handleInputChange}
+                placeholder="e.g. John Doe"
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-800"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1.5">
-                <BookOpen className="w-4 h-4 text-slate-500" /> Subject
+              <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1.5 text-slate-400">
+                <BookOpen className="w-4 h-4 text-slate-400" /> Subject (Always Blank)
               </label>
               <input
-                type="text" name="subject" value={data.subject} onChange={handleInputChange}
-                placeholder="e.g. Mathematics, Science, English..."
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-800"
+                type="text" name="subject" value="" disabled
+                placeholder="Always empty for hand-written use"
+                className="w-full px-3 py-2 border border-slate-200 bg-slate-100 rounded-lg outline-none text-slate-400 cursor-not-allowed text-sm font-medium"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -247,6 +251,7 @@ export default function GeneratorForm({ data, onChange }: Props) {
                 <label className="block text-sm font-medium text-slate-700 mb-1">Roll No.</label>
                 <input
                   type="text" name="rollNo" value={data.rollNo} onChange={handleInputChange}
+                  placeholder="e.g. 12"
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-800"
                 />
               </div>

@@ -414,12 +414,12 @@ export default function Home() {
       {/* Main Content */}
       <main className="flex-grow flex flex-col lg:flex-row max-w-[1600px] w-full mx-auto">
         {/* Left Sidebar - Form */}
-        <aside className="w-full lg:w-[400px] xl:w-[450px] bg-white border-r border-slate-200 overflow-y-auto h-[calc(100vh-64px)]">
+        <aside className="w-full lg:w-[400px] xl:w-[450px] bg-white border-b lg:border-b-0 lg:border-r border-slate-200 lg:overflow-y-auto lg:h-[calc(100vh-64px)] shrink-0">
           <GeneratorForm data={data} onChange={handleDataChange} />
         </aside>
 
         {/* Right Area - Preview */}
-        <section className="flex-grow bg-slate-50/50 overflow-y-auto h-[calc(100vh-64px)] relative p-6 lg:p-10">
+        <section className="flex-grow bg-slate-50/50 lg:overflow-y-auto lg:h-[calc(100vh-64px)] relative p-4 sm:p-6 lg:p-10">
           <SlipPreview data={data} />
         </section>
       </main>

@@ -1,12 +1,39 @@
 "use client";
 
 import { SlipData } from "@/types";
+import { useState, useEffect, useRef } from "react";
 
 interface Props {
   data: SlipData;
 }
 
 export default function SlipPreview({ data }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (containerRef.current) {
+        const width = containerRef.current.getBoundingClientRect().width;
+        // The standard A4 container width in pixel calculation is roughly 794px (210mm)
+        const targetWidth = 794;
+        const newScale = Math.min(1, width / targetWidth);
+        setScale(newScale);
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    
+    // Also trigger on a small timeout to make sure initial render completes
+    const timer = setTimeout(handleResize, 100);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(timer);
+    };
+  }, []);
+
   // Determine layout based on slip size
   let slipWidth = '85mm';
   let slipHeight = '50mm';
@@ -19,7 +46,7 @@ export default function SlipPreview({ data }: Props) {
   } else if (data.slipSize === 'small') {
     slipWidth = '60mm';
     slipHeight = '40mm';
-    copiesCount = 21; // 3 columns * 7 rows
+    copiesCount = 18; // 3 columns * 6 rows (fits perfectly on A4 page height)
   }
 
   // Enforce A5/medium layout for Unicorn when in small layout to preserve design readability
@@ -131,24 +158,35 @@ export default function SlipPreview({ data }: Props) {
         </div>
       </div>
 
-      {/* A4 Paper Container */}
-      <div
-        id="print-container"
-        className="bg-white shadow-xl rounded-sm flex flex-wrap content-start justify-center"
-        style={{
-          width: '210mm',
-          height: '297mm', // Standard A4 Size
-          padding: '10mm',
-          gap: '5mm', // Spacing between slips
-          boxSizing: 'border-box',
-          overflow: 'hidden'
-        }}
+      {/* Outer responsive wrapper that scales the A4 print container */}
+      <div 
+        ref={containerRef} 
+        className="w-full overflow-hidden flex justify-center items-start transition-all duration-300"
+        style={{ height: `${1123 * scale}px` }}
       >
+        {/* A4 Paper Container */}
+        <div
+          id="print-container"
+          className="bg-white shadow-xl rounded-sm flex flex-wrap content-start justify-center transition-transform origin-top duration-300"
+          style={{
+            width: '210mm',
+            height: '297mm', // Standard A4 Size
+            padding: '8mm',  // Reduced margins to allow full A4 print area
+            gap: '5mm', // Spacing between slips
+            boxSizing: 'border-box',
+            overflow: 'hidden',
+            transform: `scale(${scale})`,
+          }}
+        >
         {slips.map((index) => (
           <div
             key={index}
             className="break-inside-avoid relative"
-            style={{ width: actualWidth, height: actualHeight }}
+            style={{ 
+              width: actualWidth, 
+              height: actualHeight,
+              boxSizing: 'border-box' // Enforce border-box explicitly
+            }}
           >
             {/* ==================== 1. PREMIUM UNICORN TEMPLATE ==================== */}
             {data.template === 'unicorn' && (
@@ -201,51 +239,51 @@ export default function SlipPreview({ data }: Props) {
                   <div className="absolute top-1 right-2 text-[10px] text-pink-400 font-bold opacity-75">⭐</div>
                   <div className="absolute top-6 right-1 text-[8px] text-indigo-400 font-bold opacity-70">🎵</div>
 
-                  {/* School Name Top Header */}
-                  <div className="text-center pb-0.5 border-b border-pink-100/60 mb-0.5 shrink-0">
-                    <span className="text-[10px] font-black text-pink-500 uppercase tracking-wider truncate block leading-tight">
-                      {data.schoolName || 'Sunrise International'}
-                    </span>
-                  </div>
-
                   <div className="flex-1 flex flex-col justify-evenly font-sans relative pr-3">
                     {/* Student Name */}
                     <div className="relative h-6 flex items-end">
                       <div className="absolute bottom-0.5 left-0 right-0 border-b border-pink-300 border-dashed w-full z-0"></div>
-                      <div className="relative z-10 flex w-full text-[8.5px] font-bold text-pink-500 leading-none">
-                        <span>Student:</span>
-                        <span className="text-[10.5px] text-slate-800 ml-2 font-black leading-none truncate w-[130px]">{data.studentName}</span>
+                      <div className="relative z-10 flex w-full text-[8.5px] font-black text-pink-700 leading-none">
+                        <span>Name:</span>
+                        <span className="text-[10.5px] text-slate-950 ml-2 font-black leading-none truncate w-[130px]">{data.studentName || ''}</span>
                       </div>
                     </div>
 
                     {/* Class & Division */}
                     <div className="relative h-6 flex items-end">
                       <div className="absolute bottom-0.5 left-0 right-0 border-b border-pink-300 border-dashed w-full z-0"></div>
-                      <div className="relative z-10 flex w-full text-[8.5px] font-bold text-pink-500 leading-none">
+                      <div className="relative z-10 flex w-full text-[8.5px] font-black text-pink-700 leading-none">
                         <span>Class:</span>
-                        <span className="text-[10px] text-slate-800 ml-1.5 font-bold leading-none">{data.grade}</span>
+                        <span className="text-[10px] text-slate-950 ml-1.5 font-bold leading-none">{data.grade || ''}</span>
                         <span className="ml-auto">Division:</span>
-                        <span className="text-[10px] text-slate-800 ml-1.5 pr-2 font-bold leading-none">{data.section}</span>
+                        <span className="text-[10px] text-slate-950 ml-1.5 pr-2 font-bold leading-none">{data.section || ''}</span>
                       </div>
                     </div>
 
                     {/* Roll No */}
                     <div className="relative h-6 flex items-end">
                       <div className="absolute bottom-0.5 left-0 right-0 border-b border-pink-300 border-dashed w-full z-0"></div>
-                      <div className="relative z-10 flex w-full text-[8.5px] font-bold text-pink-500 leading-none">
+                      <div className="relative z-10 flex w-full text-[8.5px] font-black text-pink-700 leading-none">
                         <span>Roll No:</span>
-                        <span className="text-[10px] text-slate-800 ml-2 font-bold leading-none">{data.rollNo}</span>
+                        <span className="text-[10px] text-slate-950 ml-2 font-bold leading-none">{data.rollNo || ''}</span>
                       </div>
                     </div>
 
                     {/* Subject */}
                     <div className="relative h-6 flex items-end">
                       <div className="absolute bottom-0.5 left-0 right-0 border-b border-pink-300 border-dashed w-full z-0"></div>
-                      <div className="relative z-10 flex w-full text-[8.5px] font-bold text-pink-500 leading-none">
+                      <div className="relative z-10 flex w-full text-[8.5px] font-black text-pink-700 leading-none">
                         <span>Subject:</span>
-                        <span className="text-[10.5px] text-indigo-600 ml-2 font-black leading-none">{data.subject}</span>
+                        <span className="text-[10.5px] text-indigo-900 ml-2 font-black leading-none"></span>
                       </div>
                     </div>
+                  </div>
+
+                  {/* School Name Bottom Footer */}
+                  <div className="text-center pt-0.5 border-t border-pink-100/60 mt-0.5 shrink-0">
+                    <span className="text-[10px] font-black text-pink-500 uppercase tracking-wider truncate block leading-tight">
+                      School: {data.schoolName || ''}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -257,13 +295,7 @@ export default function SlipPreview({ data }: Props) {
                 {renderBackground()}
                 <div className="w-2 h-full shrink-0 z-10" style={{ backgroundColor: themeColor }} />
 
-                <div className="flex-1 p-2.5 flex flex-col h-full relative z-10">
-                  <div className="mb-1.5 border-b border-slate-100 pb-1 flex justify-between items-center">
-                    <h4 className="font-bold text-[11px] leading-tight text-slate-800 truncate uppercase tracking-wide" style={{ color: themeColor }}>
-                      {data.schoolName || 'School Name'}
-                    </h4>
-                  </div>
-
+                <div className="flex-1 p-2.5 flex flex-col h-full relative z-10 justify-between">
                   <div className="flex gap-2.5 flex-1 items-center">
                     <div
                       className="bg-slate-100 rounded overflow-hidden border border-slate-200 shrink-0 flex items-center justify-center relative bg-white shadow-inner transition-all"
@@ -277,25 +309,31 @@ export default function SlipPreview({ data }: Props) {
 
                     <div className="flex-1 flex flex-col justify-center space-y-1.5">
                       <div>
-                        <p className="text-[6px] text-slate-400 font-bold uppercase tracking-wider leading-none mb-0.5">Student Name</p>
-                        <p className="font-extrabold text-[11px] leading-none text-slate-800 truncate">{data.studentName || 'Student Name'}</p>
+                        <p className="text-[6px] text-slate-500 font-extrabold uppercase tracking-wider leading-none mb-0.5">Name</p>
+                        <p className="font-black text-[11px] leading-none text-slate-950 truncate">{data.studentName || ''}</p>
                       </div>
 
                       <div className="grid grid-cols-2 gap-x-1.5 gap-y-1">
                         <div className="col-span-2">
-                          <p className="text-[6px] text-slate-400 font-bold uppercase tracking-wider leading-none mb-0.5">Subject</p>
-                          <p className="font-bold text-[9.5px] leading-none" style={{ color: themeColor }}>{data.subject || '-'}</p>
+                          <p className="text-[6px] text-slate-500 font-extrabold uppercase tracking-wider leading-none mb-0.5">Subject</p>
+                          <p className="font-black text-[9.5px] leading-none" style={{ color: themeColor }}></p>
                         </div>
                         <div>
-                          <p className="text-[6px] text-slate-400 font-bold uppercase tracking-wider leading-none mb-0.5">Class/Div</p>
-                          <p className="font-semibold text-[8.5px] text-slate-700 leading-none truncate">{data.grade} - {data.section}</p>
+                          <p className="text-[6px] text-slate-500 font-extrabold uppercase tracking-wider leading-none mb-0.5">Class/Div</p>
+                          <p className="font-black text-[8.5px] text-slate-950 leading-none truncate">{data.grade || ''} - {data.section || ''}</p>
                         </div>
                         <div>
-                          <p className="text-[6px] text-slate-400 font-bold uppercase tracking-wider leading-none mb-0.5">Roll No.</p>
-                          <p className="font-semibold text-[8.5px] text-slate-700 leading-none">{data.rollNo || '-'}</p>
+                          <p className="text-[6px] text-slate-500 font-extrabold uppercase tracking-wider leading-none mb-0.5">Roll No.</p>
+                          <p className="font-black text-[8.5px] text-slate-950 leading-none">{data.rollNo || ''}</p>
                         </div>
                       </div>
                     </div>
+                  </div>
+
+                  <div className="mt-1.5 border-t border-slate-100 pt-1 flex justify-between items-center shrink-0">
+                    <h4 className="font-bold text-[10px] leading-tight text-slate-800 truncate uppercase tracking-wide" style={{ color: themeColor }}>
+                      School: {data.schoolName || ''}
+                    </h4>
                   </div>
                 </div>
               </div>
@@ -303,29 +341,26 @@ export default function SlipPreview({ data }: Props) {
 
             {/* ==================== 3. CLASSIC TEMPLATE ==================== */}
             {data.template === 'classic' && (
-              <div className="w-full h-full border-2 bg-white relative flex flex-col z-10" style={{ borderColor: themeColor }}>
+              <div className="w-full h-full border-2 bg-white relative flex flex-col z-10 justify-between" style={{ borderColor: themeColor }}>
                 {renderBackground()}
-                <div className="w-full py-1 text-center flex flex-col items-center justify-center border-b-2 z-10" style={{ backgroundColor: themeColor, borderColor: themeColor, color: textColor }}>
-                  <h4 className="font-bold text-[11px] uppercase tracking-wide leading-tight truncate px-1 w-full">{data.schoolName || 'School Name'}</h4>
-                </div>
 
                 <div className="flex-1 flex p-1.5 gap-2 z-10 bg-white/95 items-center">
                   <div className="flex-1 flex flex-col justify-evenly h-full py-0.5 font-sans">
                     <div className="flex items-end border-b border-slate-300 border-dashed pb-0.5">
-                      <span className="text-[7.5px] font-bold text-slate-500 w-12 shrink-0">Student:</span>
-                      <span className="text-[10px] font-extrabold text-slate-900 ml-1 truncate leading-none">{data.studentName}</span>
+                      <span className="text-[7.5px] font-black text-slate-600 w-12 shrink-0">Name:</span>
+                      <span className="text-[10px] font-black text-slate-950 ml-1 truncate leading-none">{data.studentName || ''}</span>
                     </div>
                     <div className="flex items-end border-b border-slate-300 border-dashed pb-0.5">
-                      <span className="text-[7.5px] font-bold text-slate-500 w-12 shrink-0">Class/Div:</span>
-                      <span className="text-[9px] font-bold text-slate-800 ml-1 leading-none">{data.grade} - {data.section}</span>
+                      <span className="text-[7.5px] font-black text-slate-600 w-12 shrink-0">Class/Div:</span>
+                      <span className="text-[9px] font-black text-slate-950 ml-1 leading-none">{data.grade || ''} - {data.section || ''}</span>
                     </div>
                     <div className="flex items-end border-b border-slate-300 border-dashed pb-0.5">
-                      <span className="text-[7.5px] font-bold text-slate-500 w-12 shrink-0">Roll No.</span>
-                      <span className="text-[9px] font-semibold text-slate-800 ml-1 leading-none">{data.rollNo}</span>
+                      <span className="text-[7.5px] font-black text-slate-600 w-12 shrink-0">Roll No.</span>
+                      <span className="text-[9px] font-black text-slate-950 ml-1 leading-none">{data.rollNo || ''}</span>
                     </div>
                     <div className="flex items-end border-b border-slate-300 border-dashed pb-0.5">
-                      <span className="text-[7.5px] font-bold text-slate-500 w-12 shrink-0">Subject:</span>
-                      <span className="text-[9px] font-extrabold ml-1 leading-none truncate" style={{ color: themeColor }}>{data.subject}</span>
+                      <span className="text-[7.5px] font-black text-slate-600 w-12 shrink-0">Subject:</span>
+                      <span className="text-[9px] font-black ml-1 leading-none truncate" style={{ color: themeColor }}></span>
                     </div>
                   </div>
 
@@ -339,24 +374,19 @@ export default function SlipPreview({ data }: Props) {
                     {renderPhoto()}
                   </div>
                 </div>
+
+                <div className="w-full py-1 text-center flex flex-col items-center justify-center border-t-2 z-10 shrink-0" style={{ backgroundColor: themeColor, borderColor: themeColor, color: textColor }}>
+                  <h4 className="font-bold text-[10px] uppercase tracking-wide leading-tight truncate px-1 w-full">School: {data.schoolName || ''}</h4>
+                </div>
               </div>
             )}
 
             {/* ==================== 4. PLAYFUL TEMPLATE ==================== */}
             {data.template === 'playful' && (
-              <div className="w-full h-full bg-white rounded-xl overflow-hidden border border-slate-200 relative shadow-sm z-10">
+              <div className="w-full h-full bg-white rounded-xl overflow-hidden border border-slate-200 relative shadow-sm z-10 flex flex-col justify-between">
                 {renderBackground()}
 
-                <div className="h-7 relative z-10 flex items-center px-3" style={{ backgroundColor: themeColor }}>
-                  <h4 className="font-black text-[12px] text-white tracking-wide truncate" style={{ textShadow: '1px 1px 0px rgba(0,0,0,0.2)' }}>
-                    {data.schoolName || 'School Name'}
-                  </h4>
-                </div>
-                <svg className="w-full h-2 absolute top-7 left-0 z-10" preserveAspectRatio="none" viewBox="0 0 1440 74" fill={themeColor} xmlns="http://www.w3.org/2000/svg">
-                  <path d="M0,0 C240,74 480,74 720,37 C960,0 1200,0 1440,37 L1440,0 L0,0 Z"></path>
-                </svg>
-
-                <div className="p-2 pt-3 flex gap-2.5 h-[calc(100%-28px)] relative z-10 items-center">
+                <div className="p-2 pt-2.5 flex gap-2.5 flex-grow relative z-10 items-center">
                   <div
                     className="rounded-full border-2 bg-white overflow-hidden shrink-0 shadow-md z-20 flex items-center justify-center transition-all"
                     style={{
@@ -371,16 +401,22 @@ export default function SlipPreview({ data }: Props) {
                   <div className="flex-1 min-w-0 z-20">
                     <div className="bg-white/85 backdrop-blur-sm border border-slate-100 rounded-lg p-1.5 relative shadow-sm space-y-1">
                       <div>
-                        <p className="text-[5.5px] font-bold text-slate-400 uppercase leading-none mb-0.5">Student</p>
-                        <p className="font-black text-[10.5px] text-slate-800 leading-none truncate">{data.studentName}</p>
+                        <p className="text-[5.5px] font-extrabold text-slate-500 uppercase leading-none mb-0.5">Name</p>
+                        <p className="font-black text-[10.5px] text-slate-950 leading-none truncate">{data.studentName || ''}</p>
                       </div>
                       <div className="flex flex-wrap gap-1 text-[7.5px] font-extrabold font-sans">
-                        <span className="bg-indigo-50 px-1 py-0.5 rounded text-indigo-600 truncate max-w-[85px]">Sub: {data.subject}</span>
-                        <span className="bg-rose-50 px-1 py-0.5 rounded text-rose-500">Std {data.grade}-{data.section}</span>
-                        <span className="bg-emerald-50 px-1 py-0.5 rounded text-emerald-600">Roll {data.rollNo}</span>
+                        <span className="bg-indigo-50 px-1 py-0.5 rounded text-indigo-700 font-black truncate max-w-[85px]">Sub: </span>
+                        <span className="bg-rose-50 px-1 py-0.5 rounded text-rose-700 font-black">Std {data.grade || ''}-{data.section || ''}</span>
+                        <span className="bg-emerald-50 px-1 py-0.5 rounded text-emerald-700 font-black">Roll {data.rollNo || ''}</span>
                       </div>
                     </div>
                   </div>
+                </div>
+
+                <div className="h-6 relative z-10 flex items-center px-3 mt-1 shrink-0" style={{ backgroundColor: themeColor }}>
+                  <h4 className="font-black text-[10px] text-white tracking-wide truncate" style={{ textShadow: '1px 1px 0px rgba(0,0,0,0.2)' }}>
+                    School: {data.schoolName || ''}
+                  </h4>
                 </div>
               </div>
             )}
@@ -406,11 +442,7 @@ export default function SlipPreview({ data }: Props) {
                 <div className="absolute top-1/2 left-1 text-sm opacity-60">✨</div>
                 
                 {/* Center Content Box */}
-                <div className="absolute inset-0 m-3 bg-white/95 backdrop-blur-sm rounded-xl shadow-sm border-2 border-indigo-200 flex flex-col p-1.5 z-10">
-                  <div className="text-center mb-1 pb-1 border-b-2 border-dotted border-amber-300 shrink-0">
-                    <span className="text-rose-500 font-black text-[9px] uppercase tracking-widest leading-none block truncate px-2">{data.schoolName || 'My Awesome School'}</span>
-                  </div>
-                  
+                <div className="absolute inset-0 m-3 bg-white/95 backdrop-blur-sm rounded-xl shadow-sm border-2 border-indigo-200 flex flex-col p-1.5 justify-between z-10">
                   <div className="flex flex-1 gap-2 items-center px-1">
                     <div className="shrink-0 rounded-2xl overflow-hidden border-4 border-white shadow-sm rotate-[-2deg] bg-blue-50" style={{width:`${data.photoFrameSize}px`,height:`${data.photoFrameSize}px`}}>
                       {renderPhoto()}
@@ -418,25 +450,29 @@ export default function SlipPreview({ data }: Props) {
                     
                     <div className="flex-1 flex flex-col justify-evenly h-full py-0.5 space-y-1">
                       <div className="flex flex-col">
-                        <span className="text-[6px] font-bold text-slate-400 uppercase leading-none mb-0.5">My Name is:</span>
-                        <span className="text-[11px] font-black text-indigo-600 leading-none truncate block">{data.studentName || 'Student Name'}</span>
+                        <span className="text-[6px] font-black text-slate-500 uppercase leading-none mb-0.5">My Name is:</span>
+                        <span className="text-[11px] font-black text-indigo-900 leading-none truncate block">{data.studentName || ''}</span>
                       </div>
                       
                       <div className="grid grid-cols-2 gap-x-1 gap-y-1 mt-0.5">
                         <div className="col-span-2">
-                          <span className="text-[5.5px] font-bold text-slate-400 uppercase block mb-0.5">Subject</span>
-                          <span className="text-[9px] font-bold text-rose-500 bg-rose-50 px-1 py-0.5 rounded block truncate leading-none">{data.subject || '-'}</span>
+                          <span className="text-[5.5px] font-black text-slate-500 uppercase block mb-0.5">Subject</span>
+                          <span className="text-[9px] font-black text-rose-700 bg-rose-50 px-1 py-0.5 rounded block truncate leading-none"></span>
                         </div>
                         <div>
-                          <span className="text-[5.5px] font-bold text-slate-400 uppercase block mb-0.5">Class & Div</span>
-                          <span className="text-[8.5px] font-bold text-amber-600 bg-amber-50 px-1 py-0.5 rounded block truncate leading-none">{data.grade} - {data.section}</span>
+                          <span className="text-[5.5px] font-black text-slate-500 uppercase block mb-0.5">Class & Div</span>
+                          <span className="text-[8.5px] font-black text-amber-800 bg-amber-50 px-1 py-0.5 rounded block truncate leading-none">{data.grade || ''} - {data.section || ''}</span>
                         </div>
                         <div>
-                          <span className="text-[5.5px] font-bold text-slate-400 uppercase block mb-0.5">Roll No</span>
-                          <span className="text-[8.5px] font-bold text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded block truncate leading-none">{data.rollNo || '-'}</span>
+                          <span className="text-[5.5px] font-black text-slate-500 uppercase block mb-0.5">Roll No</span>
+                          <span className="text-[8.5px] font-black text-emerald-800 bg-emerald-50 px-1 py-0.5 rounded block truncate leading-none">{data.rollNo || ''}</span>
                         </div>
                       </div>
                     </div>
+                  </div>
+
+                  <div className="text-center mt-1 pt-1 border-t-2 border-dotted border-amber-300 shrink-0">
+                    <span className="text-rose-600 font-black text-[9px] uppercase tracking-widest leading-none block truncate px-2">School: {data.schoolName || ''}</span>
                   </div>
                 </div>
               </div>
@@ -445,5 +481,6 @@ export default function SlipPreview({ data }: Props) {
         ))}
       </div>
     </div>
+  </div>
   );
 }

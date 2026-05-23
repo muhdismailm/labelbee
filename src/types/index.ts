@@ -24,13 +24,13 @@ export interface SlipData {
 }
 
 export const defaultSlipData: SlipData = {
-  schoolName: "School Name",
-  schoolMotto: "Knowledge is Power",
-  academicYear: "2026 - 2027",
-  studentName: "Student Name",
-  grade: "Grade 5",
-  section: "A",
-  rollNo: "12",
+  schoolName: "",
+  schoolMotto: "",
+  academicYear: "",
+  studentName: "",
+  grade: "",
+  section: "",
+  rollNo: "",
   busNo: "",
   bloodGroup: "",
   contactNo: "",
