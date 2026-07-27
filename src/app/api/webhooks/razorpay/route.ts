@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { adminDb } from "@/utils/firebaseAdmin";
+import { admin, adminDb } from "@/utils/firebaseAdmin";
 
 export async function POST(req: Request) {
   try {
@@ -20,14 +20,19 @@ export async function POST(req: Request) {
 
     const event = JSON.parse(body);
 
-    // We only care about payment.captured or order.paid
+    // Support both payment.captured and order.paid events
     if (event.event === "payment.captured" || event.event === "order.paid") {
-      const paymentEntity = event.payload.payment.entity;
-      
-      const userId = paymentEntity.notes?.userId;
-      const packageId = paymentEntity.notes?.packageId;
+      const entity = event.payload?.payment?.entity || event.payload?.order?.entity || {};
+      const notes = entity.notes || {};
 
-      if (userId && packageId && adminDb) {
+      const userId = notes.userId;
+      const packageId = notes.packageId;
+
+      if (!adminDb) {
+        console.warn("⚠️ Webhook received but adminDb is not initialized. Please configure FIREBASE_SERVICE_ACCOUNT_KEY.");
+      } else if (!userId || !packageId) {
+        console.warn(`⚠️ Webhook received but metadata missing (userId: ${userId}, packageId: ${packageId}).`);
+      } else {
         let addedCredits = 0;
         if (packageId === "pack_1") addedCredits = 2;
         if (packageId === "pack_4") addedCredits = 4;
@@ -36,20 +41,13 @@ export async function POST(req: Request) {
         if (addedCredits > 0) {
           const userRef = adminDb.collection("users").doc(userId);
           
-          await adminDb.runTransaction(async (t) => {
-            const doc = await t.get(userRef);
-            if (!doc.exists) {
-              t.set(userRef, { credits: addedCredits });
-            } else {
-              const currentCredits = doc.data()?.credits || 0;
-              t.update(userRef, { credits: currentCredits + addedCredits });
-            }
-          });
+          await userRef.set(
+            { credits: admin.firestore.FieldValue.increment(addedCredits) },
+            { merge: true }
+          );
 
-          console.log(`Successfully added ${addedCredits} credits to user ${userId}`);
+          console.log(`✅ Successfully added ${addedCredits} credits to user ${userId}`);
         }
-      } else {
-        console.warn("Webhook processed but userId/packageId missing or adminDb not initialized.");
       }
     }
 

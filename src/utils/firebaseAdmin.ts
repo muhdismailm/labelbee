@@ -4,16 +4,25 @@ if (!admin.apps.length) {
   try {
     const serviceAccountStr = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
     if (!serviceAccountStr) {
-      console.warn("FIREBASE_SERVICE_ACCOUNT_KEY is not set. Admin SDK not initialized.");
+      console.warn("⚠️ FIREBASE_SERVICE_ACCOUNT_KEY is not set. Admin SDK not initialized.");
     } else {
-      const serviceAccount = JSON.parse(serviceAccountStr);
+      let rawJson = serviceAccountStr;
+      // Handle base64 encoded string if provided
+      if (!rawJson.trim().startsWith("{")) {
+        try {
+          rawJson = Buffer.from(rawJson, "base64").toString("utf-8");
+        } catch {
+          // If not base64, proceed with original string
+        }
+      }
+      const serviceAccount = JSON.parse(rawJson);
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
       });
       console.log("Firebase Admin initialized successfully.");
     }
   } catch (error) {
-    console.error("Firebase Admin initialization error", error);
+    console.error("Firebase Admin initialization error:", error);
   }
 }
 

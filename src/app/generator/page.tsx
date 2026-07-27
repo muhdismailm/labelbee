@@ -16,7 +16,7 @@ import {
   signInWithPopup,
   sendPasswordResetEmail
 } from "firebase/auth";
-import { doc, onSnapshot, setDoc } from "firebase/firestore";
+import { doc, onSnapshot, setDoc, increment } from "firebase/firestore";
 import { db, auth } from "@/utils/firebase";
 
 
@@ -275,9 +275,11 @@ export default function Home() {
             if (packageId === 'pack_10') addedCredits = 10;
 
             if (addedCredits > 0) {
-              const newCredits = credits + addedCredits;
-              await setDoc(doc(db, "users", user.uid), { credits: newCredits }, { merge: true });
-              setCredits(newCredits);
+              try {
+                await setDoc(doc(db, "users", user.uid), { credits: increment(addedCredits) }, { merge: true });
+              } catch (clientErr) {
+                console.warn("Client-side Firestore credit write skipped (webhook will process credits):", clientErr);
+              }
             }
 
             setLoadingPayment(false);
