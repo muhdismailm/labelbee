@@ -267,19 +267,17 @@ export default function Home() {
         image: "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=128&auto=format&fit=crop", 
         order_id: orderData.id,
         handler: async function () {
-          try {
-            // Provision credits on successful checkout (essential for local dev/testing and setups without Admin SDK keys)
-            let addedCredits = 0;
-            if (packageId === 'pack_1') addedCredits = 2;
-            if (packageId === 'pack_4') addedCredits = 4;
-            if (packageId === 'pack_10') addedCredits = 10;
+          let addedCredits = 0;
+          if (packageId === 'pack_1') addedCredits = 2;
+          if (packageId === 'pack_4') addedCredits = 4;
+          if (packageId === 'pack_10') addedCredits = 10;
 
+          try {
             if (addedCredits > 0) {
-              try {
-                await setDoc(doc(db, "users", user.uid), { credits: increment(addedCredits) }, { merge: true });
-              } catch (clientErr) {
-                console.warn("Client-side Firestore credit write skipped (webhook will process credits):", clientErr);
-              }
+              // Write new credits to Firestore
+              await setDoc(doc(db, "users", user.uid), { credits: increment(addedCredits) }, { merge: true });
+              // Update local state immediately so UI reflects new balance right away
+              setCredits((prev) => prev + addedCredits);
             }
 
             setLoadingPayment(false);
@@ -287,8 +285,9 @@ export default function Home() {
 
             alert(`🎉 Success! Your payment was received. ${addedCredits} credits have been added to your account!`);
           } catch (error) {
-            console.error("Updating credits after checkout failed:", error);
+            console.error("Failed to update credits after payment:", error);
             setLoadingPayment(false);
+            alert("Payment received, but we couldn't update your credits automatically. Please refresh the page or contact support.");
           }
         },
         prefill: {
