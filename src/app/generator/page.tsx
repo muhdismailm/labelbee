@@ -55,6 +55,7 @@ export default function Home() {
   const [credits, setCredits] = useState<number>(0);
   const [isPackModalOpen, setIsPackModalOpen] = useState<boolean>(false);
   const [loadingPayment, setLoadingPayment] = useState<boolean>(false);
+  const [loadingDownload, setLoadingDownload] = useState<boolean>(false);
 
   // Listen to active Firebase authentication session
   useEffect(() => {
@@ -216,6 +217,7 @@ export default function Home() {
     }
 
     // 3. Deduct credit, update state/local storage and trigger download
+    setLoadingDownload(true);
     try {
       const newCredits = credits - 1;
       await setDoc(doc(db, "users", user.uid), { credits: newCredits }, { merge: true });
@@ -224,6 +226,8 @@ export default function Home() {
       await exportToPdf("print-container", `${data.studentName.replace(/\s+/g, '-').toLowerCase()}-slips.pdf`);
     } catch {
       alert("Failed to generate PDF. Please try again.");
+    } finally {
+      setLoadingDownload(false);
     }
   };
 
@@ -274,20 +278,18 @@ export default function Home() {
 
           try {
             if (addedCredits > 0) {
-              // Write new credits to Firestore
+              // Write credits directly to Firestore after successful payment.
+              // Note: disable this once the Razorpay webhook is properly configured
+              // to avoid double-crediting.
               await setDoc(doc(db, "users", user.uid), { credits: increment(addedCredits) }, { merge: true });
-              // Update local state immediately so UI reflects new balance right away
-              setCredits((prev) => prev + addedCredits);
             }
-
             setLoadingPayment(false);
             setIsPackModalOpen(false);
-
-            alert(`🎉 Success! Your payment was received. ${addedCredits} credits have been added to your account!`);
-          } catch (error) {
-            console.error("Failed to update credits after payment:", error);
+            alert(`🎉 Payment successful! ${addedCredits} credits have been added to your account.`);
+          } catch (err) {
+            console.error("Failed to update credits:", err);
             setLoadingPayment(false);
-            alert("Payment received, but we couldn't update your credits automatically. Please refresh the page or contact support.");
+            alert("Payment received, but credits could not be updated. Please contact support.");
           }
         },
         prefill: {
@@ -379,16 +381,24 @@ export default function Home() {
             {/* Main Action CTA Button */}
             <button
               onClick={handlePrint}
-              disabled={loadingPayment}
+              disabled={loadingPayment || loadingDownload}
               className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 shadow-sm flex items-center gap-2 cursor-pointer ${
-                loadingPayment
+                loadingPayment || loadingDownload
                   ? "bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed"
                   : user && credits > 0
                   ? "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white hover:scale-[1.02] active:scale-[0.98] shadow-emerald-100 shadow-lg"
                   : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white hover:scale-[1.02] active:scale-[0.98] shadow-indigo-100 shadow-lg"
               }`}
             >
-              {loadingPayment ? (
+              {loadingDownload ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-1 h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Generating PDF...</span>
+                </>
+              ) : loadingPayment ? (
                 <>
                   <svg className="animate-spin -ml-1 mr-1 h-4.5 w-4.5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
