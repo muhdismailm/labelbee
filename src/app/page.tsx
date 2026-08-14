@@ -1,209 +1,875 @@
+"use client";
 import Link from "next/link";
-import { Sparkles, Building2, Users, ArrowRight, CheckCircle2, Paintbrush, Printer, Wand2 } from "lucide-react";
 
+/* ---- SVG Icons (inline, no extra dep) ---- */
+function BeeIcon({ size = 32 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Body */}
+      <ellipse cx="32" cy="36" rx="14" ry="18" fill="#F5C42E" />
+      {/* Stripes */}
+      <rect x="18" y="33" width="28" height="5" rx="2" fill="#1A1F4B" opacity="0.7" />
+      <rect x="18" y="43" width="28" height="5" rx="2" fill="#1A1F4B" opacity="0.7" />
+      {/* Head */}
+      <circle cx="32" cy="18" r="10" fill="#F5C42E" />
+      {/* Antennae */}
+      <line x1="27" y1="10" x2="22" y2="4" stroke="#1A1F4B" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="21" cy="3" r="2" fill="#1A1F4B" />
+      <line x1="37" y1="10" x2="42" y2="4" stroke="#1A1F4B" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="43" cy="3" r="2" fill="#1A1F4B" />
+      {/* Eyes */}
+      <circle cx="28" cy="19" r="2.5" fill="#1A1F4B" />
+      <circle cx="36" cy="19" r="2.5" fill="#1A1F4B" />
+      {/* Wings */}
+      <ellipse cx="14" cy="28" rx="10" ry="7" fill="white" opacity="0.8" transform="rotate(-20 14 28)" />
+      <ellipse cx="50" cy="28" rx="10" ry="7" fill="white" opacity="0.8" transform="rotate(20 50 28)" />
+    </svg>
+  );
+}
+
+function UploadIcon() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="16 16 12 12 8 16" /><line x1="12" y1="12" x2="12" y2="21" />
+      <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+    </svg>
+  );
+}
+
+function SparkleIcon() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  );
+}
+
+function EditIcon() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+    </svg>
+  );
+}
+
+function DownloadIcon({ stroke = "#ef4444" }: { stroke?: string }) {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  );
+}
+
+function ShieldIcon() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#F5C42E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  );
+}
+
+function BoltIcon() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#F5C42E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+  );
+}
+
+function CloudIcon() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#F5C42E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" />
+    </svg>
+  );
+}
+
+function HeadphonesIcon() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#F5C42E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+      <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z" />
+      <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+    </svg>
+  );
+}
+
+function ArrowRight({ size = 18, className = "" }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+    </svg>
+  );
+}
+
+function PlayIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+      <polygon points="5 3 19 12 5 21 5 3" />
+    </svg>
+  );
+}
+
+/* ---- Step connector dashes ---- */
+function StepConnector() {
+  return (
+    <div className="hidden md:flex flex-1 items-center justify-center" style={{ paddingBottom: "36px" }}>
+      <div style={{ borderTop: "2px dashed #d1d5db", flex: 1 }} />
+    </div>
+  );
+}
+
+/* ---- Name-slip hero card ---- */
+function NameSlipCard() {
+  return (
+    <div
+      className="animate-float-card"
+      style={{
+        background: "white",
+        borderRadius: "16px",
+        boxShadow: "0 20px 60px rgba(26,31,75,0.18)",
+        padding: "0",
+        width: "340px",
+        overflow: "hidden",
+        position: "relative",
+      }}
+    >
+      {/* A4 badge */}
+      <div
+        style={{
+          position: "absolute",
+          top: "-14px",
+          right: "-14px",
+          background: "#8b5cf6",
+          color: "white",
+          borderRadius: "50%",
+          width: "70px",
+          height: "70px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          fontWeight: 800,
+          fontSize: "11px",
+          lineHeight: 1.3,
+          zIndex: 10,
+          textAlign: "center",
+          boxShadow: "0 4px 12px rgba(139,92,246,0.4)",
+        }}
+      >
+        A4 Size<br />PDF
+      </div>
+
+      {/* Card background - Navy + yellow leaves */}
+      <div
+        style={{
+          background: "linear-gradient(135deg, #f8f4e8 0%, #fff9e0 60%, #e8f0ff 100%)",
+          padding: "24px",
+          display: "flex",
+          alignItems: "center",
+          gap: "20px",
+          position: "relative",
+        }}
+      >
+        {/* Decorative leaf blobs */}
+        <div
+          style={{
+            position: "absolute",
+            right: 0,
+            bottom: 0,
+            width: "120px",
+            height: "120px",
+            background: "linear-gradient(135deg, #1a1f4b 0%, #2d3278 100%)",
+            borderRadius: "50% 0 0 0",
+            opacity: 0.08,
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            right: "60px",
+            width: "60px",
+            height: "60px",
+            background: "#F5C42E",
+            borderRadius: "50%",
+            opacity: 0.15,
+          }}
+        />
+
+        {/* Photo circle */}
+        <div
+          style={{
+            width: "88px",
+            height: "88px",
+            borderRadius: "50%",
+            border: "4px solid white",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
+            overflow: "hidden",
+            flexShrink: 0,
+            background: "linear-gradient(135deg, #e8d5b7, #c4a882)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "36px",
+          }}
+        >
+          👦
+        </div>
+
+        {/* Info */}
+        <div style={{ flex: 1, zIndex: 2 }}>
+          <div style={{ fontWeight: 800, fontSize: "18px", color: "#1a1f4b", marginBottom: "10px" }}>
+            Aarav Sharma
+          </div>
+          {[
+            ["Class", "5th Standard"],
+            ["Subject", "Mathematics"],
+            ["School", "Green Valley School"],
+          ].map(([label, value]) => (
+            <div key={label} style={{ display: "flex", gap: "8px", fontSize: "11.5px", marginBottom: "4px" }}>
+              <span style={{ color: "#6b7280", fontWeight: 600, width: "52px" }}>{label}</span>
+              <span style={{ color: "#374151", fontWeight: 500 }}>: {value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---- Upload card ---- */
+function UploadCard() {
+  return (
+    <div
+      style={{
+        background: "white",
+        borderRadius: "14px",
+        boxShadow: "0 8px 24px rgba(0,0,0,0.10)",
+        padding: "14px 16px",
+        width: "200px",
+      }}
+    >
+      <div style={{ fontSize: "12px", fontWeight: 700, color: "#374151", marginBottom: "10px" }}>
+        Upload Your Photo
+      </div>
+      <div
+        style={{
+          borderRadius: "10px",
+          overflow: "hidden",
+          height: "90px",
+          background: "linear-gradient(135deg, #f59e42, #f5c42e)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "42px",
+        }}
+      >
+        👦
+      </div>
+    </div>
+  );
+}
+
+/* ---- AI Backgrounds card ---- */
+function BgCard() {
+  const colors = [
+    ["#4ade80", "#22c55e"],
+    ["#60a5fa", "#3b82f6"],
+    ["#f59e0b", "#d97706"],
+    ["#c084fc", "#a855f7"],
+  ];
+  return (
+    <div
+      style={{
+        background: "white",
+        borderRadius: "14px",
+        boxShadow: "0 8px 24px rgba(0,0,0,0.10)",
+        padding: "14px 16px",
+        width: "200px",
+      }}
+    >
+      <div style={{ fontSize: "12px", fontWeight: 700, color: "#374151", marginBottom: "10px" }}>
+        AI Backgrounds
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+        {colors.map(([c1, c2], i) => (
+          <div
+            key={i}
+            style={{
+              height: "52px",
+              borderRadius: "8px",
+              background: `linear-gradient(135deg, ${c1}, ${c2})`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "22px",
+            }}
+          >
+            {["🌲", "🌊", "🌸", "🌙"][i]}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================ */
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-slate-50 font-sans selection:bg-indigo-100 selection:text-indigo-900">
+    <div style={{ minHeight: "100vh", background: "#ffffff", fontFamily: "'Inter', sans-serif" }}>
 
-      {/* Navigation */}
-      <nav className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-md shadow-indigo-200">
-              LB
-            </div>
-            <span className="font-bold text-xl text-slate-800 tracking-tight">LabelBee</span>
+      {/* ========== NAVBAR ========== */}
+      <nav
+        style={{
+          background: "rgba(255,255,255,0.95)",
+          backdropFilter: "blur(12px)",
+          borderBottom: "1px solid #f0f0f0",
+          position: "sticky",
+          top: 0,
+          zIndex: 100,
+        }}
+      >
+        <div
+          style={{
+            maxWidth: "1200px",
+            margin: "0 auto",
+            padding: "0 24px",
+            height: "68px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          {/* Logo */}
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <img
+              src="/logo.jpg"
+              alt="LabelBee"
+              style={{ height: "52px", width: "auto", objectFit: "contain" }}
+            />
           </div>
 
-          <div className="flex items-center gap-2">
-            <a href="#features" className="hidden sm:flex text-slate-600 hover:text-slate-900 text-sm font-semibold px-4 py-2 transition-colors">
-              Features
-            </a>
-            <Link href="/generator" className="hidden sm:flex text-slate-700 bg-slate-100 hover:bg-slate-200 text-sm font-semibold px-5 py-2.5 rounded-full transition-all">
-              Login
-            </Link>
-            <Link href="/generator" className="bg-slate-900 hover:bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-all shadow-md shadow-slate-200 flex items-center gap-2">
-              Open Generator <ArrowRight className="w-4 h-4" />
+          {/* Nav links */}
+          <div className="hidden md:flex" style={{ alignItems: "center", gap: "32px" }}>
+            {["Features", "How It Works"].map((item) => (
+              <a
+                key={item}
+                href={`#${item.toLowerCase().replace(/ /g, "-")}`}
+                className="nav-link"
+              >
+                {item}
+              </a>
+            ))}
+          </div>
+          {/* CTA buttons */}
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <Link
+              href="/generator"
+              style={{
+                fontSize: "14px",
+                fontWeight: 700,
+                color: "#1a1f4b",
+                background: "#F5C42E",
+                borderRadius: "50px",
+                padding: "10px 24px",
+                textDecoration: "none",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                boxShadow: "0 4px 12px rgba(245,196,46,0.4)",
+                transition: "all 0.2s",
+              }}
+            >
+              Get Started <ArrowRight size={15} />
             </Link>
           </div>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="relative pt-20 pb-24 overflow-hidden">
-        {/* Background Gradients */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-[1200px] opacity-30 pointer-events-none z-0">
-          <div className="absolute top-[10%] left-[20%] w-72 h-72 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
-          <div className="absolute top-[15%] right-[20%] w-72 h-72 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
-          <div className="absolute -bottom-8 left-[35%] w-72 h-72 bg-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-4000"></div>
-        </div>
+      {/* ========== HERO ========== */}
+      <section
+        style={{
+          background: "linear-gradient(180deg, #fffdf5 0%, #ffffff 100%)",
+          padding: "80px 24px 60px",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col items-center text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-sm font-semibold mb-6 shadow-sm">
-            <Sparkles className="w-4 h-4" /> Introducing AI Magic Backgrounds
+
+        <div
+          style={{
+            maxWidth: "1200px",
+            margin: "0 auto",
+            display: "flex",
+            alignItems: "center",
+            gap: "48px",
+            flexWrap: "wrap",
+          }}
+        >
+          {/* ---- LEFT COLUMN ---- */}
+          <div style={{ flex: "1 1 440px", minWidth: 0 }}>
+
+
+            {/* Headline */}
+            <h1
+              className="animate-fade-up delay-100"
+              style={{
+                fontWeight: 900,
+                fontSize: "clamp(36px, 5vw, 58px)",
+                lineHeight: 1.12,
+                color: "#1a1f4b",
+                marginBottom: "8px",
+              }}
+            >
+              Create Personalized<br />
+              Name Slips
+            </h1>
+            <h1
+              className="animate-fade-up delay-200"
+              style={{
+                fontWeight: 900,
+                fontSize: "clamp(36px, 5vw, 58px)",
+                lineHeight: 1.12,
+                color: "#F5C42E",
+                marginBottom: "24px",
+                display: "block",
+              }}
+            >
+              in Seconds
+            </h1>
+
+            {/* Sub-text */}
+            <p
+              className="animate-fade-up delay-300"
+              style={{
+                fontSize: "15.5px",
+                color: "#4b5563",
+                lineHeight: 1.75,
+                maxWidth: "420px",
+                marginBottom: "36px",
+              }}
+            >
+              Upload your photo, choose an AI background,<br />
+              and generate stunning A4 size name slip sheets.<br />
+              Download your PDF instantly using{" "}
+              <span style={{ color: "#F5C42E", fontWeight: 700 }}>LabelBee credits</span>.
+            </p>
+
+            {/* CTA buttons */}
+            <div
+              className="animate-fade-up delay-400"
+              style={{ display: "flex", gap: "14px", flexWrap: "wrap", marginBottom: "40px" }}
+            >
+              <Link
+                href="/generator"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  background: "#F5C42E",
+                  color: "#1a1f4b",
+                  fontWeight: 800,
+                  fontSize: "15px",
+                  padding: "13px 28px",
+                  borderRadius: "12px",
+                  textDecoration: "none",
+                  boxShadow: "0 6px 20px rgba(245,196,46,0.5)",
+                  transition: "all 0.2s",
+                }}
+              >
+                Get Started Now <ArrowRight size={17} />
+              </Link>
+              <Link
+                href="/generator"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  background: "white",
+                  color: "#374151",
+                  fontWeight: 700,
+                  fontSize: "15px",
+                  padding: "13px 28px",
+                  borderRadius: "12px",
+                  textDecoration: "none",
+                  border: "1.5px solid #e5e7eb",
+                  transition: "all 0.2s",
+                }}
+              >
+                <PlayIcon /> View Demo
+              </Link>
+            </div>
+
+
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tight leading-[1.1] mb-6 max-w-4xl">
-            Beautiful Name Slips, <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-500 to-pink-500">Generated in Seconds.</span>
-          </h1>
+          {/* ---- RIGHT COLUMN (UI mockup) ---- */}
+          <div
+            style={{
+              flex: "1 1 460px",
+              minWidth: 0,
+              position: "relative",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "flex-start",
+              minHeight: "380px",
+            }}
+          >
 
-          <p className="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl leading-relaxed">
-            The ultimate platform for <b>Schools</b> to generate bulk professional labels, and for <b>Parents</b> to create cute, personalized stickers for their kids.
+
+            {/* Upload card */}
+            <div
+              style={{
+                position: "absolute",
+                top: "20px",
+                left: 0,
+                zIndex: 3,
+                animation: "floatCard 3.5s ease-in-out infinite",
+              }}
+            >
+              <UploadCard />
+            </div>
+
+            {/* BG selection card */}
+            <div
+              style={{
+                position: "absolute",
+                top: "160px",
+                left: 0,
+                zIndex: 3,
+                animation: "floatCard 3.5s ease-in-out 0.8s infinite",
+              }}
+            >
+              <BgCard />
+            </div>
+
+            {/* Arrow SVG */}
+            <svg
+              width="60"
+              height="30"
+              style={{ position: "absolute", top: "100px", left: "185px", zIndex: 4 }}
+              viewBox="0 0 60 30"
+              fill="none"
+            >
+              <path
+                d="M5 15 Q 30 5 55 15"
+                stroke="#1a1f4b"
+                strokeWidth="2"
+                strokeDasharray="6 4"
+                strokeLinecap="round"
+                fill="none"
+              />
+              <polyline points="48,10 55,15 48,20" stroke="#1a1f4b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            </svg>
+
+            {/* Name slip card */}
+            <div style={{ position: "absolute", top: "30px", right: 0, zIndex: 3 }}>
+              <NameSlipCard />
+            </div>
+
+
+          </div>
+        </div>
+      </section>
+
+
+
+      {/* ========== HOW IT WORKS ========== */}
+      <section
+        id="how-it-works"
+        style={{ background: "#ffffff", padding: "80px 24px 90px" }}
+      >
+        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+
+
+          {/* Heading */}
+          <h2
+            style={{
+              textAlign: "center",
+              fontWeight: 900,
+              fontSize: "clamp(28px, 4vw, 42px)",
+              color: "#1a1f4b",
+              marginBottom: "64px",
+            }}
+          >
+            How <span style={{ color: "#F5C42E" }}>LabelBee</span> Works
+          </h2>
+
+          {/* Steps */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "0",
+              flexWrap: "wrap",
+              justifyContent: "center",
+            }}
+          >
+            {[
+              {
+                num: "1",
+                icon: <UploadIcon />,
+                bg: "#f0fdf4",
+                border: "#86efac",
+                title: "Upload Photo",
+                sub: "Upload your photo and get started",
+              },
+              {
+                num: "2",
+                icon: <SparkleIcon />,
+                bg: "#faf5ff",
+                border: "#d8b4fe",
+                title: "Choose AI Background",
+                sub: "Select from beautiful AI-generated backgrounds",
+              },
+              {
+                num: "3",
+                icon: <EditIcon />,
+                bg: "#eff6ff",
+                border: "#93c5fd",
+                title: "Customize",
+                sub: "Add your details and personalize your slip",
+              },
+              {
+                num: "4",
+                icon: <DownloadIcon stroke="#ef4444" />,
+                bg: "#fff1f2",
+                border: "#fca5a5",
+                title: "Download PDF",
+                sub: "Generate A4 size sheet and download using credits",
+              },
+            ].map(({ num, icon, bg, border, title, sub }, i, arr) => (
+              <div
+                key={title}
+                style={{ display: "contents" }}
+              >
+                {/* Step card */}
+                <div
+                  className="card-hover"
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    textAlign: "center",
+                    width: "190px",
+                    flexShrink: 0,
+                    padding: "0 8px",
+                  }}
+                >
+                  {/* Icon box with number badge */}
+                  <div style={{ position: "relative", marginBottom: "16px" }}>
+                    <div
+                      style={{
+                        width: "72px",
+                        height: "72px",
+                        borderRadius: "20px",
+                        background: bg,
+                        border: `2px solid ${border}`,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {icon}
+                    </div>
+                    {/* Number badge */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "-8px",
+                        left: "-8px",
+                        width: "26px",
+                        height: "26px",
+                        borderRadius: "50%",
+                        background: "#1a1f4b",
+                        color: "white",
+                        fontSize: "12px",
+                        fontWeight: 800,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {num}
+                    </div>
+                  </div>
+
+                  <div style={{ fontWeight: 700, fontSize: "14px", color: "#1a1f4b", marginBottom: "6px" }}>
+                    {title}
+                  </div>
+                  <div style={{ fontSize: "12px", color: "#6b7280", lineHeight: 1.5 }}>
+                    {sub}
+                  </div>
+                </div>
+
+                {/* Connector — only between steps */}
+                {i < arr.length - 1 && <StepConnector />}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ========== FEATURES ========== */}
+      <section
+        id="features"
+        style={{
+          background: "#fafafa",
+          borderTop: "1px solid #f0f0f0",
+          padding: "80px 24px",
+        }}
+      >
+        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: "56px" }}>
+
+            <h2
+              style={{
+                fontWeight: 900,
+                fontSize: "clamp(26px, 4vw, 40px)",
+                color: "#1a1f4b",
+                marginBottom: "12px",
+              }}
+            >
+              Everything you need in one place
+            </h2>
+            <p style={{ color: "#6b7280", fontSize: "15px", maxWidth: "500px", margin: "0 auto" }}>
+              Powerful AI tools packed into a beautifully simple interface.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              gap: "24px",
+            }}
+          >
+            {[
+              {
+                emoji: "🪄",
+                title: "AI Magic Backgrounds",
+                desc: "Describe any scene — forests, space, underwater — and our AI generates a stunning background perfectly sized for your name slip.",
+                accent: "#8b5cf6",
+                bg: "#faf5ff",
+              },
+              {
+                emoji: "🖨️",
+                title: "Smart Auto-Layout",
+                desc: "No more manual alignment. LabelBee auto-arranges up to 21 slips on an A4 canvas, perfectly spaced for cutting.",
+                accent: "#22c55e",
+                bg: "#f0fdf4",
+              },
+              {
+                emoji: "🎨",
+                title: "Live Theming",
+                desc: "Swap themes, colors, and layout sizes instantly. Watch the preview update in real-time as you tweak everything.",
+                accent: "#f59e0b",
+                bg: "#fffbe6",
+              },
+            ].map(({ emoji, title, desc, accent, bg }) => (
+              <div
+                key={title}
+                className="card-hover"
+                style={{
+                  background: "white",
+                  border: "1.5px solid #f0f0f0",
+                  borderRadius: "20px",
+                  padding: "28px",
+                  transition: "all 0.25s",
+                }}
+              >
+                <div
+                  style={{
+                    width: "54px",
+                    height: "54px",
+                    borderRadius: "16px",
+                    background: bg,
+                    border: `1.5px solid ${accent}30`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "26px",
+                    marginBottom: "18px",
+                  }}
+                >
+                  {emoji}
+                </div>
+                <h3 style={{ fontWeight: 800, fontSize: "17px", color: "#1a1f4b", marginBottom: "10px" }}>
+                  {title}
+                </h3>
+                <p style={{ fontSize: "14px", color: "#6b7280", lineHeight: 1.7 }}>{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ========== CTA ========== */}
+      <section
+        style={{
+          background: "linear-gradient(135deg, #1a1f4b 0%, #2d3278 100%)",
+          padding: "80px 24px",
+          textAlign: "center",
+        }}
+      >
+        <div style={{ maxWidth: "600px", margin: "0 auto" }}>
+
+          <h2
+            style={{
+              fontWeight: 900,
+              fontSize: "clamp(28px, 4vw, 42px)",
+              color: "white",
+              marginBottom: "16px",
+            }}
+          >
+            Ready to create your name slip?
+          </h2>
+          <p style={{ color: "#94a3b8", fontSize: "15px", marginBottom: "36px" }}>
+            Join thousands of students and schools creating beautiful name slips with LabelBee.
           </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-            <Link href="/generator" className="bg-indigo-600 hover:bg-indigo-700 text-white text-lg font-bold px-8 py-4 rounded-xl transition-all shadow-xl shadow-indigo-200 flex items-center justify-center gap-2 group">
-              Start Designing Now <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <a href="#audiences" className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-lg font-bold px-8 py-4 rounded-xl transition-all shadow-sm flex items-center justify-center">
-              Explore Features
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* Dual Audience Section (B2B vs B2C) */}
-      <section id="audiences" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Built for Everyone</h2>
-            <p className="text-slate-500 mt-3 text-lg">Whether you are an institution or an individual, LabelBee scales to your needs.</p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-
-            {/* B2B Card */}
-            <div id="schools" className="bg-slate-50 border border-slate-200 rounded-3xl p-8 relative overflow-hidden group hover:border-indigo-300 transition-colors">
-              <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
-                <Building2 className="w-8 h-8" />
-              </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-3">Institution</h3>
-              <p className="text-slate-600 mb-8 leading-relaxed">
-                Streamline your administration by generating hundreds of standardized name slips at once. Maintain your school&apos;s brand identity effortlessly.
-              </p>
-
-              <ul className="space-y-4 mb-8">
-                {[
-                  "Bulk Auto-Layout generation for A4/Letter printing",
-                  "Uniform branding with School Logos and custom color themes",
-                  "Seamless commercial credit system for high-volume usage",
-                  "Standardized, professional border designs (Classic & Modern)"
-                ].map((feature, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
-                    <span className="text-slate-700 font-medium text-sm">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <Link href="/generator" className="inline-flex font-bold text-blue-600 hover:text-blue-700 items-center gap-1 group-hover:gap-2 transition-all">
-                Try School Templates <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-
-            {/* B2C Card */}
-            <div id="parents" className="bg-slate-50 border border-slate-200 rounded-3xl p-8 relative overflow-hidden group hover:border-pink-300 transition-colors">
-              <div className="w-16 h-16 bg-pink-100 text-pink-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
-                <Users className="w-8 h-8" />
-              </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-3">Student </h3>
-              <p className="text-slate-600 mb-8 leading-relaxed">
-                Create adorable, personalized sticker labels for notebooks. Let your kids express themselves with AI-generated magical backgrounds.
-              </p>
-
-              <ul className="space-y-4 mb-8">
-                {[
-                  "Custom AI Image Generation (Type 'Unicorn in Space'!)",
-                  "Vibrant Premium Themes like Rainbow Doodles & Space Explorer",
-                  "Live photo uploading with drag-to-crop adjustments",
-                  "Easy one-click download for home printing"
-                ].map((feature, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-pink-500 shrink-0 mt-0.5" />
-                    <span className="text-slate-700 font-medium text-sm">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <Link href="/generator" className="inline-flex font-bold text-pink-600 hover:text-pink-700 items-center gap-1 group-hover:gap-2 transition-all">
-                Design Cute Slips <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* Feature Highlight Section */}
-      <section id="features" className="py-24 bg-slate-900 text-white relative overflow-hidden">
-        {/* Subtle grid background */}
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay pointer-events-none"></div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-black tracking-tight mb-4">Everything you need.</h2>
-            <p className="text-slate-400 text-lg max-w-2xl mx-auto">Powerful features packed into a remarkably simple interface.</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl backdrop-blur-sm">
-              <div className="w-12 h-12 bg-indigo-500/20 text-indigo-400 rounded-xl flex items-center justify-center mb-4">
-                <Wand2 className="w-6 h-6" />
-              </div>
-              <h4 className="text-xl font-bold mb-2">AI Magic Backgrounds</h4>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Describe any scene you can imagine, and our integrated AI will generate a seamless, stunning background perfectly sized for your slips.
-              </p>
-            </div>
-
-            <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl backdrop-blur-sm">
-              <div className="w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center mb-4">
-                <Printer className="w-6 h-6" />
-              </div>
-              <h4 className="text-xl font-bold mb-2">Smart Auto-Layout</h4>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                No more manual alignment. LabelBee automatically arranges up to 21 slips on a standard A4 canvas, perfectly spaced for cutting and peeling.
-              </p>
-            </div>
-
-            <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl backdrop-blur-sm">
-              <div className="w-12 h-12 bg-rose-500/20 text-rose-400 rounded-xl flex items-center justify-center mb-4">
-                <Paintbrush className="w-6 h-6" />
-              </div>
-              <h4 className="text-xl font-bold mb-2">Live Theming</h4>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Instantly swap between premium templates, colors, and layout sizes. Watch the preview update in real-time as you tweak photo placements.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-24 bg-white text-center">
-        <div className="max-w-3xl mx-auto px-4">
-          <h2 className="text-4xl font-black text-slate-900 mb-6">Ready to start creating?</h2>
-          <p className="text-slate-500 text-lg mb-10">Join schools and parents worldwide in creating the most beautiful notebook labels.</p>
-          <Link href="/generator" className="inline-flex bg-indigo-600 hover:bg-indigo-700 text-white text-lg font-bold px-10 py-5 rounded-2xl transition-all shadow-xl shadow-indigo-200 items-center justify-center gap-3 hover:-translate-y-1">
-            Open LabelBee Generator <Sparkles className="w-5 h-5" />
+          <Link
+            href="/generator"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "10px",
+              background: "#F5C42E",
+              color: "#1a1f4b",
+              fontWeight: 800,
+              fontSize: "16px",
+              padding: "15px 36px",
+              borderRadius: "14px",
+              textDecoration: "none",
+              boxShadow: "0 8px 24px rgba(245,196,46,0.35)",
+              transition: "all 0.2s",
+            }}
+          >
+            Get Started Now <ArrowRight size={18} />
           </Link>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-slate-50 py-10 border-t border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-6 h-6 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs">
-              LB
-            </div>
-            <span className="font-bold text-slate-800">LabelBee</span>
-          </div>
-          <p className="text-sm font-semibold text-slate-400">
-            © {new Date().getFullYear()} LabelBee. All rights reserved.
-          </p>
+      {/* ========== FOOTER ========== */}
+      <footer
+        style={{
+          background: "#fafafa",
+          borderTop: "1px solid #f0f0f0",
+          padding: "32px 24px",
+          textAlign: "center",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginBottom: "8px" }}>
+          <span style={{ fontWeight: 800, fontSize: "17px", color: "#1a1f4b" }}>
+            Label<span style={{ color: "#F5C42E" }}>Bee</span>
+          </span>
         </div>
+        <p style={{ fontSize: "13px", color: "#9ca3af", fontWeight: 500 }}>
+          © {new Date().getFullYear()} LabelBee. All rights reserved.
+        </p>
       </footer>
     </div>
   );

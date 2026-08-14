@@ -1,28 +1,180 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 @import "tailwindcss";
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
-  --font-geist-sans: "Geist Sans", Arial, Helvetica, sans-serif;
-  --font-geist-mono: "Geist Mono", Courier New, Courier, monospace;
+  --foreground: #1a1f4b;
+  --yellow: #f5c42e;
+  --yellow-dark: #e0b000;
+  --yellow-light: #fff9e0;
+  --navy: #1a1f4b;
+  --navy-light: #2d3278;
+  --gray-text: #6b7280;
+  --border: #e5e7eb;
+  --card-bg: #ffffff;
+  --section-bg: #fafafa;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: "Inter", Arial, Helvetica, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Inter", Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---- Animations ---- */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33%       { transform: translateY(-10px) rotate(5deg); }
+  66%       { transform: translateY(-5px) rotate(-3deg); }
+}
+
+@keyframes floatCard {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+
+@keyframes dash {
+  to { stroke-dashoffset: -20; }
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-ring {
+  0%   { transform: scale(0.8); opacity: 0.6; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+@keyframes blob {
+  0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+  50%       { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+}
+
+.animate-float       { animation: float 4s ease-in-out infinite; }
+.animate-float-card  { animation: floatCard 3s ease-in-out infinite; }
+.animate-fade-up     { animation: fadeSlideUp 0.6s ease-out both; }
+.animate-blob        { animation: blob 8s ease-in-out infinite; }
+
+.delay-100  { animation-delay: 0.1s; }
+.delay-200  { animation-delay: 0.2s; }
+.delay-300  { animation-delay: 0.3s; }
+.delay-400  { animation-delay: 0.4s; }
+.delay-500  { animation-delay: 0.5s; }
+
+/* ---- Dashed Arrow SVG path animation ---- */
+.dashed-line {
+  stroke-dasharray: 6 4;
+  animation: dash 1s linear infinite;
+}
+
+/* ---- Gradient text ---- */
+.gradient-text {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ---- Yellow underline decoration ---- */
+.yellow-underline {
+  position: relative;
+  display: inline-block;
+}
+.yellow-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -4px;
+  width: 100%;
+  height: 5px;
+  background: var(--yellow);
+  border-radius: 3px;
+}
+
+/* ---- Step connector dashes ---- */
+.step-dash {
+  flex: 1;
+  border-top: 2px dashed #d1d5db;
+  margin: 0 8px;
+  position: relative;
+  top: -18px;
+}
+
+/* ---- Card hover lift ---- */
+.card-hover {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(26, 31, 75, 0.12);
+}
+
+/* ---- Nav link ---- */
+.nav-link {
+  font-size: 14.5px;
+  font-weight: 500;
+  color: #374151;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.nav-link:hover {
+  color: #1a1f4b;
+}
+
+/* ---- CTA button hover ---- */
+.btn-yellow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #F5C42E;
+  color: #1a1f4b;
+  font-weight: 800;
+  font-size: 15px;
+  padding: 13px 28px;
+  border-radius: 12px;
+  text-decoration: none;
+  box-shadow: 0 6px 20px rgba(245,196,46,0.5);
+  transition: all 0.2s;
+}
+.btn-yellow:hover {
+  background: #e0b000;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(245,196,46,0.55);
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  color: #374151;
+  font-weight: 700;
+  font-size: 15px;
+  padding: 13px 28px;
+  border-radius: 12px;
+  text-decoration: none;
+  border: 1.5px solid #e5e7eb;
+  transition: all 0.2s;
+}
+.btn-outline:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
 }
