@@ -53,6 +53,11 @@ body {
   to { stroke-dashoffset: -20; }
 }
 
+@keyframes dashFlow {
+  from { stroke-dashoffset: 10; }
+  to   { stroke-dashoffset: 0; }
+}
+
 @keyframes fadeSlideUp {
   from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -83,6 +88,12 @@ body {
 .dashed-line {
   stroke-dasharray: 6 4;
   animation: dash 1s linear infinite;
+}
+
+/* ---- Hero arrow: marching dashes flowing toward the name slip card ---- */
+.arrow-march {
+  stroke-dasharray: 5 5;
+  animation: dashFlow 0.5s linear infinite;
 }
 
 /* ---- Gradient text ---- */

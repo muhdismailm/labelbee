@@ -213,10 +213,13 @@ function NameSlipCard() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: "36px",
           }}
         >
-          👦
+          <img
+            src="/student_portrait.jpg"
+            alt="Student Photo"
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
         </div>
 
         {/* Info */}
@@ -260,14 +263,18 @@ function UploadCard() {
           borderRadius: "10px",
           overflow: "hidden",
           height: "90px",
-          background: "linear-gradient(135deg, #f59e42, #f5c42e)",
+          background: "#f3f4f6",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: "42px",
+          border: "1px solid #e5e7eb",
         }}
       >
-        👦
+        <img
+          src="/student_portrait.jpg"
+          alt="Uploaded portrait"
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
       </div>
     </div>
   );
@@ -275,11 +282,11 @@ function UploadCard() {
 
 /* ---- AI Backgrounds card ---- */
 function BgCard() {
-  const colors = [
-    ["#4ade80", "#22c55e"],
-    ["#60a5fa", "#3b82f6"],
-    ["#f59e0b", "#d97706"],
-    ["#c084fc", "#a855f7"],
+  const bgPositions = [
+    { pos: "0% 0%", label: "Forest" },
+    { pos: "100% 0%", label: "Ocean" },
+    { pos: "0% 100%", label: "Blossom" },
+    { pos: "100% 100%", label: "Night Sky" },
   ];
   return (
     <div
@@ -295,21 +302,21 @@ function BgCard() {
         AI Backgrounds
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
-        {colors.map(([c1, c2], i) => (
+        {bgPositions.map(({ pos, label }, i) => (
           <div
             key={i}
+            title={label}
             style={{
               height: "52px",
               borderRadius: "8px",
-              background: `linear-gradient(135deg, ${c1}, ${c2})`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "22px",
+              backgroundImage: "url(/ai_backgrounds_grid.jpg)",
+              backgroundSize: "200% 200%",
+              backgroundPosition: pos,
+              border: "1px solid rgba(0,0,0,0.08)",
+              transition: "transform 0.2s",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
             }}
-          >
-            {["🌲", "🌊", "🌸", "🌙"][i]}
-          </div>
+          />
         ))}
       </div>
     </div>
@@ -348,7 +355,7 @@ export default function LandingPage() {
             <img
               src="/logo.png"
               alt="LabelBee"
-              style={{ height: "65px", width: "auto", objectFit: "contain" }}
+              style={{ height: "70px", width: "auto", objectFit: "contain" }}
             />
           </div>
 
@@ -512,66 +519,64 @@ export default function LandingPage() {
             style={{
               flex: "1 1 460px",
               minWidth: 0,
-              position: "relative",
               display: "flex",
-              justifyContent: "center",
-              alignItems: "flex-start",
-              minHeight: "380px",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "28px",
+              position: "relative",
             }}
           >
-
-
-            {/* Upload card */}
+            {/* Upload + AI Backgrounds side by side — top row */}
             <div
               style={{
-                position: "absolute",
-                top: "20px",
-                left: 0,
-                zIndex: 3,
+                display: "flex",
+                gap: "14px",
                 animation: "floatCard 3.5s ease-in-out infinite",
               }}
             >
               <UploadCard />
-            </div>
-
-            {/* BG selection card */}
-            <div
-              style={{
-                position: "absolute",
-                top: "160px",
-                left: 0,
-                zIndex: 3,
-                animation: "floatCard 3.5s ease-in-out 0.8s infinite",
-              }}
-            >
               <BgCard />
             </div>
 
-            {/* Arrow SVG */}
+            {/* Curved dashed arrow: from BgCard right side → curves right → NameSlipCard top-right */}
             <svg
-              width="60"
-              height="30"
-              style={{ position: "absolute", top: "100px", left: "185px", zIndex: 4 }}
-              viewBox="0 0 60 30"
-              fill="none"
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                overflow: "visible",
+                pointerEvents: "none",
+                zIndex: 5,
+              }}
+              viewBox="0 0 460 320"
+              preserveAspectRatio="xMidYMid meet"
             >
+              {/* Curve: tighter bulge to the right */}
               <path
-                d="M5 15 Q 30 5 55 15"
+                className="arrow-march"
+                d="M 433 82 C 465 82 465 200 395 200"
                 stroke="#1a1f4b"
                 strokeWidth="2"
-                strokeDasharray="6 4"
                 strokeLinecap="round"
                 fill="none"
               />
-              <polyline points="48,10 55,15 48,20" stroke="#1a1f4b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+              {/* Static arrowhead pointing left at tip */}
+              <polyline
+                points="407,193 395,200 407,207"
+                stroke="#1a1f4b"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
             </svg>
 
-            {/* Name slip card */}
-            <div style={{ position: "absolute", top: "30px", right: 0, zIndex: 3 }}>
+            {/* Name Slip card — bottom (output) */}
+            <div style={{ animation: "floatCard 3.5s ease-in-out 0.6s infinite" }}>
               <NameSlipCard />
             </div>
-
-
           </div>
         </div>
       </section>
@@ -908,7 +913,7 @@ export default function LandingPage() {
                 ],
                 cta: "Buy Super Value",
               },
-            ].map(({ name, emoji, price, priceNum, credits, badge, accent, accentBg, borderColor, highlight, perks, cta }) => (
+            ].map(({ name, price, priceNum, credits, badge, accent, accentBg, borderColor, highlight, perks, cta }) => (
               <div
                 key={name}
                 style={{
@@ -920,7 +925,7 @@ export default function LandingPage() {
                   boxShadow: highlight
                     ? "0 20px 60px rgba(99,102,241,0.30), 0 4px 24px rgba(49,46,129,0.22)"
                     : "0 4px 24px rgba(0,0,0,0.07)",
-                  transform: highlight ? "scale(1.04)" : "scale(1)",
+                  transform: "scale(1)",
                   transition: "all 0.25s",
                 }}
               >
@@ -949,29 +954,12 @@ export default function LandingPage() {
                 )}
 
                 {/* Plan header */}
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
-                  <div
-                    style={{
-                      width: "52px",
-                      height: "52px",
-                      borderRadius: "16px",
-                      background: highlight ? "rgba(99,102,241,0.15)" : accentBg,
-                      border: "1.5px solid " + (highlight ? "#6366f144" : accent + "44"),
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "26px",
-                    }}
-                  >
-                    {emoji}
+                <div style={{ marginBottom: "24px" }}>
+                  <div style={{ fontWeight: 800, fontSize: "20px", color: highlight ? "white" : "#1a1f4b", marginBottom: "4px" }}>
+                    {name}
                   </div>
-                  <div>
-                    <div style={{ fontWeight: 800, fontSize: "18px", color: highlight ? "white" : "#1a1f4b" }}>
-                      {name}
-                    </div>
-                    <div style={{ fontSize: "12px", color: highlight ? "#94a3b8" : "#9ca3af", fontWeight: 500 }}>
-                      {credits} credits
-                    </div>
+                  <div style={{ fontSize: "12px", color: highlight ? "#94a3b8" : "#9ca3af", fontWeight: 500 }}>
+                    {credits} credits
                   </div>
                 </div>
 
