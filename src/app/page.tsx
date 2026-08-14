@@ -346,15 +346,15 @@ export default function LandingPage() {
           {/* Logo */}
           <div style={{ display: "flex", alignItems: "center" }}>
             <img
-              src="/logo.jpg"
+              src="/logo.png"
               alt="LabelBee"
-              style={{ height: "52px", width: "auto", objectFit: "contain" }}
+              style={{ height: "65px", width: "auto", objectFit: "contain" }}
             />
           </div>
 
           {/* Nav links */}
           <div className="hidden md:flex" style={{ alignItems: "center", gap: "32px" }}>
-            {["Features", "How It Works"].map((item) => (
+            {["Features", "How It Works", "Pricing"].map((item) => (
               <a
                 key={item}
                 href={`#${item.toLowerCase().replace(/ /g, "-")}`}
@@ -805,6 +805,264 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ========== PRICING ========== */}
+      <section
+        id="pricing"
+        style={{
+          background: "linear-gradient(180deg, #fffdf5 0%, #ffffff 100%)",
+          borderTop: "1px solid #f0f0f0",
+          padding: "90px 24px 100px",
+        }}
+      >
+        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+          {/* Heading */}
+          <div style={{ textAlign: "center", marginBottom: "16px" }}>
+
+            <h2
+              style={{
+                fontWeight: 900,
+                fontSize: "clamp(28px, 4vw, 42px)",
+                color: "#1a1f4b",
+                marginBottom: "14px",
+              }}
+            >
+              Buy credits,{" "}
+              <span style={{ color: "#F5C42E" }}>use anytime</span>
+            </h2>
+            <p style={{ color: "#6b7280", fontSize: "15px", maxWidth: "480px", margin: "0 auto" }}>
+              No subscriptions. No hidden fees. Purchase a credit pack and generate as many name slips as you need.
+            </p>
+          </div>
+
+          {/* Cards */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+              gap: "28px",
+              marginTop: "56px",
+              alignItems: "start",
+            }}
+          >
+            {[
+              {
+                name: "Starter",
+                emoji: "🌱",
+                price: "₹11",
+                priceNum: 11,
+                credits: 2,
+                badge: null as string | null,
+                accent: "#22c55e",
+                accentBg: "#f0fdf4",
+                borderColor: "#86efac",
+                highlight: false,
+                perks: [
+                  "2 PDF downloads",
+                  "All AI backgrounds",
+                  "A4 auto-layout",
+                  "Instant delivery",
+                ],
+                cta: "Buy Starter",
+              },
+              {
+                name: "Popular",
+                emoji: "🔥",
+                price: "₹33",
+                priceNum: 33,
+                credits: 4,
+                badge: "Save 25%" as string | null,
+                accent: "#6366f1",
+                accentBg: "#eef2ff",
+                borderColor: "#6366f1",
+                highlight: true,
+                perks: [
+                  "4 PDF downloads",
+                  "All AI backgrounds",
+                  "A4 auto-layout",
+                  "Priority generation",
+                  "Live theme preview",
+                ],
+                cta: "Buy Popular",
+              },
+              {
+                name: "Best Value",
+                emoji: "⚡",
+                price: "₹99",
+                priceNum: 99,
+                credits: 10,
+                badge: "Best Value" as string | null,
+                accent: "#f59e0b",
+                accentBg: "#fffbe6",
+                borderColor: "#fcd34d",
+                highlight: false,
+                perks: [
+                  "10 PDF downloads",
+                  "All AI backgrounds",
+                  "A4 auto-layout",
+                  "Priority generation",
+                  "Live theme preview",
+                  "Bulk export support",
+                ],
+                cta: "Buy Super Value",
+              },
+            ].map(({ name, emoji, price, priceNum, credits, badge, accent, accentBg, borderColor, highlight, perks, cta }) => (
+              <div
+                key={name}
+                style={{
+                  background: highlight ? "#312e81" : "white",
+                  border: "2px solid " + (highlight ? "#6366f1" : borderColor),
+                  borderRadius: "24px",
+                  padding: "36px 32px",
+                  position: "relative",
+                  boxShadow: highlight
+                    ? "0 20px 60px rgba(99,102,241,0.30), 0 4px 24px rgba(49,46,129,0.22)"
+                    : "0 4px 24px rgba(0,0,0,0.07)",
+                  transform: highlight ? "scale(1.04)" : "scale(1)",
+                  transition: "all 0.25s",
+                }}
+              >
+                {/* Badge */}
+                {badge && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "-14px",
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      background: highlight ? "#6366f1" : accent,
+                      color: "white",
+                      fontWeight: 800,
+                      fontSize: "11px",
+                      letterSpacing: "0.05em",
+                      textTransform: "uppercase",
+                      borderRadius: "50px",
+                      padding: "5px 18px",
+                      whiteSpace: "nowrap",
+                      boxShadow: "0 4px 12px " + accent + "55",
+                    }}
+                  >
+                    {badge}
+                  </div>
+                )}
+
+                {/* Plan header */}
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
+                  <div
+                    style={{
+                      width: "52px",
+                      height: "52px",
+                      borderRadius: "16px",
+                      background: highlight ? "rgba(99,102,241,0.15)" : accentBg,
+                      border: "1.5px solid " + (highlight ? "#6366f144" : accent + "44"),
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "26px",
+                    }}
+                  >
+                    {emoji}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 800, fontSize: "18px", color: highlight ? "white" : "#1a1f4b" }}>
+                      {name}
+                    </div>
+                    <div style={{ fontSize: "12px", color: highlight ? "#94a3b8" : "#9ca3af", fontWeight: 500 }}>
+                      {credits} credits
+                    </div>
+                  </div>
+                </div>
+
+                {/* Price */}
+                <div style={{ marginBottom: "28px" }}>
+                  <div style={{ display: "flex", alignItems: "flex-end", gap: "6px" }}>
+                    <span
+                      style={{
+                        fontWeight: 900,
+                        fontSize: "48px",
+                        lineHeight: 1,
+                        color: highlight ? "#a5b4fc" : accent,
+                      }}
+                    >
+                      {price}
+                    </span>
+                    <span style={{ fontSize: "14px", color: highlight ? "#94a3b8" : "#9ca3af", marginBottom: "8px", fontWeight: 500 }}>
+                      one-time
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "12.5px", color: highlight ? "#cbd5e1" : "#6b7280", marginTop: "6px", fontWeight: 500 }}>
+                    ≈ ₹{(priceNum / credits).toFixed(1)} per download
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div
+                  style={{
+                    height: "1px",
+                    background: highlight ? "rgba(255,255,255,0.10)" : "#f0f0f0",
+                    marginBottom: "24px",
+                  }}
+                />
+
+                {/* Perks */}
+                <ul style={{ listStyle: "none", padding: 0, margin: "0 0 28px 0", display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {perks.map((perk) => (
+                    <li key={perk} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <span
+                        style={{
+                          width: "20px",
+                          height: "20px",
+                          borderRadius: "50%",
+                          background: highlight ? "rgba(99,102,241,0.20)" : accentBg,
+                          border: "1px solid " + (highlight ? "#6366f166" : accent + "55"),
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={highlight ? "#a5b4fc" : accent} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      </span>
+                      <span style={{ fontSize: "13.5px", color: highlight ? "#e2e8f0" : "#374151", fontWeight: 500 }}>{perk}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* CTA */}
+                <a
+                  href="/generator"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    width: "100%",
+                    padding: "13px 0",
+                    borderRadius: "12px",
+                    fontWeight: 800,
+                    fontSize: "14px",
+                    textDecoration: "none",
+                    background: highlight ? "#6366f1" : "transparent",
+                    color: highlight ? "white" : accent,
+                    border: highlight ? "none" : "2px solid " + accent,
+                    boxShadow: highlight ? "0 6px 20px rgba(99,102,241,0.45)" : "none",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  {cta} <ArrowRight size={15} />
+                </a>
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom note */}
+          <p style={{ textAlign: "center", fontSize: "13px", color: "#9ca3af", marginTop: "36px", fontWeight: 500 }}>
+            🔒 Secure payment · Credits never expire · Instant activation
+          </p>
         </div>
       </section>
 
