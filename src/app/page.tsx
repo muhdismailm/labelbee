@@ -104,13 +104,6 @@ function ArrowRight({ size = 18, className = "" }: { size?: number; className?: 
   );
 }
 
-function PlayIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-      <polygon points="5 3 19 12 5 21 5 3" />
-    </svg>
-  );
-}
 
 /* ---- Step connector dashes ---- */
 function StepConnector() {
@@ -128,10 +121,11 @@ function NameSlipCard() {
       className="animate-float-card"
       style={{
         background: "white",
-        borderRadius: "16px",
+        borderRadius: "18px",
         boxShadow: "0 20px 60px rgba(26,31,75,0.18)",
         padding: "0",
-        width: "340px",
+        width: "436px",
+        maxWidth: "100%",
         overflow: "hidden",
         position: "relative",
       }}
@@ -140,13 +134,13 @@ function NameSlipCard() {
       <div
         style={{
           position: "absolute",
-          top: "-14px",
-          right: "-14px",
+          top: "-12px",
+          right: "-12px",
           background: "#8b5cf6",
           color: "white",
           borderRadius: "50%",
-          width: "70px",
-          height: "70px",
+          width: "72px",
+          height: "72px",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -166,10 +160,10 @@ function NameSlipCard() {
       <div
         style={{
           background: "linear-gradient(135deg, #f8f4e8 0%, #fff9e0 60%, #e8f0ff 100%)",
-          padding: "24px",
+          padding: "24px 26px",
           display: "flex",
           alignItems: "center",
-          gap: "20px",
+          gap: "22px",
           position: "relative",
         }}
       >
@@ -179,8 +173,8 @@ function NameSlipCard() {
             position: "absolute",
             right: 0,
             bottom: 0,
-            width: "120px",
-            height: "120px",
+            width: "130px",
+            height: "130px",
             background: "linear-gradient(135deg, #1a1f4b 0%, #2d3278 100%)",
             borderRadius: "50% 0 0 0",
             opacity: 0.08,
@@ -190,9 +184,9 @@ function NameSlipCard() {
           style={{
             position: "absolute",
             top: 0,
-            right: "60px",
-            width: "60px",
-            height: "60px",
+            right: "70px",
+            width: "65px",
+            height: "65px",
             background: "#F5C42E",
             borderRadius: "50%",
             opacity: 0.15,
@@ -202,8 +196,8 @@ function NameSlipCard() {
         {/* Photo circle */}
         <div
           style={{
-            width: "88px",
-            height: "88px",
+            width: "92px",
+            height: "92px",
             borderRadius: "50%",
             border: "4px solid white",
             boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
@@ -218,13 +212,13 @@ function NameSlipCard() {
           <img
             src="/student_portrait.jpg"
             alt="Student Photo"
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
           />
         </div>
 
         {/* Info */}
         <div style={{ flex: 1, zIndex: 2 }}>
-          <div style={{ fontWeight: 800, fontSize: "18px", color: "#1a1f4b", marginBottom: "10px" }}>
+          <div style={{ fontWeight: 800, fontSize: "19px", color: "#1a1f4b", marginBottom: "10px" }}>
             Aarav Sharma
           </div>
           {[
@@ -232,8 +226,8 @@ function NameSlipCard() {
             ["Subject", "Mathematics"],
             ["School", "Green Valley School"],
           ].map(([label, value]) => (
-            <div key={label} style={{ display: "flex", gap: "8px", fontSize: "11.5px", marginBottom: "4px" }}>
-              <span style={{ color: "#6b7280", fontWeight: 600, width: "52px" }}>{label}</span>
+            <div key={label} style={{ display: "flex", gap: "8px", fontSize: "12.5px", marginBottom: "5px" }}>
+              <span style={{ color: "#6b7280", fontWeight: 600, width: "56px" }}>{label}</span>
               <span style={{ color: "#374151", fontWeight: 500 }}>: {value}</span>
             </div>
           ))}
@@ -249,20 +243,21 @@ function UploadCard() {
     <div
       style={{
         background: "white",
-        borderRadius: "14px",
-        boxShadow: "0 8px 24px rgba(0,0,0,0.10)",
-        padding: "14px 16px",
-        width: "200px",
+        borderRadius: "16px",
+        boxShadow: "0 8px 24px rgba(0,0,0,0.09)",
+        padding: "16px",
+        width: "210px",
+        flex: "1 1 200px",
       }}
     >
-      <div style={{ fontSize: "12px", fontWeight: 700, color: "#374151", marginBottom: "10px" }}>
+      <div style={{ fontSize: "12.5px", fontWeight: 700, color: "#374151", marginBottom: "10px" }}>
         Upload Your Photo
       </div>
       <div
         style={{
           borderRadius: "10px",
           overflow: "hidden",
-          height: "90px",
+          height: "116px",
           background: "#f3f4f6",
           display: "flex",
           alignItems: "center",
@@ -273,7 +268,7 @@ function UploadCard() {
         <img
           src="/student_portrait.jpg"
           alt="Uploaded portrait"
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
         />
       </div>
     </div>
@@ -292,13 +287,14 @@ function BgCard() {
     <div
       style={{
         background: "white",
-        borderRadius: "14px",
-        boxShadow: "0 8px 24px rgba(0,0,0,0.10)",
-        padding: "14px 16px",
-        width: "200px",
+        borderRadius: "16px",
+        boxShadow: "0 8px 24px rgba(0,0,0,0.09)",
+        padding: "16px",
+        width: "210px",
+        flex: "1 1 200px",
       }}
     >
-      <div style={{ fontSize: "12px", fontWeight: 700, color: "#374151", marginBottom: "10px" }}>
+      <div style={{ fontSize: "12.5px", fontWeight: 700, color: "#374151", marginBottom: "10px" }}>
         AI Backgrounds
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
@@ -307,7 +303,7 @@ function BgCard() {
             key={i}
             title={label}
             style={{
-              height: "52px",
+              height: "55px",
               borderRadius: "8px",
               backgroundImage: "url(/ai_backgrounds_grid.jpg)",
               backgroundSize: "200% 200%",
@@ -400,7 +396,7 @@ export default function LandingPage() {
       <section
         style={{
           background: "linear-gradient(180deg, #fffdf5 0%, #ffffff 100%)",
-          padding: "80px 24px 60px",
+          padding: "32px 24px 60px",
           position: "relative",
           overflow: "hidden",
         }}
@@ -409,16 +405,17 @@ export default function LandingPage() {
 
         <div
           style={{
-            maxWidth: "1200px",
+            maxWidth: "1160px",
             margin: "0 auto",
             display: "flex",
             alignItems: "center",
-            gap: "48px",
+            justifyContent: "space-between",
+            gap: "36px",
             flexWrap: "wrap",
           }}
         >
           {/* ---- LEFT COLUMN ---- */}
-          <div style={{ flex: "1 1 440px", minWidth: 0 }}>
+          <div style={{ flex: "1 1 480px", minWidth: 0, paddingRight: "10px" }}>
 
 
             {/* Headline */}
@@ -426,10 +423,10 @@ export default function LandingPage() {
               className="animate-fade-up delay-100"
               style={{
                 fontWeight: 900,
-                fontSize: "clamp(36px, 5vw, 58px)",
+                fontSize: "clamp(38px, 4.8vw, 58px)",
                 lineHeight: 1.12,
                 color: "#1a1f4b",
-                marginBottom: "8px",
+                marginBottom: "6px",
               }}
             >
               Create Personalized<br />
@@ -439,10 +436,10 @@ export default function LandingPage() {
               className="animate-fade-up delay-200"
               style={{
                 fontWeight: 900,
-                fontSize: "clamp(36px, 5vw, 58px)",
+                fontSize: "clamp(38px, 4.8vw, 58px)",
                 lineHeight: 1.12,
                 color: "#F5C42E",
-                marginBottom: "24px",
+                marginBottom: "16px",
                 display: "block",
               }}
             >
@@ -453,23 +450,21 @@ export default function LandingPage() {
             <p
               className="animate-fade-up delay-300"
               style={{
-                fontSize: "15.5px",
+                fontSize: "16.5px",
                 color: "#4b5563",
-                lineHeight: 1.75,
-                maxWidth: "420px",
-                marginBottom: "36px",
+                lineHeight: 1.7,
+                maxWidth: "480px",
+                marginBottom: "32px",
               }}
             >
-              Upload your photo, choose an AI background,<br />
-              and generate stunning A4 size name slip sheets.<br />
-              Download your PDF instantly using{" "}
+              Upload your photo, choose an AI background, and generate stunning A4 size name slip sheets. Download your PDF instantly using{" "}
               <span style={{ color: "#F5C42E", fontWeight: 700 }}>LabelBee credits</span>.
             </p>
 
             {/* CTA buttons */}
             <div
               className="animate-fade-up delay-400"
-              style={{ display: "flex", gap: "14px", flexWrap: "wrap", marginBottom: "40px" }}
+              style={{ display: "flex", gap: "14px", flexWrap: "wrap", marginBottom: "20px" }}
             >
               <Link
                 href="/generator"
@@ -480,8 +475,8 @@ export default function LandingPage() {
                   background: "#F5C42E",
                   color: "#1a1f4b",
                   fontWeight: 800,
-                  fontSize: "15px",
-                  padding: "13px 28px",
+                  fontSize: "16px",
+                  padding: "14px 32px",
                   borderRadius: "12px",
                   textDecoration: "none",
                   boxShadow: "0 6px 20px rgba(245,196,46,0.5)",
@@ -489,25 +484,6 @@ export default function LandingPage() {
                 }}
               >
                 Get Started Now <ArrowRight size={17} />
-              </Link>
-              <Link
-                href="/generator"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  background: "white",
-                  color: "#374151",
-                  fontWeight: 700,
-                  fontSize: "15px",
-                  padding: "13px 28px",
-                  borderRadius: "12px",
-                  textDecoration: "none",
-                  border: "1.5px solid #e5e7eb",
-                  transition: "all 0.2s",
-                }}
-              >
-                <PlayIcon /> View Demo
               </Link>
             </div>
 
@@ -517,28 +493,31 @@ export default function LandingPage() {
           {/* ---- RIGHT COLUMN (UI mockup) ---- */}
           <div
             style={{
-              flex: "1 1 460px",
+              flex: "1 1 450px",
               minWidth: 0,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: "28px",
+              gap: "24px",
               position: "relative",
+              animation: "floatCard 3.5s ease-in-out infinite",
             }}
           >
             {/* Upload + AI Backgrounds side by side — top row */}
             <div
               style={{
                 display: "flex",
-                gap: "14px",
-                animation: "floatCard 3.5s ease-in-out infinite",
+                gap: "16px",
+                width: "100%",
+                maxWidth: "436px",
+                justifyContent: "center",
               }}
             >
               <UploadCard />
               <BgCard />
             </div>
 
-            {/* Curved dashed arrow: from BgCard right side → curves right → NameSlipCard top-right */}
+            {/* Curved dashed arrow: hovering between BgCard and NameSlipCard with clear margins */}
             <svg
               style={{
                 position: "absolute",
@@ -550,31 +529,42 @@ export default function LandingPage() {
                 pointerEvents: "none",
                 zIndex: 5,
               }}
-              viewBox="0 0 460 320"
+              viewBox="0 0 500 320"
               preserveAspectRatio="xMidYMid meet"
             >
-              {/* Curve: tighter bulge to the right */}
+              {/* Smooth curved line with generous gap from both cards */}
               <path
                 className="arrow-march"
-                d="M 433 82 C 465 82 465 200 395 200"
+                d="M 450 102 C 494 102 494 224 458 224"
                 stroke="#1a1f4b"
-                strokeWidth="2"
+                strokeWidth="2.2"
                 strokeLinecap="round"
                 fill="none"
               />
-              {/* Static arrowhead pointing left at tip */}
-              <polyline
-                points="407,193 395,200 407,207"
-                stroke="#1a1f4b"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
+              {/* Animated arrowhead with wide margin from card */}
+              <g className="arrow-tip">
+                <polyline
+                  points="468,217 458,224 468,231"
+                  stroke="#1a1f4b"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  fill="none"
+                >
+                  <animateTransform
+                    attributeName="transform"
+                    type="translate"
+                    values="0 0; -3 0; 0 0"
+                    keyTimes="0; 0.5; 1"
+                    dur="0.9s"
+                    repeatCount="indefinite"
+                  />
+                </polyline>
+              </g>
             </svg>
 
             {/* Name Slip card — bottom (output) */}
-            <div style={{ animation: "floatCard 3.5s ease-in-out 0.6s infinite" }}>
+            <div style={{ width: "100%", maxWidth: "436px", display: "flex", justifyContent: "center" }}>
               <NameSlipCard />
             </div>
           </div>
@@ -819,25 +809,25 @@ export default function LandingPage() {
         style={{
           background: "linear-gradient(180deg, #fffdf5 0%, #ffffff 100%)",
           borderTop: "1px solid #f0f0f0",
-          padding: "90px 24px 100px",
+          padding: "64px 24px 72px",
         }}
       >
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
           {/* Heading */}
-          <div style={{ textAlign: "center", marginBottom: "16px" }}>
+          <div style={{ textAlign: "center", marginBottom: "12px" }}>
 
             <h2
               style={{
                 fontWeight: 900,
-                fontSize: "clamp(28px, 4vw, 42px)",
+                fontSize: "clamp(26px, 3.8vw, 38px)",
                 color: "#1a1f4b",
-                marginBottom: "14px",
+                marginBottom: "10px",
               }}
             >
               Buy credits,{" "}
               <span style={{ color: "#F5C42E" }}>use anytime</span>
             </h2>
-            <p style={{ color: "#6b7280", fontSize: "15px", maxWidth: "480px", margin: "0 auto" }}>
+            <p style={{ color: "#6b7280", fontSize: "14.5px", maxWidth: "480px", margin: "0 auto" }}>
               No subscriptions. No hidden fees. Purchase a credit pack and generate as many name slips as you need.
             </p>
           </div>
@@ -846,86 +836,91 @@ export default function LandingPage() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-              gap: "28px",
-              marginTop: "56px",
-              alignItems: "start",
+              gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))",
+              gap: "24px",
+              marginTop: "40px",
+              alignItems: "stretch",
             }}
           >
             {[
               {
-                name: "Starter",
+                name: "Starter Plan",
                 emoji: "🌱",
-                price: "₹11",
-                priceNum: 11,
-                credits: 2,
+                price: "₹15",
+                priceNum: 15,
+                credits: 5,
+                unit: "₹3.0 / download",
                 badge: null as string | null,
                 accent: "#22c55e",
                 accentBg: "#f0fdf4",
                 borderColor: "#86efac",
                 highlight: false,
                 perks: [
-                  "2 PDF downloads",
-                  "All AI backgrounds",
-                  "A4 auto-layout",
-                  "Instant delivery",
+                  "5 A4 PDF sheet downloads",
+                  "All AI background themes",
+                  "Auto-alignment & cut guides",
+                  "Instant PDF download",
+                  "Standard processing speed",
                 ],
                 cta: "Buy Starter",
               },
               {
-                name: "Popular",
+                name: "Popular Plan",
                 emoji: "🔥",
-                price: "₹33",
-                priceNum: 33,
-                credits: 4,
-                badge: "Save 25%" as string | null,
+                price: "₹30",
+                priceNum: 30,
+                credits: 10,
+                unit: "₹3.0 / download",
+                badge: "Most Popular" as string | null,
                 accent: "#6366f1",
                 accentBg: "#eef2ff",
                 borderColor: "#6366f1",
                 highlight: true,
                 perks: [
-                  "4 PDF downloads",
-                  "All AI backgrounds",
-                  "A4 auto-layout",
-                  "Priority generation",
-                  "Live theme preview",
+                  "10 A4 PDF sheet downloads",
+                  "All AI backgrounds & themes",
+                  "Auto-alignment & cut guides",
+                  "Priority image generation",
+                  "Live preview & adjustments",
                 ],
                 cta: "Buy Popular",
               },
               {
-                name: "Best Value",
+                name: "Business Plan",
                 emoji: "⚡",
-                price: "₹99",
-                priceNum: 99,
-                credits: 10,
-                badge: "Best Value" as string | null,
+                price: "₹100",
+                priceNum: 100,
+                credits: 100,
+                unit: "₹1.0 / download (Mega Deal)",
+                badge: "Mega Deal · ₹1/sheet" as string | null,
                 accent: "#f59e0b",
                 accentBg: "#fffbe6",
                 borderColor: "#fcd34d",
                 highlight: false,
                 perks: [
-                  "10 PDF downloads",
-                  "All AI backgrounds",
-                  "A4 auto-layout",
-                  "Priority generation",
-                  "Live theme preview",
-                  "Bulk export support",
+                  "100 A4 PDF sheet downloads",
+                  "Mega value: ₹1.00 / sheet",
+                  "Commercial & school use",
+                  "High-priority processing",
+                  "Bulk sheet export support",
                 ],
-                cta: "Buy Super Value",
+                cta: "Buy Business",
               },
-            ].map(({ name, price, priceNum, credits, badge, accent, accentBg, borderColor, highlight, perks, cta }) => (
+            ].map(({ name, price, credits, unit, badge, accent, accentBg, borderColor, highlight, perks, cta }) => (
               <div
                 key={name}
                 style={{
                   background: highlight ? "#312e81" : "white",
                   border: "2px solid " + (highlight ? "#6366f1" : borderColor),
-                  borderRadius: "24px",
-                  padding: "36px 32px",
+                  borderRadius: "22px",
+                  padding: "28px 24px",
                   position: "relative",
                   boxShadow: highlight
-                    ? "0 20px 60px rgba(99,102,241,0.30), 0 4px 24px rgba(49,46,129,0.22)"
-                    : "0 4px 24px rgba(0,0,0,0.07)",
-                  transform: "scale(1)",
+                    ? "0 20px 50px rgba(99,102,241,0.25), 0 4px 20px rgba(49,46,129,0.18)"
+                    : "0 4px 20px rgba(0,0,0,0.06)",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
                   transition: "all 0.25s",
                 }}
               >
@@ -934,17 +929,17 @@ export default function LandingPage() {
                   <div
                     style={{
                       position: "absolute",
-                      top: "-14px",
+                      top: "-13px",
                       left: "50%",
                       transform: "translateX(-50%)",
                       background: highlight ? "#6366f1" : accent,
                       color: "white",
                       fontWeight: 800,
-                      fontSize: "11px",
+                      fontSize: "10.5px",
                       letterSpacing: "0.05em",
                       textTransform: "uppercase",
                       borderRadius: "50px",
-                      padding: "5px 18px",
+                      padding: "4px 16px",
                       whiteSpace: "nowrap",
                       boxShadow: "0 4px 12px " + accent + "55",
                     }}
@@ -953,74 +948,77 @@ export default function LandingPage() {
                   </div>
                 )}
 
-                {/* Plan header */}
-                <div style={{ marginBottom: "24px" }}>
-                  <div style={{ fontWeight: 800, fontSize: "20px", color: highlight ? "white" : "#1a1f4b", marginBottom: "4px" }}>
-                    {name}
+                {/* Top Details */}
+                <div>
+                  {/* Plan header */}
+                  <div style={{ marginBottom: "16px" }}>
+                    <div style={{ fontWeight: 800, fontSize: "19px", color: highlight ? "white" : "#1a1f4b", marginBottom: "3px" }}>
+                      {name}
+                    </div>
+                    <div style={{ fontSize: "12px", color: highlight ? "#94a3b8" : "#9ca3af", fontWeight: 500 }}>
+                      {credits} credits
+                    </div>
                   </div>
-                  <div style={{ fontSize: "12px", color: highlight ? "#94a3b8" : "#9ca3af", fontWeight: 500 }}>
-                    {credits} credits
-                  </div>
-                </div>
 
-                {/* Price */}
-                <div style={{ marginBottom: "28px" }}>
-                  <div style={{ display: "flex", alignItems: "flex-end", gap: "6px" }}>
-                    <span
-                      style={{
-                        fontWeight: 900,
-                        fontSize: "48px",
-                        lineHeight: 1,
-                        color: highlight ? "#a5b4fc" : accent,
-                      }}
-                    >
-                      {price}
-                    </span>
-                    <span style={{ fontSize: "14px", color: highlight ? "#94a3b8" : "#9ca3af", marginBottom: "8px", fontWeight: 500 }}>
-                      one-time
-                    </span>
-                  </div>
-                  <div style={{ fontSize: "12.5px", color: highlight ? "#cbd5e1" : "#6b7280", marginTop: "6px", fontWeight: 500 }}>
-                    ≈ ₹{(priceNum / credits).toFixed(1)} per download
-                  </div>
-                </div>
-
-                {/* Divider */}
-                <div
-                  style={{
-                    height: "1px",
-                    background: highlight ? "rgba(255,255,255,0.10)" : "#f0f0f0",
-                    marginBottom: "24px",
-                  }}
-                />
-
-                {/* Perks */}
-                <ul style={{ listStyle: "none", padding: 0, margin: "0 0 28px 0", display: "flex", flexDirection: "column", gap: "12px" }}>
-                  {perks.map((perk) => (
-                    <li key={perk} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  {/* Price */}
+                  <div style={{ marginBottom: "20px" }}>
+                    <div style={{ display: "flex", alignItems: "flex-end", gap: "6px" }}>
                       <span
                         style={{
-                          width: "20px",
-                          height: "20px",
-                          borderRadius: "50%",
-                          background: highlight ? "rgba(99,102,241,0.20)" : accentBg,
-                          border: "1px solid " + (highlight ? "#6366f166" : accent + "55"),
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
+                          fontWeight: 900,
+                          fontSize: "42px",
+                          lineHeight: 1,
+                          color: highlight ? "#a5b4fc" : accent,
                         }}
                       >
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={highlight ? "#a5b4fc" : accent} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
+                        {price}
                       </span>
-                      <span style={{ fontSize: "13.5px", color: highlight ? "#e2e8f0" : "#374151", fontWeight: 500 }}>{perk}</span>
-                    </li>
-                  ))}
-                </ul>
+                      <span style={{ fontSize: "13px", color: highlight ? "#94a3b8" : "#9ca3af", marginBottom: "6px", fontWeight: 500 }}>
+                        one-time
+                      </span>
+                    </div>
+                    <div style={{ fontSize: "12px", color: highlight ? "#cbd5e1" : "#6b7280", marginTop: "4px", fontWeight: 500 }}>
+                      ≈ {unit}
+                    </div>
+                  </div>
 
-                {/* CTA */}
+                  {/* Divider */}
+                  <div
+                    style={{
+                      height: "1px",
+                      background: highlight ? "rgba(255,255,255,0.10)" : "#f0f0f0",
+                      marginBottom: "20px",
+                    }}
+                  />
+
+                  {/* Perks */}
+                  <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px 0", display: "flex", flexDirection: "column", gap: "10px" }}>
+                    {perks.map((perk) => (
+                      <li key={perk} style={{ display: "flex", alignItems: "center", gap: "9px" }}>
+                        <span
+                          style={{
+                            width: "18px",
+                            height: "18px",
+                            borderRadius: "50%",
+                            background: highlight ? "rgba(99,102,241,0.20)" : accentBg,
+                            border: "1px solid " + (highlight ? "#6366f166" : accent + "55"),
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={highlight ? "#a5b4fc" : accent} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        </span>
+                        <span style={{ fontSize: "13px", color: highlight ? "#e2e8f0" : "#374151", fontWeight: 500 }}>{perk}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* CTA Button */}
                 <a
                   href="/generator"
                   style={{
@@ -1029,7 +1027,7 @@ export default function LandingPage() {
                     justifyContent: "center",
                     gap: "8px",
                     width: "100%",
-                    padding: "13px 0",
+                    padding: "12px 0",
                     borderRadius: "12px",
                     fontWeight: 800,
                     fontSize: "14px",
@@ -1037,7 +1035,7 @@ export default function LandingPage() {
                     background: highlight ? "#6366f1" : "transparent",
                     color: highlight ? "white" : accent,
                     border: highlight ? "none" : "2px solid " + accent,
-                    boxShadow: highlight ? "0 6px 20px rgba(99,102,241,0.45)" : "none",
+                    boxShadow: highlight ? "0 6px 18px rgba(99,102,241,0.40)" : "none",
                     transition: "all 0.2s",
                   }}
                 >
@@ -1048,7 +1046,7 @@ export default function LandingPage() {
           </div>
 
           {/* Bottom note */}
-          <p style={{ textAlign: "center", fontSize: "13px", color: "#9ca3af", marginTop: "36px", fontWeight: 500 }}>
+          <p style={{ textAlign: "center", fontSize: "13px", color: "#9ca3af", marginTop: "32px", fontWeight: 500 }}>
             🔒 Secure payment · Credits never expire · Instant activation
           </p>
         </div>

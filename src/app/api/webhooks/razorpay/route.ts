@@ -34,9 +34,9 @@ export async function POST(req: Request) {
         console.warn(`⚠️ Webhook received but metadata missing (userId: ${userId}, packageId: ${packageId}).`);
       } else {
         let addedCredits = 0;
-        if (packageId === "pack_1") addedCredits = 2;
-        if (packageId === "pack_4") addedCredits = 4;
-        if (packageId === "pack_10") addedCredits = 10;
+        if (packageId === "pack_1") addedCredits = 5;
+        if (packageId === "pack_4") addedCredits = 10;
+        if (packageId === "pack_10") addedCredits = 100;
 
         if (addedCredits > 0) {
           const userRef = adminDb.collection("users").doc(userId);
