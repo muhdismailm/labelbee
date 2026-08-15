@@ -41,8 +41,15 @@ export async function POST(req: Request) {
         if (addedCredits > 0) {
           const userRef = adminDb.collection("users").doc(userId);
           
+          const updatePayload: Record<string, unknown> = {
+            credits: admin.firestore.FieldValue.increment(addedCredits)
+          };
+          if (packageId === "pack_10") {
+            updatePayload.plan = "business";
+          }
+          
           await userRef.set(
-            { credits: admin.firestore.FieldValue.increment(addedCredits) },
+            updatePayload,
             { merge: true }
           );
 

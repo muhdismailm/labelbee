@@ -6,12 +6,12 @@ import { SlipData, defaultSlipData } from "@/types";
 import GeneratorForm from "@/components/GeneratorForm";
 import SlipPreview from "@/components/SlipPreview";
 import { exportToPdf } from "@/utils/exportPdf";
-import { 
-  onAuthStateChanged, 
-  User, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  updateProfile, 
+import {
+  onAuthStateChanged,
+  User,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
   signOut,
   GoogleAuthProvider,
   signInWithPopup,
@@ -42,7 +42,7 @@ export default function Home() {
   const [authLoaded, setAuthLoaded] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
-  
+
   // Auth Form Inputs
   const [authEmail, setAuthEmail] = useState<string>("");
   const [authPassword, setAuthPassword] = useState<string>("");
@@ -54,6 +54,7 @@ export default function Home() {
   // Standard functional states
   const [data, setData] = useState<SlipData>(defaultSlipData);
   const [credits, setCredits] = useState<number>(0);
+  const [userPlan, setUserPlan] = useState<'free' | 'starter' | 'popular' | 'business'>('free');
   const [isPackModalOpen, setIsPackModalOpen] = useState<boolean>(false);
   const [loadingPayment, setLoadingPayment] = useState<boolean>(false);
   const [loadingDownload, setLoadingDownload] = useState<boolean>(false);
@@ -67,16 +68,19 @@ export default function Home() {
     return () => unsubscribe();
   }, []);
 
-  // Sync credits balance for the active Firebase user from Firestore
+  // Sync credits balance & plan for the active Firebase user from Firestore
   useEffect(() => {
     let unsubscribeFirestore: () => void;
     if (user) {
       const userRef = doc(db, "users", user.uid);
       unsubscribeFirestore = onSnapshot(userRef, (docSnap) => {
         if (docSnap.exists()) {
-          setCredits(docSnap.data().credits || 0);
+          const docData = docSnap.data();
+          setCredits(docData.credits || 0);
+          setUserPlan(docData.plan || (docData.credits >= 50 ? 'business' : 'free'));
         } else {
           setCredits(0);
+          setUserPlan('free');
         }
       }, (error) => {
         console.error("Firestore credits sync error:", error);
@@ -84,6 +88,7 @@ export default function Home() {
     } else {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setCredits(0);
+      setUserPlan('free');
     }
     return () => {
       if (unsubscribeFirestore) unsubscribeFirestore();
@@ -266,10 +271,9 @@ export default function Home() {
         amount: orderData.amount,
         currency: orderData.currency,
         name: "LabelBee Credits",
-        description: `${
-          packageId === 'pack_1' ? '5 Downloads (Starter)' : packageId === 'pack_4' ? '10 Downloads (Popular)' : '100 Downloads (Business)'
-        }`,
-        image: "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=128&auto=format&fit=crop", 
+        description: `${packageId === 'pack_1' ? '5 Downloads (Starter)' : packageId === 'pack_4' ? '10 Downloads (Popular)' : '100 Downloads (Business)'
+          }`,
+        image: "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=128&auto=format&fit=crop",
         order_id: orderData.id,
         handler: async function () {
           let addedCredits = 0;
@@ -279,14 +283,20 @@ export default function Home() {
 
           try {
             if (addedCredits > 0) {
-              // Write credits directly to Firestore after successful payment.
-              // Note: disable this once the Razorpay webhook is properly configured
-              // to avoid double-crediting.
-              await setDoc(doc(db, "users", user.uid), { credits: increment(addedCredits) }, { merge: true });
+              const updatePayload: Record<string, unknown> = {
+                credits: increment(addedCredits)
+              };
+              if (packageId === 'pack_10') {
+                updatePayload.plan = 'business';
+                setUserPlan('business');
+              }
+
+              // Write credits and plan directly to Firestore
+              await setDoc(doc(db, "users", user.uid), updatePayload, { merge: true });
             }
             setLoadingPayment(false);
             setIsPackModalOpen(false);
-            alert(`🎉 Payment successful! ${addedCredits} credits have been added to your account.`);
+            alert(`Payment successful! ${addedCredits} credits have been added to your account.`);
           } catch (err) {
             console.error("Failed to update credits:", err);
             setLoadingPayment(false);
@@ -302,7 +312,7 @@ export default function Home() {
           packageId: packageId,
         },
         theme: {
-          color: "#4f46e5", 
+          color: "#4f46e5",
         },
         modal: {
           ondismiss: function () {
@@ -321,26 +331,52 @@ export default function Home() {
     }
   };
 
+  // 1-Click Instant Business Plan Activator for Testing
+  const handleActivateTestBusinessPlan = async () => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    try {
+      setLoadingPayment(true);
+      const userRef = doc(db, "users", user.uid);
+      await setDoc(userRef, {
+        plan: "business",
+        credits: (credits || 0) + 100
+      }, { merge: true });
+      setUserPlan("business");
+      setIsPackModalOpen(false);
+    } catch (err) {
+      console.error("Test activation error:", err);
+      alert("Failed to activate test plan: " + (err as Error).message);
+    } finally {
+      setLoadingPayment(false);
+    }
+  };
+
+  // Mobile tab toggle: 'form' | 'preview'
+  const [mobileTab, setMobileTab] = useState<'form' | 'preview'>('form');
+
   return (
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col font-sans">
       {/* Header */}
       <header className="bg-white/95 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group cursor-pointer">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
+          <Link href="/" className="flex items-center gap-2 group cursor-pointer shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
-              src="/logo.png" 
-              alt="LabelBee" 
-              className="h-10 w-auto object-contain transition-transform group-hover:scale-105" 
+            <img
+              src="/logo.png"
+              alt="LabelBee"
+              className="h-10 sm:h-12 w-auto object-contain transition-transform group-hover:scale-105"
             />
           </Link>
 
-          <nav className="flex items-center gap-3 sm:gap-4">
+          <nav className="flex items-center gap-2 sm:gap-4">
             {/* Authenticated user UI */}
             {authLoaded && (
               <>
                 {user ? (
-                  <div className="flex items-center gap-2.5 sm:gap-3">
+                  <div className="flex items-center gap-1.5 sm:gap-3">
                     <span className="hidden md:inline text-sm text-slate-600 font-semibold">
                       Hi, {user.displayName || "Parent"}!
                     </span>
@@ -348,20 +384,20 @@ export default function Home() {
                     {/* Interactive credit balance badge */}
                     <button
                       onClick={() => setIsPackModalOpen(true)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-extrabold transition-all shadow-sm cursor-pointer hover:scale-[1.02]"
+                      className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-extrabold transition-all shadow-sm cursor-pointer hover:scale-[1.02] shrink-0"
                       title="Click to buy more credits"
                     >
                       <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                      <span>{credits} {credits === 1 ? 'Credit' : 'Credits'}</span>
+                      <span>{credits} <span className="hidden sm:inline">{credits === 1 ? 'Credit' : 'Credits'}</span></span>
                     </button>
 
                     {/* Simple Custom Sign Out Button */}
                     <button
                       onClick={handleSignOut}
-                      className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-100 transition-all cursor-pointer"
+                      className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-100 transition-all cursor-pointer shrink-0"
                       title="Sign Out"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
                     </button>
                   </div>
                 ) : (
@@ -371,7 +407,7 @@ export default function Home() {
                       setAuthMode('login');
                       setIsAuthModalOpen(true);
                     }}
-                    className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#1a1f4b] text-sm font-bold transition-all shadow-sm cursor-pointer"
+                    className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#1a1f4b] text-xs sm:text-sm font-bold transition-all shadow-sm cursor-pointer shrink-0"
                   >
                     Sign In
                   </button>
@@ -383,17 +419,16 @@ export default function Home() {
             <button
               onClick={handlePrint}
               disabled={loadingPayment || loadingDownload}
-              className={`px-5 py-2.5 rounded-xl font-extrabold text-sm transition-all duration-200 flex items-center gap-2 cursor-pointer ${
-                loadingPayment || loadingDownload
-                  ? "bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed"
-                  : user && credits > 0
+              className={`px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 flex items-center gap-1.5 sm:gap-2 cursor-pointer shrink-0 ${loadingPayment || loadingDownload
+                ? "bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed"
+                : user && credits > 0
                   ? "bg-[#22c55e] hover:bg-[#16a34a] text-white shadow-[0_4px_14px_rgba(34,197,94,0.35)] hover:scale-[1.02] active:scale-[0.98]"
                   : "bg-[#F5C42E] hover:bg-[#e0b000] text-[#1a1f4b] shadow-[0_4px_14px_rgba(245,196,46,0.45)] hover:scale-[1.02] active:scale-[0.98]"
-              }`}
+                }`}
             >
               {loadingDownload ? (
                 <>
-                  <svg className="animate-spin -ml-1 mr-1 h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin -ml-1 mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
@@ -401,7 +436,7 @@ export default function Home() {
                 </>
               ) : loadingPayment ? (
                 <>
-                  <svg className="animate-spin -ml-1 mr-1 h-4.5 w-4.5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin -ml-1 mr-1 h-3.5 w-3.5 sm:h-4.5 sm:w-4.5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
@@ -409,12 +444,13 @@ export default function Home() {
                 </>
               ) : user && credits > 0 ? (
                 <>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                  <span>Download PDF (-1 Credit)</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <span className="hidden sm:inline">Download PDF (-1 Credit)</span>
+                  <span className="sm:hidden">Download (-1)</span>
                 </>
               ) : (
                 <>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                   <span>Export PDF</span>
                 </>
               )}
@@ -423,15 +459,60 @@ export default function Home() {
         </div>
       </header>
 
+      {/* Mobile Segmented Tab Navigation Bar (< lg screens) */}
+      <div className="lg:hidden sticky top-16 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 py-2 flex items-center justify-center">
+        <div className="flex bg-slate-100 p-1 rounded-xl w-full max-w-sm border border-slate-200/80 shadow-xs">
+          <button
+            type="button"
+            onClick={() => setMobileTab('form')}
+            className={`flex-1 py-2 px-3 text-xs rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              mobileTab === 'form'
+                ? 'bg-white text-[#1a1f4b] shadow-xs font-extrabold'
+                : 'text-slate-600 hover:text-slate-900 font-semibold'
+            }`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+            <span>Edit Slip Details</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab('preview')}
+            className={`flex-1 py-2 px-3 text-xs rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              mobileTab === 'preview'
+                ? 'bg-white text-[#1a1f4b] shadow-xs font-extrabold'
+                : 'text-slate-600 hover:text-slate-900 font-semibold'
+            }`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <span>Preview Sheet (A4)</span>
+          </button>
+        </div>
+      </div>
+
       {/* Main Content */}
       <main className="flex-grow flex flex-col lg:flex-row max-w-[1600px] w-full mx-auto">
         {/* Left Sidebar - Form */}
-        <aside className="w-full lg:w-[420px] xl:w-[460px] bg-white border-b lg:border-b-0 lg:border-r border-slate-200/80 lg:overflow-y-auto lg:h-[calc(100vh-64px)] shrink-0 shadow-sm">
-          <GeneratorForm data={data} onChange={handleDataChange} />
+        <aside className={`w-full lg:w-[420px] xl:w-[460px] bg-white border-b lg:border-b-0 lg:border-r border-slate-200/80 lg:overflow-y-auto lg:h-[calc(100vh-64px)] shrink-0 shadow-sm ${
+          mobileTab === 'form' ? 'block' : 'hidden lg:block'
+        }`}>
+          <GeneratorForm 
+            data={data} 
+            onChange={handleDataChange} 
+            userPlan={userPlan}
+            onUpgradeBusiness={() => {
+              if (!user) {
+                setIsAuthModalOpen(true);
+              } else {
+                setIsPackModalOpen(true);
+              }
+            }}
+          />
         </aside>
 
         {/* Right Area - Preview */}
-        <section className="flex-grow bg-[#FAF9F6] lg:overflow-y-auto lg:h-[calc(100vh-64px)] relative p-4 sm:p-6 lg:p-10">
+        <section className={`flex-grow bg-[#FAF9F6] lg:overflow-y-auto lg:h-[calc(100vh-64px)] relative p-3 sm:p-6 lg:p-10 ${
+          mobileTab === 'preview' ? 'block' : 'hidden lg:block'
+        }`}>
           <SlipPreview data={data} />
         </section>
       </main>
@@ -440,9 +521,9 @@ export default function Home() {
       {isAuthModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
           <div className="bg-white border border-slate-100 rounded-[32px] p-6 sm:p-8 max-h-[95vh] overflow-y-auto max-w-md w-full shadow-2xl relative flex flex-col gap-4 animate-scale-up">
-            
+
             {/* Close Button */}
-            <button 
+            <button
               onClick={() => { if (!loadingAuthSubmit) setIsAuthModalOpen(false); }}
               disabled={loadingAuthSubmit}
               className="absolute top-4 right-4 bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 p-2 rounded-full transition-colors disabled:opacity-50 z-10 cursor-pointer"
@@ -453,13 +534,13 @@ export default function Home() {
             {/* Custom Premium Brand Logo Badge */}
             <div className="flex justify-start">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.png" alt="LabelBee" className="h-11 w-auto object-contain" />
+              <img src="/logo.png" alt="LabelBee" className="h-12 w-auto object-contain" />
             </div>
 
             {/* Modal Title */}
             <div className="relative text-left w-full mt-1">
               <h3 className="text-[28px] font-black text-[#1a1f4b] leading-[1.15] tracking-tight">
-                Welcome<br/>
+                Welcome<br />
                 To {authMode === 'login' ? 'LabelBee!' : 'Registration!'}
               </h3>
               <p className="text-xs font-semibold text-slate-500 mt-1.5">
@@ -491,10 +572,10 @@ export default function Home() {
               className="w-full py-3 rounded-2xl border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-[#1a1f4b] text-xs font-extrabold shadow-sm flex items-center justify-center gap-2.5 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05" />
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335" />
               </svg>
               <span>Continue with Google</span>
             </button>
@@ -508,7 +589,7 @@ export default function Home() {
 
             {/* Auth Form */}
             <form onSubmit={handleAuthSubmit} className="flex flex-col gap-3.5">
-              
+
               {/* Name Field (Sign Up Mode Only) */}
               {authMode === 'signup' && (
                 <div className="flex flex-col gap-1">
@@ -554,15 +635,15 @@ export default function Home() {
               {authMode === 'login' && (
                 <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 mt-0.5 px-1">
                   <label className="flex items-center gap-1.5 cursor-pointer select-none hover:text-slate-700 transition-colors">
-                    <input 
-                      type="checkbox" 
-                      defaultChecked 
-                      className="w-3.5 h-3.5 rounded border-slate-300 text-[#1a1f4b] focus:ring-[#F5C42E] cursor-pointer" 
+                    <input
+                      type="checkbox"
+                      defaultChecked
+                      className="w-3.5 h-3.5 rounded border-slate-300 text-[#1a1f4b] focus:ring-[#F5C42E] cursor-pointer"
                     />
                     <span>Remember me</span>
                   </label>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={handleForgotPassword}
                     className="text-[#1a1f4b] hover:text-[#F5C42E] hover:underline cursor-pointer bg-transparent border-none p-0 font-bold transition-colors"
                   >
@@ -596,7 +677,7 @@ export default function Home() {
               {authMode === 'login' ? (
                 <span>
                   Don&apos;t have an account?{' '}
-                  <button 
+                  <button
                     onClick={() => { setAuthMode('signup'); setAuthError(null); }}
                     className="text-[#1a1f4b] font-black hover:underline cursor-pointer bg-transparent border-none p-0"
                   >
@@ -606,7 +687,7 @@ export default function Home() {
               ) : (
                 <span>
                   Already have an account?{' '}
-                  <button 
+                  <button
                     onClick={() => { setAuthMode('login'); setAuthError(null); }}
                     className="text-[#1a1f4b] font-black hover:underline cursor-pointer bg-transparent border-none p-0"
                   >
@@ -629,9 +710,9 @@ export default function Home() {
       {isPackModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-fade-in">
           <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-h-[95vh] overflow-y-auto max-w-3xl w-full shadow-2xl relative flex flex-col gap-5 animate-scale-up">
-            
+
             {/* Close Button */}
-            <button 
+            <button
               onClick={() => { if (!loadingPayment) setIsPackModalOpen(false); }}
               disabled={loadingPayment}
               className="absolute top-4 right-4 bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 p-2 rounded-full transition-colors disabled:opacity-50 z-10 cursor-pointer"
@@ -654,7 +735,7 @@ export default function Home() {
 
             {/* Pricing Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-2">
-              
+
               {/* Pack 1: Starter (₹15 for 5 credits) */}
               <div className="border border-slate-200 rounded-2xl p-5 flex flex-col items-center text-center gap-4 bg-white relative hover:shadow-md transition-all duration-300">
                 <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold">
@@ -724,6 +805,19 @@ export default function Home() {
                 </button>
               </div>
 
+            </div>
+
+            {/* Instant 1-Click Test Button for Developer Testing */}
+            <div className="pt-2 border-t border-slate-100 flex flex-col items-center gap-1.5">
+              <button
+                type="button"
+                onClick={handleActivateTestBusinessPlan}
+                disabled={loadingPayment}
+                className="py-2 px-4 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-bold transition-all cursor-pointer flex items-center gap-2 hover:scale-[1.01]"
+              >
+                <span>⚡ Instant Activate Business Plan (Free Testing)</span>
+              </button>
+              <p className="text-[10px] text-slate-400 font-medium">Adds `plan: &quot;business&quot;` and 100 print credits to your Firestore document immediately.</p>
             </div>
 
             {/* Modal Footer loading indicator */}

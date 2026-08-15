@@ -1,12 +1,39 @@
 "use client";
 
 import { SlipData } from "@/types";
-import { User, Image as ImageIcon, Settings, Palette, Grid3X3, Layers, Sparkles, Loader2, BookOpen, Move, RotateCw, ZoomIn, Maximize2 } from "lucide-react";
+import { 
+  User, 
+  Image as ImageIcon, 
+  Settings, 
+  Palette, 
+  Layers, 
+  Sparkles, 
+  Loader2, 
+  BookOpen, 
+  Move, 
+  RotateCw, 
+  ZoomIn, 
+  Maximize2,
+  Upload,
+  Crown,
+  Lock,
+  CheckCircle2,
+  Wand2,
+  PenTool,
+  FileText,
+  Trash2,
+  ImagePlus,
+  Zap,
+  RefreshCw,
+  AlertCircle
+} from "lucide-react";
 import React, { ChangeEvent, useRef, useState } from "react";
 
 interface Props {
   data: SlipData;
   onChange: (updates: Partial<SlipData>) => void;
+  userPlan?: 'free' | 'starter' | 'popular' | 'business';
+  onUpgradeBusiness?: () => void;
 }
 
 const THEMES = [
@@ -20,13 +47,35 @@ const THEMES = [
   { id: '#991b1b', name: 'Maroon' },
 ];
 
-export default function GeneratorForm({ data, onChange }: Props) {
+export default function GeneratorForm({ 
+  data, 
+  onChange, 
+  userPlan = 'free', 
+  onUpgradeBusiness 
+}: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const templateBgInputRef = useRef<HTMLInputElement>(null);
 
-  // AI State
+  // AI Prompt State
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+
+  // Gemini Vision Theme Analysis State
+  const [analyzingTheme, setAnalyzingTheme] = useState(false);
+  const [themeAnalysisSuccess, setThemeAnalysisSuccess] = useState<{
+    description: string;
+    advice?: string;
+    colorTheme?: string;
+  } | null>(null);
+  const [themeAnalysisError, setThemeAnalysisError] = useState<string | null>(null);
+
+  // AI Compose State (Business Plan)
+  const [composing, setComposing] = useState(false);
+  const [composeError, setComposeError] = useState<string | null>(null);
+  const [composeSuccess, setComposeSuccess] = useState(false);
+
+  const isBusinessUser = userPlan === 'business';
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -37,7 +86,6 @@ export default function GeneratorForm({ data, onChange }: Props) {
     const file = e.target.files?.[0];
     if (file) {
       const url = URL.createObjectURL(file);
-      // Save directly to photoUrl and reset alignment offsets
       onChange({
         photoUrl: url,
         photoZoom: 100,
@@ -61,12 +109,94 @@ export default function GeneratorForm({ data, onChange }: Props) {
     });
   };
 
-  // Call API route to generate background via Stable Diffusion / Pollinations
-  const generateAiBackground = async () => {
-    if (!aiPrompt.trim()) return;
+  // Analyze uploaded background with Gemini Vision API
+  const analyzeBackgroundWithGemini = async (base64Image: string) => {
+    setAnalyzingTheme(true);
+    setThemeAnalysisError(null);
+    setThemeAnalysisSuccess(null);
+
+    try {
+      const res = await fetch("/api/analyze-theme", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ imageBase64: base64Image }),
+      });
+
+      const result = await res.json();
+      if (!res.ok) {
+        throw new Error(result.error || "Failed to analyze theme with Gemini AI.");
+      }
+
+      // Automatically harmonize color theme & template layout
+      const updates: Partial<SlipData> = {};
+      if (result.colorTheme) updates.colorTheme = result.colorTheme;
+      if (result.template) updates.template = result.template;
+      onChange(updates);
+
+      setThemeAnalysisSuccess({
+        description: result.themeDescription,
+        advice: result.themeAdvice,
+        colorTheme: result.colorTheme,
+      });
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("Gemini theme analysis failed:", error);
+      setThemeAnalysisError(error.message || "Failed to adapt theme.");
+    } finally {
+      setAnalyzingTheme(false);
+    }
+  };
+
+  // Handle custom background template upload (Business Plan)
+  const handleTemplateBgUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!isBusinessUser) {
+      if (onUpgradeBusiness) onUpgradeBusiness();
+      if (templateBgInputRef.current) templateBgInputRef.current.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const base64Url = event.target?.result as string;
+      if (base64Url) {
+        onChange({ aiBackgroundUrl: base64Url });
+        // Automatically run Gemini Vision analysis to harmonize theme & details
+        await analyzeBackgroundWithGemini(base64Url);
+      }
+    };
+    reader.readAsDataURL(file);
+    if (templateBgInputRef.current) templateBgInputRef.current.value = '';
+  };
+
+  // Call API route to generate background via AI
+  const generateAiBackground = async (promptOverride?: string) => {
+    const activePrompt = (promptOverride || aiPrompt).trim();
+    if (!activePrompt) return;
 
     setAiLoading(true);
     setAiError(null);
+
+    // Heuristic instant color harmonization based on prompt
+    const p = activePrompt.toLowerCase();
+    let initialColor = data.colorTheme;
+    if (p.includes('space') || p.includes('astro') || p.includes('galaxy') || p.includes('planet')) {
+      initialColor = '#1e3a8a';
+    } else if (p.includes('racing') || p.includes('car') || p.includes('speed') || p.includes('track')) {
+      initialColor = '#dc2626';
+    } else if (p.includes('princess') || p.includes('castle') || p.includes('crown') || p.includes('barbie') || p.includes('fairy')) {
+      initialColor = '#db2777';
+    } else if (p.includes('superhero') || p.includes('comic') || p.includes('action') || p.includes('hero')) {
+      initialColor = '#0284c7';
+    } else if (p.includes('dinosaur') || p.includes('dino') || p.includes('jungle')) {
+      initialColor = '#059669';
+    } else if (p.includes('unicorn') || p.includes('rainbow')) {
+      initialColor = '#ec4899';
+    }
 
     try {
       const res = await fetch("/api/generate", {
@@ -74,7 +204,7 @@ export default function GeneratorForm({ data, onChange }: Props) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ prompt: aiPrompt }),
+        body: JSON.stringify({ prompt: activePrompt }),
       });
 
       const result = await res.json();
@@ -83,99 +213,108 @@ export default function GeneratorForm({ data, onChange }: Props) {
         throw new Error(result.error || "Failed to generate image.");
       }
 
-      onChange({ aiBackgroundUrl: result.imageUrl });
-    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-      console.error(err);
-      setAiError(err.message || "An error occurred generating AI background.");
+      const updates: Partial<SlipData> = { 
+        aiBackgroundUrl: result.imageUrl,
+        colorTheme: initialColor,
+      };
+
+      // If user was on a standalone premium theme, switch to modern so the background is displayed
+      if (data.template === 'unicorn' || data.template === 'doodle') {
+        updates.template = 'modern';
+      }
+
+      onChange(updates);
+
+      // Optionally run Gemini vision harmonization in background for fine-tuning
+      if (result.imageUrl && !result.imageUrl.startsWith('data:image/svg+xml')) {
+        analyzeBackgroundWithGemini(result.imageUrl).catch(() => {});
+      }
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error(error);
+      setAiError(error.message || "An error occurred generating AI background.");
     } finally {
       setAiLoading(false);
     }
   };
 
   const removeAiBackground = () => {
-    onChange({ aiBackgroundUrl: null });
+    onChange({ aiBackgroundUrl: null, composedSlipUrl: null });
     setAiPrompt("");
+    setThemeAnalysisSuccess(null);
+    setThemeAnalysisError(null);
+    setComposeError(null);
+    setComposeSuccess(false);
   };
+
+  const clearComposedSlip = () => {
+    onChange({ composedSlipUrl: null });
+    setComposeError(null);
+    setComposeSuccess(false);
+  };
+
+  // ─── Main Business Plan AI Composer ───────────────────────────────────────
+  const composeWithGemini = async () => {
+    if (!data.aiBackgroundUrl) return;
+
+    setComposing(true);
+    setComposeError(null);
+    setComposeSuccess(false);
+
+    try {
+      const res = await fetch("/api/compose-slip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          backgroundBase64: data.aiBackgroundUrl,
+          studentPhotoBase64: data.photoUrl || undefined,
+          stylePrompt: data.stylePrompt || undefined,
+          studentDetails: {
+            studentName: data.studentName,
+            grade: data.grade,
+            section: data.section,
+            rollNo: data.rollNo,
+            subject: data.subject || (data.subjects?.[0] ?? ""),
+            schoolName: data.schoolName,
+          },
+        }),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.error || "Gemini composition failed.");
+      }
+
+      if (result.composedSlipUrl) {
+        onChange({ composedSlipUrl: result.composedSlipUrl });
+        setComposeSuccess(true);
+      } else {
+        throw new Error("No image returned from Gemini.");
+      }
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("[compose] Error:", error);
+      setComposeError(error.message || "Failed to compose name slip.");
+    } finally {
+      setComposing(false);
+    }
+  };
+
 
   return (
     <>
-      <div className="p-6 space-y-7">
-        <div className="border-b border-slate-100 pb-5">
+      <div className="p-3.5 sm:p-6 space-y-5 sm:space-y-7">
+        <div className="border-b border-slate-100 pb-4 sm:pb-5">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#F5C42E]"></span>
-            <h2 className="text-2xl font-black text-[#1a1f4b] tracking-tight">Design Settings</h2>
+            <h2 className="text-xl sm:text-2xl font-black text-[#1a1f4b] tracking-tight">Design Settings</h2>
           </div>
           <p className="text-slate-500 text-xs font-medium mt-1">Customize student information, layout & background</p>
         </div>
 
-        {/* AI Background Generator */}
-        <section className="space-y-4 bg-gradient-to-br from-amber-50/80 via-yellow-50/30 to-white p-5 rounded-2xl border border-amber-200/80 shadow-[0_2px_12px_rgba(245,196,46,0.08)]">
-          <div className="flex items-center gap-2 text-[#1a1f4b] font-extrabold text-sm mb-1">
-            <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
-            <h3>AI Magic Background</h3>
-          </div>
-
-          <div className="space-y-3">
-            <p className="text-xs text-amber-900/80 font-medium">
-              Create a custom name slip background using AI prompts!
-            </p>
-
-            <div className="flex flex-col gap-2">
-              <input
-                type="text"
-                value={aiPrompt}
-                onChange={(e) => setAiPrompt(e.target.value)}
-                placeholder="e.g. cute pastel space, watercolor flowers..."
-                className="w-full px-3.5 py-2.5 border border-amber-200/90 rounded-xl focus:ring-2 focus:ring-[#F5C42E]/50 focus:border-[#1a1f4b] outline-none transition-all text-slate-800 text-xs bg-white font-medium"
-                disabled={aiLoading}
-              />
-
-              {aiError && (
-                <p className="text-xs text-rose-600 font-semibold bg-rose-50 p-2.5 rounded-xl border border-rose-100">{aiError}</p>
-              )}
-
-              <div className="flex gap-2">
-                <button
-                  onClick={generateAiBackground}
-                  disabled={aiLoading || !aiPrompt.trim()}
-                  className="flex-1 bg-[#1a1f4b] hover:bg-[#2d3278] disabled:bg-slate-300 text-white text-xs font-bold py-2.5 px-3.5 rounded-xl transition-all flex justify-center items-center gap-1.5 shadow-sm cursor-pointer disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99]"
-                >
-                  {aiLoading ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-3.5 h-3.5 text-[#F5C42E]" /> Generate Background
-                    </>
-                  )}
-                </button>
-
-                {data.aiBackgroundUrl && (
-                  <button
-                    onClick={removeAiBackground}
-                    className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold py-2.5 px-3 rounded-xl transition-colors cursor-pointer"
-                  >
-                    Clear AI
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {data.aiBackgroundUrl && (
-              <div className="relative w-full h-16 rounded-xl overflow-hidden border border-amber-200 shadow-inner mt-2">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={data.aiBackgroundUrl} alt="AI Background" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-2">
-                  <span className="text-[11px] text-white font-bold">Active Background ✓</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
-
         {/* Student & School Info */}
-        <section className="space-y-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+        <section className="space-y-4 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-2 text-[#1a1f4b] font-bold text-sm">
               <User className="w-4 h-4 text-[#1a1f4b]" />
@@ -208,24 +347,26 @@ export default function GeneratorForm({ data, onChange }: Props) {
                   <button
                     type="button"
                     onClick={() => onChange({ subjectMode: 'blank' })}
-                    className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                    className={`px-2.5 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
                       data.subjectMode === 'blank'
                         ? 'bg-[#1a1f4b] text-white shadow-sm'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    ✏️ Blank (Handwritten)
+                    <PenTool className="w-3 h-3" />
+                    <span>Blank (Handwritten)</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => onChange({ subjectMode: 'custom' })}
-                    className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                    className={`px-2.5 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
                       data.subjectMode === 'custom'
                         ? 'bg-[#1a1f4b] text-white shadow-sm'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    ⌨️ Type per Slip
+                    <FileText className="w-3 h-3" />
+                    <span>Type per Slip</span>
                   </button>
                 </div>
               </div>
@@ -478,58 +619,44 @@ export default function GeneratorForm({ data, onChange }: Props) {
             <h3>Layout & Theme</h3>
           </div>
 
-          {/* Design Selection Dropdown (Only classic, modern, playful, unicorn) */}
+          {/* Design Selection Dropdown */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5 text-[#1a1f4b]" /> Select Design Template
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-[#1a1f4b]" /> Select Design Template
+              </label>
+              <span className="text-[10px] font-semibold text-slate-400">Standard supports AI</span>
+            </div>
             <select
               name="template"
               value={data.template}
               onChange={(e) => {
                 const val = e.target.value as SlipData['template'];
-                if (['classic', 'modern', 'playful', 'unicorn', 'doodle'].includes(val)) {
-                  onChange({ template: val });
-                } else {
-                  onChange({ template: 'unicorn' });
+                const validTemplates = ['classic', 'modern', 'playful', 'unicorn', 'doodle'];
+                const nextTemplate = validTemplates.includes(val) ? val : 'unicorn';
+                const updates: Partial<SlipData> = { 
+                  template: nextTemplate,
+                  composedSlipUrl: null,
+                };
+                // If switching to standalone premium themes, clear AI background so the theme artwork shows
+                if (nextTemplate === 'unicorn' || nextTemplate === 'doodle') {
+                  updates.aiBackgroundUrl = null;
                 }
+                onChange(updates);
               }}
               className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#F5C42E]/40 focus:border-[#1a1f4b] outline-none transition-all text-[#1a1f4b] bg-white font-bold text-xs cursor-pointer shadow-sm"
             >
-              <optgroup label="Standard Layouts">
-                <option value="classic">📜 Classic Bordered</option>
-                <option value="modern">💼 Modern Accent</option>
-                <option value="playful">🎈 Playful Rounded</option>
+              <optgroup label="Standard Layouts (AI Compatible)">
+                <option value="classic">Classic Bordered</option>
+                <option value="modern">Modern Accent</option>
+                <option value="playful">Playful Rounded</option>
               </optgroup>
-              <optgroup label="Premium Themes">
-                <option value="unicorn">🦄 Rainbow Unicorn</option>
-                <option value="doodle">🎨 Rainbow Doodles</option>
+              <optgroup label="Premium Standalone Themes">
+                <option value="unicorn">Rainbow Unicorn</option>
+                <option value="doodle">Rainbow Doodles</option>
               </optgroup>
             </select>
           </div>
-
-          {!data.aiBackgroundUrl && (
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
-                <Grid3X3 className="w-3.5 h-3.5 text-[#1a1f4b]" /> Background Pattern
-              </label>
-              <div className="flex flex-wrap gap-1.5">
-                {(['none', 'dots', 'waves', 'grid', 'confetti'] as const).map((pat) => (
-                  <button
-                    key={pat}
-                    onClick={() => onChange({ pattern: pat })}
-                    className={`py-1.5 px-3 rounded-full border text-xs font-bold capitalize transition-all cursor-pointer ${
-                      data.pattern === pat
-                        ? 'border-[#1a1f4b] bg-[#1a1f4b] text-white shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    {pat}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
@@ -539,6 +666,7 @@ export default function GeneratorForm({ data, onChange }: Props) {
               {THEMES.map((theme) => (
                 <button
                   key={theme.id}
+                  type="button"
                   onClick={() => onChange({ colorTheme: theme.id })}
                   className={`w-7 h-7 rounded-full shadow-sm border-2 transition-transform cursor-pointer ${
                     data.colorTheme === theme.id ? 'border-slate-900 scale-110 ring-2 ring-[#F5C42E]' : 'border-white hover:scale-110'
@@ -596,6 +724,292 @@ export default function GeneratorForm({ data, onChange }: Props) {
                 <span className="text-[9.5px] text-indigo-800 font-bold mt-1 bg-indigo-100/70 px-1.5 py-0.5 rounded w-fit">Most Popular</span>
               </button>
             </div>
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* BUSINESS EXCLUSIVE: Custom Template Upload & Gemini AI Harmonizer */}
+        {/* ========================================================================= */}
+        <section className={`space-y-4 p-5 rounded-2xl border transition-all ${
+          isBusinessUser 
+            ? 'bg-gradient-to-br from-indigo-50/70 via-purple-50/40 to-white border-indigo-200/90 shadow-[0_2px_14px_rgba(99,102,241,0.08)]'
+            : 'bg-gradient-to-br from-amber-50/40 via-slate-50/40 to-white border-amber-200/60 shadow-sm'
+        }`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-[#1a1f4b] font-black text-sm">
+              <Crown className="w-4 h-4 text-amber-500" />
+              <h3>Custom Template Background</h3>
+            </div>
+            <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1 ${
+              isBusinessUser 
+                ? 'bg-indigo-100 text-indigo-700 border border-indigo-200' 
+                : 'bg-amber-100 text-amber-900 border border-amber-200'
+            }`}>
+              {isBusinessUser ? <CheckCircle2 className="w-3 h-3 text-indigo-600" /> : <Lock className="w-3 h-3 text-amber-700" />}
+              <span>Business Plan</span>
+            </span>
+          </div>
+
+          {!isBusinessUser ? (
+            /* Locked State for Non-Business Plan Users */
+            <div className="bg-white/90 border border-amber-200/90 rounded-xl p-4 flex flex-col gap-3 shadow-xs">
+              <div className="flex items-start gap-3">
+                <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 shrink-0">
+                  <Upload className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#1a1f4b]">Unlock Custom Template Uploads</h4>
+                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                    Upgrade to the Business Plan (₹100 for 100 sheets) to upload custom background templates with automated Gemini AI theme adaptation.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={onUpgradeBusiness}
+                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white font-extrabold text-xs shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Crown className="w-3.5 h-3.5" />
+                <span>Upgrade to Business Plan</span>
+              </button>
+            </div>
+          ) : (
+            /* Unlocked State for Business Plan Users */
+            <div className="space-y-3">
+              <div
+                onClick={() => templateBgInputRef.current?.click()}
+                className="border-2 border-dashed border-indigo-200 hover:border-indigo-400 bg-white/80 hover:bg-indigo-50/30 rounded-xl p-4 text-center cursor-pointer transition-all group"
+              >
+                <div className="w-9 h-9 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
+                  <Upload className="w-4 h-4" />
+                </div>
+                <p className="text-xs font-bold text-[#1a1f4b]">Click to upload background template</p>
+                <p className="text-[10.5px] text-slate-400 mt-0.5">PNG, JPG, WEBP • Auto-harmonized with Gemini</p>
+              </div>
+
+              <input
+                type="file"
+                ref={templateBgInputRef}
+                onChange={handleTemplateBgUpload}
+                accept="image/*"
+                className="hidden"
+              />
+
+              {/* Gemini Harmonization Status / Trigger */}
+              {data.aiBackgroundUrl && (
+                <div className="space-y-3 pt-1">
+                  {/* Background preview thumbnail */}
+                  <div className="relative w-full h-20 rounded-xl overflow-hidden border border-indigo-200 shadow-inner">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={data.aiBackgroundUrl} alt="Background" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-between p-2">
+                      <span className="text-[11px] text-white font-bold flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Background Ready
+                      </span>
+                      <button
+                        type="button"
+                        onClick={removeAiBackground}
+                        className="text-white/80 hover:text-rose-300 transition-colors cursor-pointer p-0.5"
+                        title="Remove background"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-indigo-100 pt-2">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Zap className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                      <span className="text-xs font-extrabold text-[#1a1f4b]">✨ AI Name Slip Composer</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 font-medium mb-2.5 leading-relaxed">
+                      Gemini will blend your background, student photo, and details into a single high-quality name slip image.
+                    </p>
+
+                    {/* Style Prompt */}
+                    <div className="mb-2.5">
+                      <label className="block text-[10.5px] font-bold text-slate-600 mb-1">
+                        Style / Mood Instructions (optional)
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={data.stylePrompt}
+                        onChange={(e) => onChange({ stylePrompt: e.target.value })}
+                        placeholder="e.g. Make it dark and cosmic, with glowing text. Vibrant neon accents..."
+                        className="w-full px-3 py-2 border border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-300/50 focus:border-indigo-400 outline-none transition-all text-slate-800 text-[11px] bg-white font-medium resize-none"
+                        disabled={composing}
+                      />
+                    </div>
+
+                    {/* Compose button row */}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        disabled={composing}
+                        onClick={composeWithGemini}
+                        className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:from-slate-300 disabled:to-slate-300 text-white text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99]"
+                      >
+                        {composing ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Composing with Gemini...</span>
+                          </>
+                        ) : (
+                          <>
+                            <ImagePlus className="w-3.5 h-3.5" />
+                            <span>{data.composedSlipUrl ? 'Re-compose Slip' : 'Compose Name Slip with AI'}</span>
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => analyzeBackgroundWithGemini(data.aiBackgroundUrl!)}
+                        disabled={analyzingTheme || composing}
+                        title="Re-analyze theme colors"
+                        className="px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {analyzingTheme ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Compose success state */}
+                  {composeSuccess && data.composedSlipUrl && (
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-emerald-800 font-extrabold text-xs">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span>Name Slip Composed!</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={clearComposedSlip}
+                          className="text-[10px] font-bold text-slate-500 hover:text-rose-500 bg-white border border-slate-200 px-2 py-0.5 rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
+                        >
+                          <RefreshCw className="w-2.5 h-2.5" /> Use HTML Layout
+                        </button>
+                      </div>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={data.composedSlipUrl}
+                        alt="Composed Name Slip"
+                        className="w-full rounded-lg border border-emerald-200 shadow-sm"
+                      />
+                      <p className="text-[10.5px] text-emerald-700 font-medium">
+                        Preview above tiles across all slips on the A4 sheet. Click Re-compose to regenerate.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Compose error */}
+                  {composeError && (
+                    <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-xs flex items-start gap-2">
+                      <AlertCircle className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-extrabold text-rose-700 block">Composition failed</span>
+                        <span className="text-rose-600 font-medium">{composeError}</span>
+                        <p className="text-rose-500 mt-0.5">Your HTML overlay layout is still showing in the preview.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Theme harmonize status */}
+                  {themeAnalysisSuccess && !composeSuccess && (
+                    <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-2.5 text-xs flex items-start gap-1.5">
+                      <CheckCircle2 className="w-3 h-3 text-indigo-500 shrink-0 mt-0.5" />
+                      <span className="text-indigo-700 font-medium">{themeAnalysisSuccess.description} — theme harmonized</span>
+                    </div>
+                  )}
+                  {themeAnalysisError && (
+                    <div className="bg-rose-50 border border-rose-200 rounded-xl p-2.5 text-xs text-rose-700 font-semibold">
+                      {themeAnalysisError}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+
+
+        {/* AI Background Generator */}
+        <section className="space-y-4 bg-gradient-to-br from-amber-50/80 via-yellow-50/30 to-white p-5 rounded-2xl border border-amber-200/80 shadow-[0_2px_12px_rgba(245,196,46,0.08)]">
+          <div className="flex items-center gap-2 text-[#1a1f4b] font-extrabold text-sm mb-1">
+            <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
+            <h3>AI Magic Background Generator</h3>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-xs text-amber-900/80 font-medium">
+              Create a custom name slip background pattern using AI prompts!
+            </p>
+
+            {/* Note: Shown only when user is currently using a premium layout */}
+            {(data.template === 'unicorn' || data.template === 'doodle') && (
+              <div className="bg-amber-100/60 border border-amber-200/90 rounded-xl p-2.5 flex items-start gap-2 shadow-2xs">
+                <Sparkles className="w-3.5 h-3.5 text-amber-700 shrink-0 mt-0.5" />
+                <p className="text-[11px] text-amber-950 font-medium leading-snug">
+                  <span className="font-extrabold text-[#1a1f4b]">Please note:</span> You are currently using a Premium theme ({data.template === 'unicorn' ? 'Rainbow Unicorn' : 'Rainbow Doodles'}). AI backgrounds apply to <strong>Standard Layouts</strong> (Classic, Modern, Playful) or Business Templates. Generating a background will adapt it to a standard layout.
+                </p>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-2">
+              <input
+                type="text"
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                placeholder="e.g. cute pastel space, watercolor flowers, anime ninja..."
+                className="w-full px-3.5 py-2.5 border border-amber-200/90 rounded-xl focus:ring-2 focus:ring-[#F5C42E]/50 focus:border-[#1a1f4b] outline-none transition-all text-slate-800 text-xs bg-white font-medium"
+                disabled={aiLoading}
+              />
+
+              {aiError && (
+                <p className="text-xs text-rose-600 font-semibold bg-rose-50 p-2.5 rounded-xl border border-rose-100">{aiError}</p>
+              )}
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => generateAiBackground()}
+                  disabled={aiLoading || !aiPrompt.trim()}
+                  className="flex-1 bg-[#1a1f4b] hover:bg-[#2d3278] disabled:bg-slate-300 text-white text-xs font-bold py-2.5 px-3.5 rounded-xl transition-all flex justify-center items-center gap-1.5 shadow-sm cursor-pointer disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99]"
+                >
+                  {aiLoading ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5 text-[#F5C42E]" /> Generate Background
+                    </>
+                  )}
+                </button>
+
+                {data.aiBackgroundUrl && (
+                  <button
+                    onClick={removeAiBackground}
+                    className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold py-2.5 px-3 rounded-xl transition-colors cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {data.aiBackgroundUrl && (
+              <div className="relative w-full h-16 rounded-xl overflow-hidden border border-amber-200 shadow-inner mt-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={data.aiBackgroundUrl} alt="Active Background" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-2">
+                  <span className="text-[11px] text-white font-bold flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Active Background
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 

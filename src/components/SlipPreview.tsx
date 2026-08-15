@@ -9,20 +9,22 @@ interface Props {
 
 export default function SlipPreview({ data }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(0.75);
-  const [zoomMode, setZoomMode] = useState<'fit' | '100' | 'manual'>('fit');
+  const [scale, setScale] = useState(1);
+  const [zoomMode, setZoomMode] = useState<'fit' | '100'>('100');
 
   const calculateFitScale = () => {
-    if (containerRef.current) {
-      const containerWidth = containerRef.current.getBoundingClientRect().width;
-      const windowHeight = typeof window !== 'undefined' ? window.innerHeight : 900;
-      const availableHeight = Math.max(450, windowHeight - 180); // Subtract navbar and action bar
+    if (typeof window !== 'undefined') {
+      const containerWidth = containerRef.current
+        ? containerRef.current.getBoundingClientRect().width
+        : window.innerWidth;
+      const windowHeight = window.innerHeight;
+      const availableHeight = Math.max(350, windowHeight - 160);
       
-      const widthScale = (containerWidth - 32) / 794;
+      const widthScale = (containerWidth - 20) / 794;
       const heightScale = availableHeight / 1123;
       
-      // Calculate scale so the entire A4 PDF is 100% visible on screen without scrolling
-      const fitScale = Math.max(0.35, Math.min(widthScale, heightScale, 0.95));
+      // Calculate scale so the entire A4 PDF is visible on screen without overflow
+      const fitScale = Math.max(0.3, Math.min(widthScale, heightScale, 1));
       return Number(fitScale.toFixed(2));
     }
     return 0.75;
@@ -57,7 +59,7 @@ export default function SlipPreview({ data }: Props) {
   const isLight = themeColor === '#f8fafc' || themeColor === '#ffffff';
   const textColor = isLight ? '#1e293b' : '#ffffff';
 
-  // Helper to render backgrounds (standard patterns or AI image)
+  // Helper to render backgrounds (AI or custom uploaded image)
   const renderBackground = () => {
     if (data.aiBackgroundUrl) {
       return (
@@ -67,55 +69,7 @@ export default function SlipPreview({ data }: Props) {
         />
       );
     }
-
-    switch (data.pattern) {
-      case 'dots':
-        return (
-          <svg className="absolute inset-0 w-full h-full opacity-10 pointer-events-none z-0" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="dots" width="10" height="10" patternUnits="userSpaceOnUse">
-                <circle cx="2" cy="2" r="2" fill={themeColor} />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#dots)" />
-          </svg>
-        );
-      case 'waves':
-        return (
-          <svg className="absolute inset-0 w-full h-full opacity-5 pointer-events-none z-0" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="waves" width="40" height="40" patternUnits="userSpaceOnUse">
-                <path d="M0 20 Q 10 10, 20 20 T 40 20" fill="none" stroke={themeColor} strokeWidth="2" />
-                <path d="M0 40 Q 10 30, 20 40 T 40 40" fill="none" stroke={themeColor} strokeWidth="2" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#waves)" />
-          </svg>
-        );
-      case 'grid':
-        return (
-          <svg className="absolute inset-0 w-full h-full opacity-10 pointer-events-none z-0" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="grid" width="15" height="15" patternUnits="userSpaceOnUse">
-                <path d="M 15 0 L 0 0 0 15" fill="none" stroke={themeColor} strokeWidth="1" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#grid)" />
-          </svg>
-        );
-      case 'confetti':
-        return (
-          <div className="absolute inset-0 w-full h-full opacity-20 pointer-events-none overflow-hidden z-0">
-            <div className="absolute top-2 left-2 w-2 h-2 rounded-full" style={{ backgroundColor: themeColor }}></div>
-            <div className="absolute top-8 left-10 w-2 h-2 rotate-45 bg-amber-400"></div>
-            <div className="absolute bottom-4 right-8 w-2 h-2 rounded-full bg-rose-400"></div>
-            <div className="absolute top-4 right-4 w-3 h-1 rotate-12 bg-emerald-400"></div>
-            <div className="absolute bottom-8 left-4 w-1.5 h-1.5 rounded-full bg-blue-400"></div>
-          </div>
-        );
-      default:
-        return null;
-    }
+    return null;
   };
 
   // Helper to render the live-adjusted photo element
@@ -143,26 +97,26 @@ export default function SlipPreview({ data }: Props) {
   return (
     <div className="flex flex-col items-center w-full">
       {/* Action & Zoom Controls Bar */}
-      <div className="w-full max-w-[840px] flex flex-wrap gap-3 justify-between items-center mb-5 bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+      <div className="w-full max-w-[840px] flex flex-col sm:flex-row gap-2.5 sm:gap-3 justify-between items-start sm:items-center mb-4 sm:mb-5 bg-white p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-xs">
         <div>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse"></span>
-            <h3 className="font-black text-sm text-[#1a1f4b]">Full A4 PDF Sheet Preview</h3>
+            <h3 className="font-black text-xs sm:text-sm text-[#1a1f4b]">Full A4 PDF Sheet Preview</h3>
           </div>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
+          <p className="text-[11px] sm:text-xs text-slate-500 font-medium mt-0.5">
             {is8Slips ? '8 Slips / Sheet (Large • 4 × 2 Grid)' : '10 Slips / Sheet (Standard • 5 × 2 Grid)'}
           </p>
         </div>
 
-        {/* Interactive Zoom & Fit Controls */}
-        <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-xl border border-slate-200">
+        {/* Interactive Fit & 100% Controls */}
+        <div className="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200">
           <button
             type="button"
             onClick={() => {
               setZoomMode('fit');
               setScale(calculateFitScale());
             }}
-            className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
               zoomMode === 'fit'
                 ? 'bg-[#1a1f4b] text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
@@ -178,7 +132,7 @@ export default function SlipPreview({ data }: Props) {
               setZoomMode('100');
               setScale(1);
             }}
-            className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
               zoomMode === '100'
                 ? 'bg-[#1a1f4b] text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
@@ -187,43 +141,13 @@ export default function SlipPreview({ data }: Props) {
           >
             100%
           </button>
-
-          <div className="h-4 w-px bg-slate-200 mx-0.5"></div>
-
-          <button
-            type="button"
-            onClick={() => {
-              setZoomMode('manual');
-              setScale((prev) => Math.max(0.3, Number((prev - 0.05).toFixed(2))));
-            }}
-            className="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer"
-            title="Zoom Out"
-          >
-            -
-          </button>
-
-          <span className="text-[11px] font-black text-[#1a1f4b] w-10 text-center">
-            {Math.round(scale * 100)}%
-          </span>
-
-          <button
-            type="button"
-            onClick={() => {
-              setZoomMode('manual');
-              setScale((prev) => Math.min(1.5, Number((prev + 0.05).toFixed(2))));
-            }}
-            className="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer"
-            title="Zoom In"
-          >
-            +
-          </button>
         </div>
       </div>
 
-      {/* Outer responsive wrapper that scales the A4 print container */}
+      {/* Outer responsive wrapper that scales the A4 print container with horizontal scroll support */}
       <div 
         ref={containerRef} 
-        className="w-full flex justify-center items-start transition-all duration-300 pb-12"
+        className="w-full overflow-x-auto flex justify-center items-start transition-all duration-300 pb-12 px-1"
         style={{ minHeight: `${1123 * scale}px` }}
       >
         {/* A4 Paper Container with realistic PDF page shadow */}
@@ -261,6 +185,18 @@ export default function SlipPreview({ data }: Props) {
               minHeight: 0
             }}
           >
+            {/* ===== COMPOSED IMAGE (Gemini AI output — highest priority) ===== */}
+            {data.composedSlipUrl ? (
+              <div className="w-full h-full rounded-2xl overflow-hidden relative shadow-sm border border-slate-200">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={data.composedSlipUrl}
+                  alt={`Composed Name Slip — ${data.studentName || 'Student'}`}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              <>
             {/* ==================== 1. PREMIUM UNICORN TEMPLATE ==================== */}
             {data.template === 'unicorn' && (
               <div className="w-full h-full rounded-2xl overflow-hidden border border-slate-200 relative bg-gradient-to-br from-pink-100/60 via-purple-50/40 to-blue-100/60 p-2 flex gap-3 shadow-md z-10">
@@ -316,7 +252,7 @@ export default function SlipPreview({ data }: Props) {
                     {/* 1. Student Name */}
                     <div className="relative h-6 flex items-end">
                       <div className="absolute bottom-0.5 left-0 right-0 border-b border-pink-300 border-dashed w-full z-0"></div>
-                      <div className="relative z-10 flex w-full text-[8.5px] font-black text-pink-700 leading-none">
+                      <div className="relative z-10 flex w-full text-[8.5px] font-black leading-none" style={{ color: themeColor }}>
                         <span>Name:</span>
                         <span className="text-[10.5px] text-slate-950 ml-2 font-black leading-none truncate w-[130px]">{data.studentName || ''}</span>
                       </div>
@@ -325,16 +261,16 @@ export default function SlipPreview({ data }: Props) {
                     {/* 2. Subject */}
                     <div className="relative h-6 flex items-end">
                       <div className="absolute bottom-0.5 left-0 right-0 border-b border-pink-300 border-dashed w-full z-0"></div>
-                      <div className="relative z-10 flex w-full text-[8.5px] font-black text-pink-700 leading-none">
+                      <div className="relative z-10 flex w-full text-[8.5px] font-black leading-none" style={{ color: themeColor }}>
                         <span>Subject:</span>
-                        <span className="text-[10px] text-indigo-900 ml-2 font-black leading-none truncate">{slipSubject}</span>
+                        <span className="text-[10px] text-slate-950 ml-2 font-black leading-none truncate">{slipSubject}</span>
                       </div>
                     </div>
 
                     {/* 3. Class & Division */}
                     <div className="relative h-6 flex items-end">
                       <div className="absolute bottom-0.5 left-0 right-0 border-b border-pink-300 border-dashed w-full z-0"></div>
-                      <div className="relative z-10 flex w-full text-[8.5px] font-black text-pink-700 leading-none">
+                      <div className="relative z-10 flex w-full text-[8.5px] font-black leading-none" style={{ color: themeColor }}>
                         <span>Class:</span>
                         <span className="text-[10px] text-slate-950 ml-1.5 font-bold leading-none">{data.grade || ''}</span>
                         <span className="ml-auto">Division:</span>
@@ -345,7 +281,7 @@ export default function SlipPreview({ data }: Props) {
                     {/* 4. Roll No */}
                     <div className="relative h-6 flex items-end">
                       <div className="absolute bottom-0.5 left-0 right-0 border-b border-pink-300 border-dashed w-full z-0"></div>
-                      <div className="relative z-10 flex w-full text-[8.5px] font-black text-pink-700 leading-none">
+                      <div className="relative z-10 flex w-full text-[8.5px] font-black leading-none" style={{ color: themeColor }}>
                         <span>Roll No:</span>
                         <span className="text-[10px] text-slate-950 ml-2 font-bold leading-none">{data.rollNo || ''}</span>
                       </div>
@@ -353,9 +289,9 @@ export default function SlipPreview({ data }: Props) {
                   </div>
 
                   {/* 5. School Name Bottom Footer */}
-                  <div className="text-center pt-0.5 border-t border-pink-100/60 mt-0.5 shrink-0">
-                    <span className="text-[10px] font-black text-pink-500 uppercase tracking-wider truncate block leading-tight">
-                      School: {data.schoolName || ''}
+                  <div className="text-center pt-0.5 border-t border-pink-100/60 mt-0.5 shrink-0 min-h-[16px]">
+                    <span className="text-[10px] font-black uppercase tracking-wider truncate block leading-tight" style={{ color: themeColor }}>
+                      {data.schoolName || ''}
                     </span>
                   </div>
                 </div>
@@ -364,57 +300,56 @@ export default function SlipPreview({ data }: Props) {
 
             {/* ==================== 2. MODERN TEMPLATE ==================== */}
             {data.template === 'modern' && (
-              <div className="w-full h-full rounded-lg overflow-hidden flex border border-slate-200 relative shadow-sm bg-white z-10">
+              <div className="w-full h-full rounded-xl overflow-hidden flex border border-slate-200/80 relative shadow-sm z-10">
                 {renderBackground()}
-                <div className="w-2 h-full shrink-0 z-10" style={{ backgroundColor: themeColor }} />
+                <div className="w-2.5 h-full shrink-0 z-10" style={{ backgroundColor: themeColor }} />
 
-                <div className="flex-1 p-2.5 flex flex-col h-full relative z-10 justify-between">
+                <div className="flex-1 p-2 sm:p-2.5 flex flex-col h-full relative z-10 justify-between">
                   <div className="flex gap-2.5 flex-1 items-center">
+                    {/* Left: Photo Frame */}
                     <div
-                      className="bg-slate-100 rounded overflow-hidden border border-slate-200 shrink-0 flex items-center justify-center relative bg-white shadow-inner transition-all"
+                      className="rounded-lg overflow-hidden border-2 shrink-0 flex items-center justify-center relative bg-white/80 shadow-sm transition-all"
                       style={{
                         width: `${data.photoFrameSize}px`,
-                        height: `${data.photoFrameSize * 1.15}px`
+                        height: `${data.photoFrameSize * 1.15}px`,
+                        borderColor: themeColor,
                       }}
                     >
                       {renderPhoto()}
                     </div>
 
-                    <div className="flex-1 flex flex-col justify-center space-y-1.5">
+                    {/* Right: Details (Transparent background, no white box!) */}
+                    <div className="flex-1 flex flex-col justify-center space-y-1.5 min-w-0">
                       {/* 1. Name */}
-                      <div>
-                        <p className="text-[6px] text-slate-500 font-extrabold uppercase tracking-wider leading-none mb-0.5">Name</p>
+                      <div className="relative pb-0.5 border-b border-slate-300/80">
+                        <p className="text-[6.5px] font-black uppercase tracking-wider leading-none mb-0.5" style={{ color: themeColor }}>Name</p>
                         <p className="font-black text-[11px] leading-none text-slate-950 truncate">{data.studentName || ''}</p>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-x-1.5 gap-y-1">
+                      <div className="grid grid-cols-2 gap-x-2 gap-y-1">
                         {/* 2. Subject */}
-                        <div className="col-span-2">
-                          <p className="text-[6px] text-slate-500 font-extrabold uppercase tracking-wider leading-none mb-0.5">Subject</p>
-                          {slipSubject ? (
-                            <p className="font-black text-[9.5px] leading-none truncate" style={{ color: themeColor }}>{slipSubject}</p>
-                          ) : (
-                            <div className="h-2.5 border-b border-slate-300 border-dashed w-full mt-0.5"></div>
-                          )}
+                        <div className="col-span-2 relative pb-0.5 border-b border-slate-300/80">
+                          <p className="text-[6.5px] font-black uppercase tracking-wider leading-none mb-0.5" style={{ color: themeColor }}>Subject</p>
+                          <p className="font-black text-[9.5px] leading-none truncate text-slate-950">{slipSubject || ''}</p>
                         </div>
                         {/* 3. Class/Div */}
-                        <div>
-                          <p className="text-[6px] text-slate-500 font-extrabold uppercase tracking-wider leading-none mb-0.5">Class/Div</p>
-                          <p className="font-black text-[8.5px] text-slate-950 leading-none truncate">{data.grade || ''} {data.section ? `- ${data.section}` : ''}</p>
+                        <div className="relative pb-0.5 border-b border-slate-300/80">
+                          <p className="text-[6.5px] font-black uppercase tracking-wider leading-none mb-0.5" style={{ color: themeColor }}>Class / Div</p>
+                          <p className="font-black text-[9px] text-slate-950 leading-none truncate">{data.grade || ''}{data.section ? ` - ${data.section}` : ''}</p>
                         </div>
-                        {/* 4. Roll No. */}
-                        <div>
-                          <p className="text-[6px] text-slate-500 font-extrabold uppercase tracking-wider leading-none mb-0.5">Roll No.</p>
-                          <p className="font-black text-[8.5px] text-slate-950 leading-none">{data.rollNo || ''}</p>
+                        {/* 4. Roll No */}
+                        <div className="relative pb-0.5 border-b border-slate-300/80">
+                          <p className="text-[6.5px] font-black uppercase tracking-wider leading-none mb-0.5" style={{ color: themeColor }}>Roll No</p>
+                          <p className="font-black text-[9px] text-slate-950 leading-none">{data.rollNo || ''}</p>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* 5. School */}
-                  <div className="mt-1.5 border-t border-slate-100 pt-1 flex justify-between items-center shrink-0">
-                    <h4 className="font-bold text-[10px] leading-tight text-slate-800 truncate uppercase tracking-wide" style={{ color: themeColor }}>
-                      School: {data.schoolName || ''}
+                  {/* 5. School Footer */}
+                  <div className="mt-1 border-t border-slate-300/80 pt-1 flex justify-between items-center shrink-0 min-h-[16px]">
+                    <h4 className="font-extrabold text-[10px] leading-tight truncate uppercase tracking-wide" style={{ color: themeColor }}>
+                      {data.schoolName || ''}
                     </h4>
                   </div>
                 </div>
@@ -423,91 +358,104 @@ export default function SlipPreview({ data }: Props) {
 
             {/* ==================== 3. CLASSIC TEMPLATE ==================== */}
             {data.template === 'classic' && (
-              <div className="w-full h-full border-2 bg-white relative flex flex-col z-10 justify-between" style={{ borderColor: themeColor }}>
+              <div className="w-full h-full border-2 relative flex flex-col z-10 justify-between overflow-hidden rounded-lg shadow-sm" style={{ borderColor: themeColor }}>
                 {renderBackground()}
 
-                <div className="flex-1 flex p-1.5 gap-2 z-10 bg-white/95 items-center">
+                <div className="flex-1 flex p-2 gap-2.5 z-10 items-center">
+                  {/* Left: Details (Transparent background, no white block!) */}
                   <div className="flex-1 flex flex-col justify-evenly h-full py-0.5 font-sans">
                     {/* 1. Name */}
-                    <div className="flex items-end border-b border-slate-300 border-dashed pb-0.5">
-                      <span className="text-[7.5px] font-black text-slate-600 w-12 shrink-0">Name:</span>
-                      <span className="text-[10px] font-black text-slate-950 ml-1 truncate leading-none">{data.studentName || ''}</span>
+                    <div className="flex items-end border-b border-slate-300/80 border-dashed pb-0.5 h-5">
+                      <span className="text-[8px] font-black w-14 shrink-0" style={{ color: themeColor }}>Name:</span>
+                      <span className="text-[10.5px] font-black text-slate-950 ml-1 truncate leading-none flex-1">{data.studentName || ''}</span>
                     </div>
                     {/* 2. Subject */}
-                    <div className="flex items-end border-b border-slate-300 border-dashed pb-0.5">
-                      <span className="text-[7.5px] font-black text-slate-600 w-12 shrink-0">Subject:</span>
-                      <span className="text-[9.5px] font-black ml-1 leading-none truncate" style={{ color: themeColor }}>{slipSubject}</span>
+                    <div className="flex items-end border-b border-slate-300/80 border-dashed pb-0.5 h-5">
+                      <span className="text-[8px] font-black w-14 shrink-0" style={{ color: themeColor }}>Subject:</span>
+                      <span className="text-[10px] font-black text-slate-950 ml-1 leading-none truncate flex-1">{slipSubject || ''}</span>
                     </div>
                     {/* 3. Class/Div */}
-                    <div className="flex items-end border-b border-slate-300 border-dashed pb-0.5">
-                      <span className="text-[7.5px] font-black text-slate-600 w-12 shrink-0">Class/Div:</span>
-                      <span className="text-[9px] font-black text-slate-950 ml-1 leading-none">{data.grade || ''} {data.section ? `- ${data.section}` : ''}</span>
+                    <div className="flex items-end border-b border-slate-300/80 border-dashed pb-0.5 h-5">
+                      <span className="text-[8px] font-black w-14 shrink-0" style={{ color: themeColor }}>Class/Div:</span>
+                      <span className="text-[9.5px] font-black text-slate-950 ml-1 leading-none flex-1">{data.grade || ''}{data.section ? ` - ${data.section}` : ''}</span>
                     </div>
                     {/* 4. Roll No */}
-                    <div className="flex items-end border-b border-slate-300 border-dashed pb-0.5">
-                      <span className="text-[7.5px] font-black text-slate-600 w-12 shrink-0">Roll No.</span>
-                      <span className="text-[9px] font-black text-slate-950 ml-1 leading-none">{data.rollNo || ''}</span>
+                    <div className="flex items-end border-b border-slate-300/80 border-dashed pb-0.5 h-5">
+                      <span className="text-[8px] font-black w-14 shrink-0" style={{ color: themeColor }}>Roll No:</span>
+                      <span className="text-[9.5px] font-black text-slate-950 ml-1 leading-none flex-1">{data.rollNo || ''}</span>
                     </div>
                   </div>
 
+                  {/* Right: Photo Frame */}
                   <div
-                    className="border border-slate-300 shrink-0 flex items-center justify-center p-0.5 bg-white shadow-sm overflow-hidden transition-all"
+                    className="border-2 rounded-lg shrink-0 flex items-center justify-center p-0.5 bg-white/80 shadow-sm overflow-hidden transition-all"
                     style={{
                       width: `${data.photoFrameSize}px`,
-                      height: `${data.photoFrameSize * 1.25}px`
+                      height: `${data.photoFrameSize * 1.2}px`,
+                      borderColor: themeColor,
                     }}
                   >
                     {renderPhoto()}
                   </div>
                 </div>
 
-                {/* 5. School */}
-                <div className="w-full py-1 text-center flex flex-col items-center justify-center border-t-2 z-10 shrink-0" style={{ backgroundColor: themeColor, borderColor: themeColor, color: textColor }}>
-                  <h4 className="font-bold text-[10px] uppercase tracking-wide leading-tight truncate px-1 w-full">School: {data.schoolName || ''}</h4>
+                {/* Bottom: School Name */}
+                <div className="w-full py-1 text-center flex flex-col items-center justify-center z-10 shrink-0 min-h-[18px]" style={{ backgroundColor: themeColor, color: textColor }}>
+                  <h4 className="font-bold text-[10px] uppercase tracking-wide leading-tight truncate px-2 w-full">{data.schoolName || ''}</h4>
                 </div>
               </div>
             )}
 
             {/* ==================== 4. PLAYFUL TEMPLATE ==================== */}
             {data.template === 'playful' && (
-              <div className="w-full h-full bg-white rounded-xl overflow-hidden border border-slate-200 relative shadow-sm z-10 flex flex-col justify-between">
+              <div className="w-full h-full rounded-2xl overflow-hidden border border-slate-200/80 relative shadow-sm z-10 flex flex-col justify-between">
                 {renderBackground()}
 
                 <div className="p-2 pt-2.5 flex gap-2.5 flex-grow relative z-10 items-center">
+                  {/* Left: Circular Photo Frame with double border */}
                   <div
-                    className="rounded-full border-2 bg-white overflow-hidden shrink-0 shadow-md z-20 flex items-center justify-center transition-all"
+                    className="rounded-full border-[3px] bg-white/80 overflow-hidden shrink-0 shadow-md z-20 flex items-center justify-center transition-all p-0.5"
                     style={{
-                      width: `${data.photoFrameSize}px`,
-                      height: `${data.photoFrameSize}px`,
+                      width: `${data.photoFrameSize + 8}px`,
+                      height: `${data.photoFrameSize + 8}px`,
                       borderColor: themeColor
                     }}
                   >
-                    {renderPhoto()}
+                    <div className="w-full h-full rounded-full overflow-hidden">
+                      {renderPhoto()}
+                    </div>
                   </div>
 
-                  <div className="flex-1 min-w-0 z-20">
-                    <div className="bg-white/85 backdrop-blur-sm border border-slate-100 rounded-lg p-1.5 relative shadow-sm space-y-1">
-                      {/* 1. Name */}
-                      <div>
-                        <p className="text-[5.5px] font-extrabold text-slate-500 uppercase leading-none mb-0.5">Name</p>
-                        <p className="font-black text-[10.5px] text-slate-950 leading-none truncate">{data.studentName || ''}</p>
+                  {/* Right: Details (Transparent, NO opaque white box!) */}
+                  <div className="flex-1 min-w-0 z-20 space-y-1.5">
+                    {/* 1. Name */}
+                    <div className="border-b border-slate-300/80 pb-0.5">
+                      <p className="text-[6.5px] font-extrabold uppercase leading-none mb-0.5" style={{ color: themeColor }}>Name</p>
+                      <p className="font-black text-[11px] text-slate-950 leading-none truncate">{data.studentName || ''}</p>
+                    </div>
+
+                    {/* 2. Sub, 3. Std/Div, 4. Roll with clean underline rows */}
+                    <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+                      <div className="col-span-2 border-b border-slate-300/80 pb-0.5">
+                        <span className="text-[6.5px] font-extrabold uppercase block leading-none mb-0.5" style={{ color: themeColor }}>Subject</span>
+                        <span className="text-[9.5px] font-black text-slate-950 truncate block leading-none">{slipSubject || ''}</span>
                       </div>
-                      {/* 2. Sub & 3. Std/Div & 4. Roll */}
-                      <div className="flex flex-wrap gap-1 text-[7.5px] font-extrabold font-sans">
-                        <span className="bg-indigo-50 px-1 py-0.5 rounded text-indigo-700 font-black truncate max-w-[95px]">
-                          Sub: {slipSubject || '_________'}
-                        </span>
-                        <span className="bg-rose-50 px-1 py-0.5 rounded text-rose-700 font-black">Std {data.grade || ''}{data.section ? `-${data.section}` : ''}</span>
-                        <span className="bg-emerald-50 px-1 py-0.5 rounded text-emerald-700 font-black">Roll {data.rollNo || ''}</span>
+                      <div className="border-b border-slate-300/80 pb-0.5">
+                        <span className="text-[6.5px] font-extrabold uppercase block leading-none mb-0.5" style={{ color: themeColor }}>Class / Div</span>
+                        <span className="text-[9px] font-black text-slate-950 truncate block leading-none">{data.grade || ''}{data.section ? ` - ${data.section}` : ''}</span>
+                      </div>
+                      <div className="border-b border-slate-300/80 pb-0.5">
+                        <span className="text-[6.5px] font-extrabold uppercase block leading-none mb-0.5" style={{ color: themeColor }}>Roll No</span>
+                        <span className="text-[9px] font-black text-slate-950 block leading-none">{data.rollNo || ''}</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* 5. School */}
-                <div className="h-6 relative z-10 flex items-center px-3 mt-1 shrink-0" style={{ backgroundColor: themeColor }}>
-                  <h4 className="font-black text-[10px] text-white tracking-wide truncate" style={{ textShadow: '1px 1px 0px rgba(0,0,0,0.2)' }}>
-                    School: {data.schoolName || ''}
+                {/* 5. School Banner */}
+                <div className="h-5.5 relative z-10 flex items-center px-3 mt-1 shrink-0" style={{ backgroundColor: themeColor }}>
+                  <h4 className="font-black text-[10px] text-white tracking-wide truncate">
+                    {data.schoolName || ''}
                   </h4>
                 </div>
               </div>
@@ -515,7 +463,7 @@ export default function SlipPreview({ data }: Props) {
 
             {/* ===== DOODLE TEMPLATE ===== */}
             {data.template === 'doodle' && (
-              <div className="w-full h-full relative overflow-hidden z-10 bg-yellow-50 rounded-xl shadow-sm border-[3px] border-dashed border-rose-300" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+              <div className="w-full h-full relative overflow-hidden z-10 bg-yellow-50 rounded-xl shadow-sm border-[3px] border-dashed font-fredoka" style={{ borderColor: themeColor }}>
                 {/* Doodles & Rainbows */}
                 <svg className="absolute -top-3 -left-3 w-16 h-16 opacity-80 z-0" viewBox="0 0 60 60">
                   <path d="M10,40 Q30,10 50,40" fill="none" stroke="#f87171" strokeWidth="3" strokeLinecap="round" />
@@ -534,7 +482,7 @@ export default function SlipPreview({ data }: Props) {
                 <div className="absolute top-1/2 left-1 text-sm opacity-60">✨</div>
                 
                 {/* Center Content Box */}
-                <div className="absolute inset-0 m-3 bg-white/95 backdrop-blur-sm rounded-xl shadow-sm border-2 border-indigo-200 flex flex-col p-1.5 justify-between z-10">
+                <div className="absolute inset-0 m-3 bg-white/95 backdrop-blur-sm rounded-xl shadow-sm border-2 flex flex-col p-1.5 justify-between z-10" style={{ borderColor: `${themeColor}60` }}>
                   <div className="flex flex-1 gap-2 items-center px-1">
                     <div className="shrink-0 rounded-2xl overflow-hidden border-4 border-white shadow-sm rotate-[-2deg] bg-blue-50" style={{width:`${data.photoFrameSize}px`,height:`${data.photoFrameSize}px`}}>
                       {renderPhoto()}
@@ -572,11 +520,69 @@ export default function SlipPreview({ data }: Props) {
                   </div>
 
                   {/* 5. School */}
-                  <div className="text-center mt-1 pt-1 border-t-2 border-dotted border-amber-300 shrink-0">
-                    <span className="text-rose-600 font-black text-[9px] uppercase tracking-widest leading-none block truncate px-2">School: {data.schoolName || ''}</span>
+                  <div className="text-center mt-1 pt-1 border-t-2 border-dotted border-amber-300 shrink-0 min-h-[16px]">
+                    <span className="font-black text-[9px] uppercase tracking-widest leading-none block truncate px-2" style={{ color: themeColor }}>{data.schoolName || ''}</span>
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* Fallback to Modern template if not matched */}
+            {!['unicorn', 'modern', 'classic', 'playful', 'doodle'].includes(data.template) && (
+              <div className="w-full h-full rounded-xl overflow-hidden flex border border-slate-200/80 relative shadow-sm z-10">
+                {renderBackground()}
+                <div className="w-2.5 h-full shrink-0 z-10" style={{ backgroundColor: themeColor }} />
+
+                <div className="flex-1 p-2 sm:p-2.5 flex flex-col h-full relative z-10 justify-between">
+                  <div className="flex gap-2.5 flex-1 items-center">
+                    <div
+                      className="rounded-lg overflow-hidden border-2 shrink-0 flex items-center justify-center relative bg-white/80 shadow-sm transition-all"
+                      style={{
+                        width: `${data.photoFrameSize}px`,
+                        height: `${data.photoFrameSize * 1.15}px`,
+                        borderColor: themeColor,
+                      }}
+                    >
+                      {renderPhoto()}
+                    </div>
+
+                    <div className="flex-1 flex flex-col justify-center space-y-1.5 min-w-0">
+                      {/* 1. Name */}
+                      <div className="relative pb-0.5 border-b border-slate-300/80">
+                        <p className="text-[6.5px] font-black uppercase tracking-wider leading-none mb-0.5" style={{ color: themeColor }}>Name</p>
+                        <p className="font-black text-[11px] leading-none text-slate-950 truncate">{data.studentName || ''}</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+                        {/* 2. Subject */}
+                        <div className="col-span-2 relative pb-0.5 border-b border-slate-300/80">
+                          <p className="text-[6.5px] font-black uppercase tracking-wider leading-none mb-0.5" style={{ color: themeColor }}>Subject</p>
+                          <p className="font-black text-[9.5px] leading-none truncate text-slate-950">{slipSubject || ''}</p>
+                        </div>
+                        {/* 3. Class/Div */}
+                        <div className="relative pb-0.5 border-b border-slate-300/80">
+                          <p className="text-[6.5px] font-black uppercase tracking-wider leading-none mb-0.5" style={{ color: themeColor }}>Class / Div</p>
+                          <p className="font-black text-[9px] text-slate-950 leading-none truncate">{data.grade || ''}{data.section ? ` - ${data.section}` : ''}</p>
+                        </div>
+                        {/* 4. Roll No */}
+                        <div className="relative pb-0.5 border-b border-slate-300/80">
+                          <p className="text-[6.5px] font-black uppercase tracking-wider leading-none mb-0.5" style={{ color: themeColor }}>Roll No</p>
+                          <p className="font-black text-[9px] text-slate-950 leading-none">{data.rollNo || ''}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 5. School Footer */}
+                  <div className="mt-1 border-t border-slate-300/80 pt-1 flex justify-between items-center shrink-0 min-h-[16px]">
+                    <h4 className="font-extrabold text-[10px] leading-tight truncate uppercase tracking-wide" style={{ color: themeColor }}>
+                      {data.schoolName || ''}
+                    </h4>
+                  </div>
+                </div>
+              </div>
+            )}
+              </>
             )}
           </div>
           );
