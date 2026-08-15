@@ -9,53 +9,48 @@ interface Props {
 
 export default function SlipPreview({ data }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
+  const [scale, setScale] = useState(0.75);
+  const [zoomMode, setZoomMode] = useState<'fit' | '100' | 'manual'>('fit');
+
+  const calculateFitScale = () => {
+    if (containerRef.current) {
+      const containerWidth = containerRef.current.getBoundingClientRect().width;
+      const windowHeight = typeof window !== 'undefined' ? window.innerHeight : 900;
+      const availableHeight = Math.max(450, windowHeight - 180); // Subtract navbar and action bar
+      
+      const widthScale = (containerWidth - 32) / 794;
+      const heightScale = availableHeight / 1123;
+      
+      // Calculate scale so the entire A4 PDF is 100% visible on screen without scrolling
+      const fitScale = Math.max(0.35, Math.min(widthScale, heightScale, 0.95));
+      return Number(fitScale.toFixed(2));
+    }
+    return 0.75;
+  };
 
   useEffect(() => {
     const handleResize = () => {
-      if (containerRef.current) {
-        const width = containerRef.current.getBoundingClientRect().width;
-        // The standard A4 container width in pixel calculation is roughly 794px (210mm)
-        const targetWidth = 794;
-        const newScale = Math.min(1, width / targetWidth);
-        setScale(newScale);
+      if (zoomMode === 'fit') {
+        setScale(calculateFitScale());
+      } else if (zoomMode === '100') {
+        setScale(1);
       }
     };
 
     handleResize();
     window.addEventListener("resize", handleResize);
-    
-    // Also trigger on a small timeout to make sure initial render completes
     const timer = setTimeout(handleResize, 100);
 
     return () => {
       window.removeEventListener("resize", handleResize);
       clearTimeout(timer);
     };
-  }, []);
+  }, [zoomMode, data.slipSize]);
 
-  // Determine layout based on slip size
-  let slipWidth = '85mm';
-  let slipHeight = '50mm';
-  let copiesCount = 10;
-
-  if (data.slipSize === 'large') {
-    slipWidth = '90mm';
-    slipHeight = '60mm';
-    copiesCount = 8;
-  } else if (data.slipSize === 'small') {
-    slipWidth = '60mm';
-    slipHeight = '40mm';
-    copiesCount = 18; // 3 columns * 6 rows (fits perfectly on A4 page height)
-  }
-
-  // Enforce A5/medium layout for Unicorn when in small layout to preserve design readability
-  const isPremium = ['unicorn', 'doodle'].includes(data.template);
-  const actualWidth = isPremium && data.slipSize === 'small' ? '85mm' : slipWidth;
-  const actualHeight = isPremium && data.slipSize === 'small' ? '50mm' : slipHeight;
-  const actualCopies = isPremium && data.slipSize === 'small' ? 10 : copiesCount;
-
-  const slips = Array.from({ length: actualCopies }, (_, i) => i);
+  // Determine layout based on slip size (8 Slips vs 10 Slips per A4 sheet)
+  const is8Slips = data.slipSize === '8' || data.slipSize === 'large';
+  const copiesCount = is8Slips ? 8 : 10;
+  const slips = Array.from({ length: copiesCount }, (_, i) => i);
 
   // Dynamic styles based on theme
   const themeColor = data.colorTheme;
@@ -147,45 +142,123 @@ export default function SlipPreview({ data }: Props) {
 
   return (
     <div className="flex flex-col items-center w-full">
-      {/* Action Bar */}
-      <div className="w-full max-w-[800px] flex justify-between items-center mb-6 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      {/* Action & Zoom Controls Bar */}
+      <div className="w-full max-w-[840px] flex flex-wrap gap-3 justify-between items-center mb-5 bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-sm">
         <div>
-          <h3 className="font-semibold text-slate-800">Auto-Layout A4 Preview</h3>
-          <p className="text-sm text-slate-500 capitalize">{data.slipSize} Size • Perfectly fits {actualCopies} slips per page</p>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse"></span>
+            <h3 className="font-black text-sm text-[#1a1f4b]">Full A4 PDF Sheet Preview</h3>
+          </div>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">
+            {is8Slips ? '8 Slips / Sheet (Large • 4 × 2 Grid)' : '10 Slips / Sheet (Standard • 5 × 2 Grid)'}
+          </p>
         </div>
-        <div className="text-sm px-3 py-1 bg-indigo-50 text-indigo-600 font-medium rounded-full capitalize">
-          {data.template} + {data.aiBackgroundUrl ? "AI Background" : data.pattern}
+
+        {/* Interactive Zoom & Fit Controls */}
+        <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-xl border border-slate-200">
+          <button
+            type="button"
+            onClick={() => {
+              setZoomMode('fit');
+              setScale(calculateFitScale());
+            }}
+            className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+              zoomMode === 'fit'
+                ? 'bg-[#1a1f4b] text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+            title="Fit complete A4 page to screen"
+          >
+            Fit Page
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setZoomMode('100');
+              setScale(1);
+            }}
+            className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+              zoomMode === '100'
+                ? 'bg-[#1a1f4b] text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+            title="View 100% actual print size"
+          >
+            100%
+          </button>
+
+          <div className="h-4 w-px bg-slate-200 mx-0.5"></div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setZoomMode('manual');
+              setScale((prev) => Math.max(0.3, Number((prev - 0.05).toFixed(2))));
+            }}
+            className="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer"
+            title="Zoom Out"
+          >
+            -
+          </button>
+
+          <span className="text-[11px] font-black text-[#1a1f4b] w-10 text-center">
+            {Math.round(scale * 100)}%
+          </span>
+
+          <button
+            type="button"
+            onClick={() => {
+              setZoomMode('manual');
+              setScale((prev) => Math.min(1.5, Number((prev + 0.05).toFixed(2))));
+            }}
+            className="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer"
+            title="Zoom In"
+          >
+            +
+          </button>
         </div>
       </div>
 
       {/* Outer responsive wrapper that scales the A4 print container */}
       <div 
         ref={containerRef} 
-        className="w-full overflow-hidden flex justify-center items-start transition-all duration-300"
-        style={{ height: `${1123 * scale}px` }}
+        className="w-full flex justify-center items-start transition-all duration-300 pb-12"
+        style={{ minHeight: `${1123 * scale}px` }}
       >
-        {/* A4 Paper Container */}
+        {/* A4 Paper Container with realistic PDF page shadow */}
         <div
           id="print-container"
-          className="bg-white shadow-xl rounded-sm flex flex-wrap content-start justify-center transition-transform origin-top duration-300"
+          className="bg-white shadow-[0_20px_50px_rgba(0,0,0,0.15)] ring-1 ring-slate-900/10 rounded-xs transition-all origin-top duration-300"
           style={{
             width: '210mm',
             height: '297mm', // Standard A4 Size
-            padding: '8mm',  // Reduced margins to allow full A4 print area
-            gap: '5mm', // Spacing between slips
+            paddingTop: is8Slips ? '10mm' : '7.5mm',
+            paddingBottom: is8Slips ? '10mm' : '7.5mm',
+            paddingLeft: '7.5mm',
+            paddingRight: '7.5mm',
+            gap: is8Slips ? '5mm' : '3.5mm',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+            gridTemplateRows: is8Slips ? 'repeat(4, minmax(0, 1fr))' : 'repeat(5, minmax(0, 1fr))',
             boxSizing: 'border-box',
             overflow: 'hidden',
             transform: `scale(${scale})`,
           }}
         >
-        {slips.map((index) => (
+        {slips.map((index) => {
+          const slipSubject = data.subjectMode === 'custom' 
+            ? (data.subjects?.[index] || "") 
+            : (data.subject || "");
+
+          return (
           <div
             key={index}
-            className="break-inside-avoid relative"
+            className="break-inside-avoid relative w-full h-full"
             style={{ 
-              width: actualWidth, 
-              height: actualHeight,
-              boxSizing: 'border-box' // Enforce border-box explicitly
+              boxSizing: 'border-box',
+              minWidth: 0,
+              minHeight: 0
             }}
           >
             {/* ==================== 1. PREMIUM UNICORN TEMPLATE ==================== */}
@@ -240,7 +313,7 @@ export default function SlipPreview({ data }: Props) {
                   <div className="absolute top-6 right-1 text-[8px] text-indigo-400 font-bold opacity-70">🎵</div>
 
                   <div className="flex-1 flex flex-col justify-evenly font-sans relative pr-3">
-                    {/* Student Name */}
+                    {/* 1. Student Name */}
                     <div className="relative h-6 flex items-end">
                       <div className="absolute bottom-0.5 left-0 right-0 border-b border-pink-300 border-dashed w-full z-0"></div>
                       <div className="relative z-10 flex w-full text-[8.5px] font-black text-pink-700 leading-none">
@@ -249,7 +322,16 @@ export default function SlipPreview({ data }: Props) {
                       </div>
                     </div>
 
-                    {/* Class & Division */}
+                    {/* 2. Subject */}
+                    <div className="relative h-6 flex items-end">
+                      <div className="absolute bottom-0.5 left-0 right-0 border-b border-pink-300 border-dashed w-full z-0"></div>
+                      <div className="relative z-10 flex w-full text-[8.5px] font-black text-pink-700 leading-none">
+                        <span>Subject:</span>
+                        <span className="text-[10px] text-indigo-900 ml-2 font-black leading-none truncate">{slipSubject}</span>
+                      </div>
+                    </div>
+
+                    {/* 3. Class & Division */}
                     <div className="relative h-6 flex items-end">
                       <div className="absolute bottom-0.5 left-0 right-0 border-b border-pink-300 border-dashed w-full z-0"></div>
                       <div className="relative z-10 flex w-full text-[8.5px] font-black text-pink-700 leading-none">
@@ -260,7 +342,7 @@ export default function SlipPreview({ data }: Props) {
                       </div>
                     </div>
 
-                    {/* Roll No */}
+                    {/* 4. Roll No */}
                     <div className="relative h-6 flex items-end">
                       <div className="absolute bottom-0.5 left-0 right-0 border-b border-pink-300 border-dashed w-full z-0"></div>
                       <div className="relative z-10 flex w-full text-[8.5px] font-black text-pink-700 leading-none">
@@ -268,18 +350,9 @@ export default function SlipPreview({ data }: Props) {
                         <span className="text-[10px] text-slate-950 ml-2 font-bold leading-none">{data.rollNo || ''}</span>
                       </div>
                     </div>
-
-                    {/* Subject */}
-                    <div className="relative h-6 flex items-end">
-                      <div className="absolute bottom-0.5 left-0 right-0 border-b border-pink-300 border-dashed w-full z-0"></div>
-                      <div className="relative z-10 flex w-full text-[8.5px] font-black text-pink-700 leading-none">
-                        <span>Subject:</span>
-                        <span className="text-[10.5px] text-indigo-900 ml-2 font-black leading-none"></span>
-                      </div>
-                    </div>
                   </div>
 
-                  {/* School Name Bottom Footer */}
+                  {/* 5. School Name Bottom Footer */}
                   <div className="text-center pt-0.5 border-t border-pink-100/60 mt-0.5 shrink-0">
                     <span className="text-[10px] font-black text-pink-500 uppercase tracking-wider truncate block leading-tight">
                       School: {data.schoolName || ''}
@@ -308,20 +381,28 @@ export default function SlipPreview({ data }: Props) {
                     </div>
 
                     <div className="flex-1 flex flex-col justify-center space-y-1.5">
+                      {/* 1. Name */}
                       <div>
                         <p className="text-[6px] text-slate-500 font-extrabold uppercase tracking-wider leading-none mb-0.5">Name</p>
                         <p className="font-black text-[11px] leading-none text-slate-950 truncate">{data.studentName || ''}</p>
                       </div>
 
                       <div className="grid grid-cols-2 gap-x-1.5 gap-y-1">
+                        {/* 2. Subject */}
                         <div className="col-span-2">
                           <p className="text-[6px] text-slate-500 font-extrabold uppercase tracking-wider leading-none mb-0.5">Subject</p>
-                          <p className="font-black text-[9.5px] leading-none" style={{ color: themeColor }}></p>
+                          {slipSubject ? (
+                            <p className="font-black text-[9.5px] leading-none truncate" style={{ color: themeColor }}>{slipSubject}</p>
+                          ) : (
+                            <div className="h-2.5 border-b border-slate-300 border-dashed w-full mt-0.5"></div>
+                          )}
                         </div>
+                        {/* 3. Class/Div */}
                         <div>
                           <p className="text-[6px] text-slate-500 font-extrabold uppercase tracking-wider leading-none mb-0.5">Class/Div</p>
-                          <p className="font-black text-[8.5px] text-slate-950 leading-none truncate">{data.grade || ''} - {data.section || ''}</p>
+                          <p className="font-black text-[8.5px] text-slate-950 leading-none truncate">{data.grade || ''} {data.section ? `- ${data.section}` : ''}</p>
                         </div>
+                        {/* 4. Roll No. */}
                         <div>
                           <p className="text-[6px] text-slate-500 font-extrabold uppercase tracking-wider leading-none mb-0.5">Roll No.</p>
                           <p className="font-black text-[8.5px] text-slate-950 leading-none">{data.rollNo || ''}</p>
@@ -330,6 +411,7 @@ export default function SlipPreview({ data }: Props) {
                     </div>
                   </div>
 
+                  {/* 5. School */}
                   <div className="mt-1.5 border-t border-slate-100 pt-1 flex justify-between items-center shrink-0">
                     <h4 className="font-bold text-[10px] leading-tight text-slate-800 truncate uppercase tracking-wide" style={{ color: themeColor }}>
                       School: {data.schoolName || ''}
@@ -346,21 +428,25 @@ export default function SlipPreview({ data }: Props) {
 
                 <div className="flex-1 flex p-1.5 gap-2 z-10 bg-white/95 items-center">
                   <div className="flex-1 flex flex-col justify-evenly h-full py-0.5 font-sans">
+                    {/* 1. Name */}
                     <div className="flex items-end border-b border-slate-300 border-dashed pb-0.5">
                       <span className="text-[7.5px] font-black text-slate-600 w-12 shrink-0">Name:</span>
                       <span className="text-[10px] font-black text-slate-950 ml-1 truncate leading-none">{data.studentName || ''}</span>
                     </div>
+                    {/* 2. Subject */}
+                    <div className="flex items-end border-b border-slate-300 border-dashed pb-0.5">
+                      <span className="text-[7.5px] font-black text-slate-600 w-12 shrink-0">Subject:</span>
+                      <span className="text-[9.5px] font-black ml-1 leading-none truncate" style={{ color: themeColor }}>{slipSubject}</span>
+                    </div>
+                    {/* 3. Class/Div */}
                     <div className="flex items-end border-b border-slate-300 border-dashed pb-0.5">
                       <span className="text-[7.5px] font-black text-slate-600 w-12 shrink-0">Class/Div:</span>
-                      <span className="text-[9px] font-black text-slate-950 ml-1 leading-none">{data.grade || ''} - {data.section || ''}</span>
+                      <span className="text-[9px] font-black text-slate-950 ml-1 leading-none">{data.grade || ''} {data.section ? `- ${data.section}` : ''}</span>
                     </div>
+                    {/* 4. Roll No */}
                     <div className="flex items-end border-b border-slate-300 border-dashed pb-0.5">
                       <span className="text-[7.5px] font-black text-slate-600 w-12 shrink-0">Roll No.</span>
                       <span className="text-[9px] font-black text-slate-950 ml-1 leading-none">{data.rollNo || ''}</span>
-                    </div>
-                    <div className="flex items-end border-b border-slate-300 border-dashed pb-0.5">
-                      <span className="text-[7.5px] font-black text-slate-600 w-12 shrink-0">Subject:</span>
-                      <span className="text-[9px] font-black ml-1 leading-none truncate" style={{ color: themeColor }}></span>
                     </div>
                   </div>
 
@@ -375,6 +461,7 @@ export default function SlipPreview({ data }: Props) {
                   </div>
                 </div>
 
+                {/* 5. School */}
                 <div className="w-full py-1 text-center flex flex-col items-center justify-center border-t-2 z-10 shrink-0" style={{ backgroundColor: themeColor, borderColor: themeColor, color: textColor }}>
                   <h4 className="font-bold text-[10px] uppercase tracking-wide leading-tight truncate px-1 w-full">School: {data.schoolName || ''}</h4>
                 </div>
@@ -400,19 +487,24 @@ export default function SlipPreview({ data }: Props) {
 
                   <div className="flex-1 min-w-0 z-20">
                     <div className="bg-white/85 backdrop-blur-sm border border-slate-100 rounded-lg p-1.5 relative shadow-sm space-y-1">
+                      {/* 1. Name */}
                       <div>
                         <p className="text-[5.5px] font-extrabold text-slate-500 uppercase leading-none mb-0.5">Name</p>
                         <p className="font-black text-[10.5px] text-slate-950 leading-none truncate">{data.studentName || ''}</p>
                       </div>
+                      {/* 2. Sub & 3. Std/Div & 4. Roll */}
                       <div className="flex flex-wrap gap-1 text-[7.5px] font-extrabold font-sans">
-                        <span className="bg-indigo-50 px-1 py-0.5 rounded text-indigo-700 font-black truncate max-w-[85px]">Sub: </span>
-                        <span className="bg-rose-50 px-1 py-0.5 rounded text-rose-700 font-black">Std {data.grade || ''}-{data.section || ''}</span>
+                        <span className="bg-indigo-50 px-1 py-0.5 rounded text-indigo-700 font-black truncate max-w-[95px]">
+                          Sub: {slipSubject || '_________'}
+                        </span>
+                        <span className="bg-rose-50 px-1 py-0.5 rounded text-rose-700 font-black">Std {data.grade || ''}{data.section ? `-${data.section}` : ''}</span>
                         <span className="bg-emerald-50 px-1 py-0.5 rounded text-emerald-700 font-black">Roll {data.rollNo || ''}</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
+                {/* 5. School */}
                 <div className="h-6 relative z-10 flex items-center px-3 mt-1 shrink-0" style={{ backgroundColor: themeColor }}>
                   <h4 className="font-black text-[10px] text-white tracking-wide truncate" style={{ textShadow: '1px 1px 0px rgba(0,0,0,0.2)' }}>
                     School: {data.schoolName || ''}
@@ -449,20 +541,28 @@ export default function SlipPreview({ data }: Props) {
                     </div>
                     
                     <div className="flex-1 flex flex-col justify-evenly h-full py-0.5 space-y-1">
+                      {/* 1. Name */}
                       <div className="flex flex-col">
                         <span className="text-[6px] font-black text-slate-500 uppercase leading-none mb-0.5">My Name is:</span>
                         <span className="text-[11px] font-black text-indigo-900 leading-none truncate block">{data.studentName || ''}</span>
                       </div>
                       
                       <div className="grid grid-cols-2 gap-x-1 gap-y-1 mt-0.5">
+                        {/* 2. Subject */}
                         <div className="col-span-2">
                           <span className="text-[5.5px] font-black text-slate-500 uppercase block mb-0.5">Subject</span>
-                          <span className="text-[9px] font-black text-rose-700 bg-rose-50 px-1 py-0.5 rounded block truncate leading-none"></span>
+                          {slipSubject ? (
+                            <span className="text-[9px] font-black text-rose-700 bg-rose-50 px-1 py-0.5 rounded block truncate leading-none">{slipSubject}</span>
+                          ) : (
+                            <div className="h-2.5 border-b border-rose-300 border-dashed w-full"></div>
+                          )}
                         </div>
+                        {/* 3. Class & Div */}
                         <div>
                           <span className="text-[5.5px] font-black text-slate-500 uppercase block mb-0.5">Class & Div</span>
-                          <span className="text-[8.5px] font-black text-amber-800 bg-amber-50 px-1 py-0.5 rounded block truncate leading-none">{data.grade || ''} - {data.section || ''}</span>
+                          <span className="text-[8.5px] font-black text-amber-800 bg-amber-50 px-1 py-0.5 rounded block truncate leading-none">{data.grade || ''} {data.section ? `- ${data.section}` : ''}</span>
                         </div>
+                        {/* 4. Roll No */}
                         <div>
                           <span className="text-[5.5px] font-black text-slate-500 uppercase block mb-0.5">Roll No</span>
                           <span className="text-[8.5px] font-black text-emerald-800 bg-emerald-50 px-1 py-0.5 rounded block truncate leading-none">{data.rollNo || ''}</span>
@@ -471,6 +571,7 @@ export default function SlipPreview({ data }: Props) {
                     </div>
                   </div>
 
+                  {/* 5. School */}
                   <div className="text-center mt-1 pt-1 border-t-2 border-dotted border-amber-300 shrink-0">
                     <span className="text-rose-600 font-black text-[9px] uppercase tracking-widest leading-none block truncate px-2">School: {data.schoolName || ''}</span>
                   </div>
@@ -478,7 +579,8 @@ export default function SlipPreview({ data }: Props) {
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   </div>
