@@ -511,57 +511,115 @@ export default function LandingPage() {
                 width: "100%",
                 maxWidth: "436px",
                 justifyContent: "center",
+                position: "relative",
               }}
             >
               <UploadCard />
+              {/* Plus badge in between */}
+              <div
+                style={{
+                  position: "absolute",
+                  left: "50%",
+                  top: "50%",
+                  transform: "translate(-50%, -50%)",
+                  width: "28px",
+                  height: "28px",
+                  borderRadius: "50%",
+                  background: "#1a1f4b",
+                  color: "#F5C42E",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "16px",
+                  fontWeight: 900,
+                  boxShadow: "0 4px 12px rgba(26,31,75,0.25)",
+                  zIndex: 10,
+                  border: "2px solid white",
+                }}
+              >
+                +
+              </div>
               <BgCard />
             </div>
 
-            {/* Curved dashed arrow: hovering between BgCard and NameSlipCard with clear margins */}
-            <svg
+            {/* Symmetrical dashed flow connector */}
+            <div
               style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
                 width: "100%",
-                height: "100%",
-                overflow: "visible",
-                pointerEvents: "none",
-                zIndex: 5,
+                maxWidth: "436px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                margin: "-4px 0 2px",
+                position: "relative",
               }}
-              viewBox="0 0 500 320"
-              preserveAspectRatio="xMidYMid meet"
             >
-              {/* Smooth curved line with generous gap from both cards */}
-              <path
-                className="arrow-march"
-                d="M 450 102 C 494 102 494 224 458 224"
-                stroke="#1a1f4b"
-                strokeWidth="2.2"
-                strokeLinecap="round"
+              <svg
+                width="100%"
+                height="46"
+                viewBox="0 0 436 46"
                 fill="none"
-              />
-              {/* Animated arrowhead with wide margin from card */}
-              <g className="arrow-tip">
+                xmlns="http://www.w3.org/2000/svg"
+                style={{ overflow: "visible" }}
+              >
+                {/* Left curve from Upload card to badge */}
+                <path
+                  className="arrow-march"
+                  d="M 108 0 C 108 14 140 14 165 14"
+                  stroke="#1a1f4b"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                />
+                {/* Right curve from AI Bg card to badge */}
+                <path
+                  className="arrow-march"
+                  d="M 328 0 C 328 14 296 14 271 14"
+                  stroke="#1a1f4b"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                />
+                {/* Downward stem from badge into Name Slip card */}
+                <path
+                  className="arrow-march"
+                  d="M 218 24 L 218 36"
+                  stroke="#1a1f4b"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                />
+                {/* Downward arrow tip */}
                 <polyline
-                  points="468,217 458,224 468,231"
+                  points="212 30 218 38 224 30"
                   stroke="#1a1f4b"
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   fill="none"
-                >
-                  <animateTransform
-                    attributeName="transform"
-                    type="translate"
-                    values="0 0; -3 0; 0 0"
-                    keyTimes="0; 0.5; 1"
-                    dur="0.9s"
-                    repeatCount="indefinite"
-                  />
-                </polyline>
-              </g>
-            </svg>
+                />
+              </svg>
+
+              {/* Mini Sparkle pill badge */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: "3px",
+                  background: "#F5C42E",
+                  color: "#1a1f4b",
+                  padding: "3px 12px",
+                  borderRadius: "20px",
+                  fontSize: "11px",
+                  fontWeight: 800,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  boxShadow: "0 2px 10px rgba(245,196,46,0.35)",
+                  border: "1.5px solid white",
+                  letterSpacing: "0.02em",
+                  zIndex: 2,
+                }}
+              >
+                ✨ AI Merge
+              </div>
+            </div>
 
             {/* Name Slip card — bottom (output) */}
             <div style={{ width: "100%", maxWidth: "436px", display: "flex", justifyContent: "center" }}>
