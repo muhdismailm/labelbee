@@ -11,6 +11,7 @@ import {
   Move,
   RotateCw,
   ZoomIn,
+  ZoomOut,
   Maximize2,
   Upload,
   Crown,
@@ -20,7 +21,8 @@ import {
   PenTool,
   FileText,
   Trash2,
-  Pipette
+  Pipette,
+  RotateCcw,
 } from "lucide-react";
 import React, { ChangeEvent, useRef, useState } from "react";
 
@@ -74,6 +76,96 @@ export default function GeneratorForm({
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  // ─── Direct Interactive Photo Manipulation Handlers ──────────────────────────
+  const [isDraggingPhoto, setIsDraggingPhoto] = useState(false);
+  const photoDragStartRef = useRef<{ x: number; y: number; photoX: number; photoY: number } | null>(null);
+  const photoPinchRef = useRef<{ dist: number; zoom: number } | null>(null);
+  const photoPointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+
+  const handlePhotoPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!data.photoUrl) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    photoPointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (photoPointersRef.current.size === 1) {
+      setIsDraggingPhoto(true);
+      photoDragStartRef.current = {
+        x: e.clientX,
+        y: e.clientY,
+        photoX: data.photoX || 0,
+        photoY: data.photoY || 0,
+      };
+    } else if (photoPointersRef.current.size === 2) {
+      const pts = Array.from(photoPointersRef.current.values());
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      photoPinchRef.current = { dist, zoom: data.photoZoom || 100 };
+    }
+  };
+
+  const handlePhotoPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!photoPointersRef.current.has(e.pointerId)) return;
+    photoPointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (photoPointersRef.current.size === 2 && photoPinchRef.current) {
+      // 2-Finger Pinch Zoom
+      const pts = Array.from(photoPointersRef.current.values());
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      const scale = dist / photoPinchRef.current.dist;
+      const newZoom = Math.min(300, Math.max(100, Math.round(photoPinchRef.current.zoom * scale)));
+      onChange({ photoZoom: newZoom });
+    } else if (photoPointersRef.current.size === 1 && photoDragStartRef.current) {
+      // 1-Finger / Mouse Drag to Pan
+      const dx = e.clientX - photoDragStartRef.current.x;
+      const dy = e.clientY - photoDragStartRef.current.y;
+      const newX = Math.min(80, Math.max(-80, Math.round(photoDragStartRef.current.photoX + dx)));
+      const newY = Math.min(80, Math.max(-80, Math.round(photoDragStartRef.current.photoY + dy)));
+      onChange({ photoX: newX, photoY: newY });
+    }
+  };
+
+  const handlePhotoPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    photoPointersRef.current.delete(e.pointerId);
+    try {
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+    } catch {
+      // ignore
+    }
+
+    if (photoPointersRef.current.size === 0) {
+      setIsDraggingPhoto(false);
+      photoDragStartRef.current = null;
+      photoPinchRef.current = null;
+    } else if (photoPointersRef.current.size === 1) {
+      const pt = Array.from(photoPointersRef.current.values())[0];
+      photoDragStartRef.current = {
+        x: pt.x,
+        y: pt.y,
+        photoX: data.photoX || 0,
+        photoY: data.photoY || 0,
+      };
+    }
+  };
+
+  const handlePhotoWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (!data.photoUrl) return;
+    e.preventDefault();
+    const delta = -Math.sign(e.deltaY) * 6;
+    const newZoom = Math.min(300, Math.max(100, (data.photoZoom || 100) + delta));
+    onChange({ photoZoom: Math.round(newZoom) });
+  };
+
+  const handleResetPhotoAdjustments = () => {
+    onChange({
+      photoZoom: 100,
+      photoTilt: 0,
+      photoX: 0,
+      photoY: 0,
+      photoFrameSize: 65,
+    });
   };
 
   // Handle custom background image upload (Available to ALL users)
@@ -285,98 +377,183 @@ export default function GeneratorForm({
           </div>
         </section>
 
-        {/* Photo Upload & Positioning */}
-        <section className="space-y-4 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-          <div className="flex items-center justify-between mb-1">
+        {/* Photo Upload & Direct Visual Manipulation */}
+        <section className="space-y-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+          <div className="flex items-center justify-between mb-0.5">
             <div className="flex items-center gap-2 text-[#1a1f4b] font-bold text-sm">
               <ImageIcon className="w-4 h-4 text-[#1a1f4b]" />
               <h3>Student Photo & Frame</h3>
             </div>
             {data.photoUrl && (
-              <button
-                type="button"
-                onClick={() => onChange({ photoUrl: null })}
-                className="text-[11px] font-bold text-rose-500 hover:text-rose-700 transition-colors cursor-pointer"
-              >
-                Remove Photo
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-[11px] font-bold text-[#1a1f4b] hover:text-[#f59e0b] transition-colors cursor-pointer"
+                >
+                  Change
+                </button>
+                <span className="text-slate-300">•</span>
+                <button
+                  type="button"
+                  onClick={() => onChange({ photoUrl: null })}
+                  className="text-[11px] font-bold text-rose-500 hover:text-rose-700 transition-colors cursor-pointer"
+                >
+                  Remove
+                </button>
+              </div>
             )}
           </div>
 
           {data.photoUrl ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-4 bg-slate-50/70 p-3.5 rounded-2xl border border-slate-200/80">
+            <div className="space-y-3">
+              {/* Interactive Direct Manipulation Canvas Workspace */}
+              <div className="relative rounded-2xl bg-gradient-to-b from-slate-50 to-slate-100/90 border border-slate-200 p-4 flex flex-col items-center justify-center overflow-hidden select-none touch-none">
+                {/* Visual Target Frame (Circular Avatar Container) */}
                 <div
-                  className="w-16 h-16 rounded-full border-2 border-white shadow-md overflow-hidden bg-slate-200 shrink-0 relative cursor-pointer"
-                  onClick={() => fileInputRef.current?.click()}
-                  title="Click to replace photo"
+                  className="relative rounded-full border-4 border-white shadow-[0_8px_24px_rgba(0,0,0,0.12)] overflow-hidden bg-slate-200 transition-all select-none"
+                  style={{
+                    width: '144px',
+                    height: '144px',
+                    cursor: isDraggingPhoto ? 'grabbing' : 'grab',
+                    touchAction: 'none',
+                  }}
+                  onPointerDown={handlePhotoPointerDown}
+                  onPointerMove={handlePhotoPointerMove}
+                  onPointerUp={handlePhotoPointerUp}
+                  onPointerCancel={handlePhotoPointerUp}
+                  onWheel={handlePhotoWheel}
+                  title="Drag photo to pan • Mouse wheel or pinch to zoom"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={data.photoUrl}
-                    alt="Uploaded"
-                    className="w-full h-full object-cover transition-transform"
+                    alt="Student Preview"
+                    draggable={false}
+                    className="w-full h-full object-cover pointer-events-none select-none transition-transform duration-75"
                     style={{
                       transform: `scale(${data.photoZoom / 100}) rotate(${data.photoTilt}deg) translate(${data.photoX}px, ${data.photoY}px)`,
+                      transformOrigin: 'center center',
                     }}
                   />
+
+                  {/* Subtle Interactive Crosshair Guidelines when dragging */}
+                  {isDraggingPhoto && (
+                    <div className="absolute inset-0 pointer-events-none border border-indigo-400/40 grid grid-cols-3 grid-rows-3 opacity-60">
+                      <div className="border-r border-b border-indigo-400/40" />
+                      <div className="border-r border-b border-indigo-400/40" />
+                      <div className="border-b border-indigo-400/40" />
+                      <div className="border-r border-b border-indigo-400/40" />
+                      <div className="border-r border-b border-indigo-400/40" />
+                      <div className="border-b border-indigo-400/40" />
+                      <div className="border-r border-indigo-400/40" />
+                      <div className="border-r border-indigo-400/40" />
+                      <div />
+                    </div>
+                  )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-slate-800 truncate">Photo uploaded</p>
-                  <p className="text-[11px] text-slate-400 mb-2">Adjust zoom, tilt and frame below</p>
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="text-[11px] font-extrabold text-[#1a1f4b] hover:text-[#F5C42E] transition-colors cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs"
-                  >
-                    Change Image
-                  </button>
+
+                {/* Subtle Gesture Guidance Pill */}
+                <div className="mt-3 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/90 backdrop-blur-xs border border-slate-200/80 shadow-2xs text-[10.5px] font-semibold text-slate-600">
+                  <Move className="w-3 h-3 text-indigo-600" />
+                  <span>Drag photo to pan • Scroll or pinch to zoom</span>
                 </div>
               </div>
 
-              {/* Adjusters Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50/50 p-3.5 rounded-2xl border border-slate-200/60">
-                <div className="sm:col-span-2">
-                  <div className="flex justify-between text-xs font-semibold text-slate-600 mb-1.5">
-                    <span className="flex items-center gap-1.5"><Maximize2 className="w-3.5 h-3.5 text-indigo-600" /> Photo Frame Size</span>
-                    <span className="font-bold text-[#1a1f4b]">{data.photoFrameSize}px</span>
-                  </div>
+              {/* Streamlined Simple Controls */}
+              <div className="bg-slate-50/70 p-3.5 rounded-2xl border border-slate-200/80 space-y-3">
+                {/* 1. Zoom Bar */}
+                <div className="flex items-center gap-2.5">
+                  <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5 min-w-[62px]">
+                    <ZoomIn className="w-3.5 h-3.5 text-indigo-600" /> Zoom
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onChange({ photoZoom: Math.max(100, data.photoZoom - 10) })}
+                    className="w-7 h-7 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-extrabold flex items-center justify-center transition-all cursor-pointer text-sm shadow-2xs"
+                    title="Zoom Out"
+                  >
+                    −
+                  </button>
                   <input
                     type="range"
-                    value={data.photoFrameSize}
-                    min={40}
-                    max={100}
-                    onChange={(e) => onChange({ photoFrameSize: Number(e.target.value) })}
-                    className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                  />
-                </div>
-                <div>
-                  <div className="flex justify-between text-xs font-semibold text-slate-600 mb-1.5">
-                    <span className="flex items-center gap-1.5"><ZoomIn className="w-3.5 h-3.5 text-indigo-600" /> Zoom</span>
-                    <span className="font-bold text-[#1a1f4b]">{data.photoZoom}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    value={data.photoZoom}
                     min={100}
                     max={300}
+                    value={data.photoZoom}
                     onChange={(e) => onChange({ photoZoom: Number(e.target.value) })}
-                    className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                    className="flex-1 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                   />
+                  <button
+                    type="button"
+                    onClick={() => onChange({ photoZoom: Math.min(300, data.photoZoom + 10) })}
+                    className="w-7 h-7 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-extrabold flex items-center justify-center transition-all cursor-pointer text-sm shadow-2xs"
+                    title="Zoom In"
+                  >
+                    +
+                  </button>
+                  <span className="text-xs font-extrabold text-[#1a1f4b] min-w-[40px] text-right">
+                    {data.photoZoom}%
+                  </span>
                 </div>
-                <div>
-                  <div className="flex justify-between text-xs font-semibold text-slate-600 mb-1.5">
-                    <span className="flex items-center gap-1.5"><RotateCw className="w-3.5 h-3.5 text-indigo-600" /> Tilt</span>
-                    <span className="font-bold text-[#1a1f4b]">{data.photoTilt}°</span>
+
+                {/* 2. Rotate & Reset Row */}
+                <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5 min-w-[62px]">
+                      <RotateCw className="w-3.5 h-3.5 text-indigo-600" /> Rotate
+                    </span>
+                    <div className="flex items-center bg-white border border-slate-200 rounded-xl p-0.5 shadow-2xs">
+                      <button
+                        type="button"
+                        onClick={() => onChange({ photoTilt: ((data.photoTilt - 15 + 180) % 360) - 180 })}
+                        className="px-2.5 py-1 text-xs font-bold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50/50 rounded-lg transition-all cursor-pointer"
+                        title="Rotate -15°"
+                      >
+                        ↶ -15°
+                      </button>
+                      <span className="px-2 text-xs font-black text-[#1a1f4b] border-x border-slate-100 min-w-[36px] text-center">
+                        {data.photoTilt}°
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => onChange({ photoTilt: ((data.photoTilt + 15 + 180) % 360) - 180 })}
+                        className="px-2.5 py-1 text-xs font-bold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50/50 rounded-lg transition-all cursor-pointer"
+                        title="Rotate +15°"
+                      >
+                        +15° ↷
+                      </button>
+                    </div>
                   </div>
-                  <input
-                    type="range"
-                    value={data.photoTilt}
-                    min={-45}
-                    max={45}
-                    onChange={(e) => onChange({ photoTilt: Number(e.target.value) })}
-                    className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                  />
+
+                  <button
+                    type="button"
+                    onClick={handleResetPhotoAdjustments}
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-600 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                    title="Reset photo position, zoom, and rotation"
+                  >
+                    <RotateCcw className="w-3 h-3 text-slate-500" />
+                    <span>Reset</span>
+                  </button>
+                </div>
+
+                {/* 3. Frame Size Row */}
+                <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
+                  <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <Maximize2 className="w-3.5 h-3.5 text-indigo-600" /> Frame Size
+                  </span>
+                  <div className="flex items-center gap-2 w-48">
+                    <input
+                      type="range"
+                      min={40}
+                      max={95}
+                      value={data.photoFrameSize}
+                      onChange={(e) => onChange({ photoFrameSize: Number(e.target.value) })}
+                      className="flex-1 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                    />
+                    <span className="text-xs font-extrabold text-[#1a1f4b] min-w-[36px] text-right">
+                      {data.photoFrameSize}px
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
