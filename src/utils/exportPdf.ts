@@ -1,4 +1,5 @@
 import html2canvas from "html2canvas";
+import { toJpeg } from "html-to-image";
 import jsPDF from "jspdf";
 
 /**
@@ -33,16 +34,18 @@ export const exportToPdf = async (elementId: string, filename: string = "name-sl
     return;
   }
 
-  try {
-    // Wait for all image bitmaps and fonts to be ready
-    await ensureAssetsLoaded(element);
-    await new Promise((resolve) => setTimeout(resolve, 100));
+  // Ensure assets are loaded
+  await ensureAssetsLoaded(element);
+  await new Promise((resolve) => setTimeout(resolve, 100));
 
-    // html2canvas renders directly to 2D Canvas context (immune to WebKit foreignObject sandbox image dropping)
+  let imgData: string | null = null;
+
+  // Primary Engine: html2canvas (Direct 2D Canvas rendering - preserves images on iOS without foreignObject sandbox dropping)
+  try {
     const canvas = await html2canvas(element, {
-      scale: 2, // 2x DPI (~1588x2246 px) delivers crisp 300DPI-equivalent prints without exceeding mobile canvas memory
+      scale: 2, // ~1588x2246 px crisp A4 resolution
       useCORS: true,
-      allowTaint: true,
+      allowTaint: false, // Critical: allowTaint must be false so canvas.toDataURL() is permitted
       backgroundColor: "#ffffff",
       logging: false,
       imageTimeout: 15000,
@@ -61,6 +64,13 @@ export const exportToPdf = async (elementId: string, filename: string = "name-sl
           printNode.style.width = "794px";
           printNode.style.height = "1123px";
 
+          // Expand parent in clone so no mobile container clipping occurs
+          if (printNode.parentElement) {
+            printNode.parentElement.style.width = "794px";
+            printNode.parentElement.style.height = "1123px";
+            printNode.parentElement.style.overflow = "visible";
+          }
+
           // Strip preview watermarks from the clone so output PDF is 100% clean
           printNode.querySelectorAll(".preview-watermark, .preview-watermark-overlay").forEach((el) => {
             el.remove();
@@ -69,24 +79,56 @@ export const exportToPdf = async (elementId: string, filename: string = "name-sl
       },
     });
 
-    const imgData = canvas.toDataURL("image/jpeg", 0.98);
-
-    // Create a new jsPDF instance (A4 size: 210mm x 297mm, portrait)
-    const pdf = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: "a4",
-      compress: true,
-    });
-
-    // Map 1:1 onto standard A4 page
-    pdf.addImage(imgData, "JPEG", 0, 0, 210, 297, undefined, "FAST");
-
-    // Standard pdf.save() triggers native browser download confirmation prompt on iOS Safari and Desktop
-    pdf.save(filename);
-  } catch (error) {
-    console.error("[exportToPdf] Error generating PDF:", error);
-    throw error;
+    imgData = canvas.toDataURL("image/jpeg", 0.98);
+  } catch (canvasErr) {
+    console.warn("[exportToPdf] html2canvas failed, attempting html-to-image fallback...", canvasErr);
   }
+
+  // Fallback Engine: html-to-image (toJpeg) if html2canvas was blocked
+  if (!imgData || imgData.length < 5000) {
+    try {
+      const originalTransform = element.style.transform;
+      element.style.transform = "none";
+      await new Promise((resolve) => setTimeout(resolve, 80));
+
+      imgData = await toJpeg(element, {
+        quality: 0.98,
+        pixelRatio: 2,
+        backgroundColor: "#ffffff",
+        cacheBust: true,
+        filter: (node) => {
+          if (node instanceof HTMLElement) {
+            if (node.classList.contains("preview-watermark") || node.classList.contains("preview-watermark-overlay")) {
+              return false;
+            }
+          }
+          return true;
+        },
+      });
+
+      element.style.transform = originalTransform;
+    } catch (toJpegErr) {
+      console.error("[exportToPdf] html-to-image fallback also failed:", toJpegErr);
+      throw toJpegErr;
+    }
+  }
+
+  if (!imgData) {
+    throw new Error("Failed to capture name slip image data for PDF.");
+  }
+
+  // Create a new jsPDF instance (A4 size: 210mm x 297mm, portrait)
+  const pdf = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+    compress: true,
+  });
+
+  // Map 1:1 onto standard A4 page
+  pdf.addImage(imgData, "JPEG", 0, 0, 210, 297, undefined, "FAST");
+
+  // Standard pdf.save() triggers native browser download confirmation prompt on iOS Safari and Desktop
+  pdf.save(filename);
 };
 
