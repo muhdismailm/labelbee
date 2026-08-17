@@ -46,58 +46,87 @@ export const exportToPdf = async (elementId: string, filename: string = "name-sl
   }
 
   const isIOS = isIOSDevice();
-  // iOS Safari canvas memory limit is strict (pixelRatio 2 produces ~1588x2246 px, avoiding canvas crashes)
+  // Standard A4 pixel metrics at 96 DPI: 794px width x 1123px height
+  const A4_WIDTH = 794;
+  const A4_HEIGHT = 1123;
   const pixelRatio = isIOS ? 2 : 2.5;
 
-  // Temporarily reset transform for unscaled high-res capture
-  const originalTransform = element.style.transform;
-  const originalTransition = element.style.transition;
+  // Create an isolated off-screen staging container
+  // This completely eliminates mobile viewport clipping, parent CSS transforms, and scale distortion
+  const offscreenContainer = document.createElement("div");
+  offscreenContainer.style.position = "fixed";
+  offscreenContainer.style.left = "-9999px";
+  offscreenContainer.style.top = "0";
+  offscreenContainer.style.width = `${A4_WIDTH}px`;
+  offscreenContainer.style.height = `${A4_HEIGHT}px`;
+  offscreenContainer.style.overflow = "hidden";
+  offscreenContainer.style.zIndex = "-9999";
+  offscreenContainer.style.pointerEvents = "none";
+  offscreenContainer.style.backgroundColor = "#ffffff";
+
+  // Deep clone the print container
+  const clone = element.cloneNode(true) as HTMLElement;
+  clone.id = "print-container-export-clone";
+  clone.style.transform = "none";
+  clone.style.transition = "none";
+  clone.style.position = "relative";
+  clone.style.top = "0";
+  clone.style.left = "0";
+  clone.style.width = `${A4_WIDTH}px`;
+  clone.style.height = `${A4_HEIGHT}px`;
+  clone.style.margin = "0";
+  clone.style.boxShadow = "none";
+  clone.style.borderRadius = "0";
+  clone.style.overflow = "hidden";
+  clone.style.boxSizing = "border-box";
+
+  // Remove any preview watermarks or overlays from the clone to guarantee clean output
+  clone.querySelectorAll(".preview-watermark, .preview-watermark-overlay, [aria-hidden='true']").forEach((el) => {
+    el.remove();
+  });
+
+  offscreenContainer.appendChild(clone);
+  document.body.appendChild(offscreenContainer);
 
   try {
-    element.style.transform = "none";
-    element.style.transition = "none";
-
-    // Wait for DOM layout repaint and asset readiness
+    // Wait for layout calculation and sub-assets in the clone
     await new Promise((resolve) => setTimeout(resolve, 150));
-    await ensureAssetsLoaded(element);
+    await ensureAssetsLoaded(clone);
 
     // Warm-up pass for Safari/WebKit to bake foreignObject sub-resources into the rasterizer cache
     try {
-      await toJpeg(element, {
+      await toJpeg(clone, {
         quality: 0.8,
         pixelRatio: 1,
+        width: A4_WIDTH,
+        height: A4_HEIGHT,
         backgroundColor: "#ffffff",
       });
     } catch {
       // Warm-up pass is non-critical
     }
 
-    const filterNode = (node: Node) => {
-      if (node instanceof HTMLElement) {
-        if (node.classList.contains("preview-watermark") || node.classList.contains("preview-watermark-overlay")) {
-          return false;
-        }
-      }
-      return true;
-    };
-
-    // High-resolution capture (strictly filtered for clean PDF output)
-    let imgData = await toJpeg(element, {
+    // High-resolution capture from the isolated clone
+    let imgData = await toJpeg(clone, {
       quality: 0.98,
       pixelRatio,
+      width: A4_WIDTH,
+      height: A4_HEIGHT,
+      canvasWidth: Math.round(A4_WIDTH * pixelRatio),
+      canvasHeight: Math.round(A4_HEIGHT * pixelRatio),
       backgroundColor: "#ffffff",
       cacheBust: true,
-      filter: filterNode,
     });
 
     // If Safari returned an empty payload, retry once with fallback parameters
     if (!imgData || imgData.length < 5000) {
       console.warn("[exportToPdf] Retrying image capture for Safari/WebKit...");
-      imgData = await toJpeg(element, {
+      imgData = await toJpeg(clone, {
         quality: 0.95,
         pixelRatio: 2,
+        width: A4_WIDTH,
+        height: A4_HEIGHT,
         backgroundColor: "#ffffff",
-        filter: filterNode,
       });
     }
 
@@ -109,6 +138,7 @@ export const exportToPdf = async (elementId: string, filename: string = "name-sl
       compress: true,
     });
 
+    // Map 1:1 onto standard A4 page
     pdf.addImage(imgData, "JPEG", 0, 0, 210, 297, undefined, "FAST");
 
     if (isIOS) {
@@ -140,9 +170,10 @@ export const exportToPdf = async (elementId: string, filename: string = "name-sl
     console.error("[exportToPdf] Error generating PDF:", error);
     throw error;
   } finally {
-    // Always restore original scale transform
-    element.style.transform = originalTransform;
-    element.style.transition = originalTransition;
+    // Always clean up offscreen container
+    if (offscreenContainer.parentNode) {
+      offscreenContainer.parentNode.removeChild(offscreenContainer);
+    }
   }
 };
 
