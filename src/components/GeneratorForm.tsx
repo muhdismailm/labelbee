@@ -6,7 +6,6 @@ import {
   Image as ImageIcon,
   Settings,
   Palette,
-  Sparkles,
   Loader2,
   BookOpen,
   Move,
@@ -640,7 +639,7 @@ export default function GeneratorForm({
               <div className="space-y-2 bg-slate-50/80 p-3 rounded-xl border border-slate-200/80">
                 <div className="flex items-center justify-between">
                   <label className="text-[11.5px] font-extrabold text-[#1a1f4b] flex items-center gap-1.5">
-                    <Sparkles className="w-3 h-3 text-amber-500" />
+                    <Palette className="w-3 h-3 text-amber-500" />
                     <span>Select Background Template Layout</span>
                   </label>
                 </div>
@@ -703,16 +702,11 @@ export default function GeneratorForm({
               <div className="space-y-2">
                 <h4 className="text-xs font-bold text-[#1a1f4b]">Unlock Full AI Generation & Composition</h4>
                 <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
-                  Upgrade to the <strong className="text-amber-800">Premium Plan (₹100 for 100 sheets)</strong> to unlock our complete AI creative suite:
+                  Upgrade to the <strong className="text-amber-800">Premium Plan</strong> to unlock our complete AI creative suite:
                 </p>
                 <ul className="text-[11px] text-slate-600 space-y-1.5 pl-1">
                   <li className="flex items-center gap-1.5 font-semibold text-[#1a1f4b]">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                     <span>AI Magic Background Generator (Prompt-based)</span>
-                  </li>
-                  <li className="flex items-center gap-1.5 font-semibold text-[#1a1f4b]">
-                    <Zap className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                    <span>Gemini AI Name Slip Composer (Generative synthesis)</span>
                   </li>
                 </ul>
               </div>
@@ -731,7 +725,6 @@ export default function GeneratorForm({
               {/* Feature 1: AI Background Generator */}
               <div className="bg-white/90 p-4 rounded-xl border border-indigo-100 space-y-2.5 shadow-2xs">
                 <div className="flex items-center gap-1.5 text-xs font-black text-[#1a1f4b]">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                   <h4>AI Magic Background Generator</h4>
                 </div>
                 <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
@@ -763,9 +756,7 @@ export default function GeneratorForm({
                           <Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating Background...
                         </>
                       ) : (
-                        <>
-                          <Sparkles className="w-3.5 h-3.5 text-[#F5C42E]" /> Generate AI Background
-                        </>
+                        <span>Generate AI Background</span>
                       )}
                     </button>
 
