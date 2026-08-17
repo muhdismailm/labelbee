@@ -9,12 +9,28 @@ export const exportToPdf = async (elementId: string, filename: string = "name-sl
   }
 
   try {
-    // Generate JPEG from the element using html-to-image
-    const imgData = await toJpeg(element, {
-      quality: 1,
-      pixelRatio: 3, // High resolution
-      backgroundColor: "#ffffff",
-    });
+    // Temporarily reset transform for unscaled high-res capture
+    const originalTransform = element.style.transform;
+    const originalTransition = element.style.transition;
+    element.style.transform = "none";
+    element.style.transition = "none";
+
+    // Small delay to allow DOM to layout without transform
+    await new Promise((resolve) => setTimeout(resolve, 60));
+
+    let imgData: string;
+    try {
+      // Generate JPEG from the element using html-to-image at 300 DPI
+      imgData = await toJpeg(element, {
+        quality: 1,
+        pixelRatio: 3, // High resolution
+        backgroundColor: "#ffffff",
+      });
+    } finally {
+      // Always restore original scale transform
+      element.style.transform = originalTransform;
+      element.style.transition = originalTransition;
+    }
 
     // Create a new jsPDF instance (A4 size, portrait)
     // A4 dimensions: 210 x 297 mm

@@ -9,7 +9,9 @@ export interface SlipData {
   busNo: string;
   bloodGroup: string;
   contactNo: string;
-  subject: string; // Added for Notebook subject line (e.g. Math, English)
+  subject: string; // Default or fallback subject
+  subjects: string[]; // Per-slip individual subjects (e.g. Slip 1: Math, Slip 2: Science)
+  subjectMode: 'blank' | 'custom'; // 'blank' for handwriting, 'custom' for per-slip typed subjects
   photoUrl: string | null;
   photoZoom: number; // Zoom level (100% to 300%)
   photoTilt: number; // Rotate angle (-180 to 180)
@@ -18,9 +20,12 @@ export interface SlipData {
   photoFrameSize: number; // Size of the photo frame container (45 to 95)
   template: 'classic' | 'modern' | 'playful' | 'unicorn' | 'bookcard' | 'space' | 'sunshine' | 'science' | 'garden' | 'doodle';
   colorTheme: string;
-  pattern: 'none' | 'dots' | 'waves' | 'grid' | 'confetti'; // Added for background materials
-  aiBackgroundUrl: string | null; // Added for Gemini AI background image
-  slipSize: 'large' | 'medium' | 'small'; // The size determines how many fit on A4
+  pattern?: 'none' | 'dots' | 'waves' | 'grid' | 'confetti';
+  aiBackgroundUrl: string | null; // Added for Gemini AI or custom background image
+  slipSize: '8' | '10' | 'large' | 'medium' | 'small'; // 8 or 10 slips per A4 sheet
+  // Premium Plan AI Composer
+  composedSlipUrl: string | null; // Final Gemini-composed name slip image (replaces HTML overlay)
+  stylePrompt: string; // User's style/composition instructions for Gemini
 }
 
 export const defaultSlipData: SlipData = {
@@ -35,6 +40,8 @@ export const defaultSlipData: SlipData = {
   bloodGroup: "",
   contactNo: "",
   subject: "",
+  subjects: [],
+  subjectMode: 'blank',
   photoUrl: null,
   photoZoom: 100,
   photoTilt: 0,
@@ -43,7 +50,8 @@ export const defaultSlipData: SlipData = {
   photoFrameSize: 65,
   template: 'unicorn',
   colorTheme: '#6366f1',
-  pattern: 'confetti',
   aiBackgroundUrl: null,
-  slipSize: 'medium',
+  slipSize: '10',
+  composedSlipUrl: null,
+  stylePrompt: '',
 };
