@@ -30,8 +30,8 @@ export async function POST(req: Request) {
     // Secure server-side pricing definitions (paise: ₹1 = 100 paise)
     const pricingMap: Record<string, number> = {
       pack_1: 1500,   // ₹15.00 (Starter: 5 credits)
-      pack_4: 3000,   // ₹30.00 (Popular: 10 credits)
-      pack_10: 10000, // ₹100.00 (Business: 100 credits)
+      pack_4: 3000,   // ₹30.00 (Standard: 10 credits)
+      pack_10: 10000, // ₹100.00 (Premium: 25 credits)
     };
 
     const amount = pricingMap[packageId];
