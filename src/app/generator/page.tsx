@@ -782,14 +782,9 @@ export default function Home() {
 
               {/* Pack 10: Premium Plan (₹100 for 25 credits) */}
               <div className="border border-amber-300 rounded-2xl p-5 flex flex-col items-center text-center gap-4 bg-amber-50/15 relative hover:shadow-md transition-all duration-300">
-                <div className="flex flex-col items-center gap-1">
-                  <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold uppercase tracking-wide">
-                    Premium Plan
-                  </span>
-                  <span className="text-[10.5px] font-extrabold text-amber-700 bg-amber-100/70 border border-amber-300/80 px-2 py-0.5 rounded-full">
-                    ✨ Includes AI Magic
-                  </span>
-                </div>
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold uppercase tracking-wide">
+                  Premium Plan
+                </span>
                 <div className="my-1">
                   <div className="text-3xl font-black text-amber-500">25</div>
                   <div className="text-xs text-amber-500 uppercase font-bold tracking-wider">Download Credits</div>

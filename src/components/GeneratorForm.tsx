@@ -20,10 +20,6 @@ import {
   PenTool,
   FileText,
   Trash2,
-  ImagePlus,
-  Zap,
-  RefreshCw,
-  AlertCircle,
   Pipette
 } from "lucide-react";
 import React, { ChangeEvent, useRef, useState } from "react";
@@ -63,11 +59,6 @@ export default function GeneratorForm({
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
-
-  // Gemini AI Slip Composer State
-  const [composing, setComposing] = useState(false);
-  const [composeError, setComposeError] = useState<string | null>(null);
-  const [composeSuccess, setComposeSuccess] = useState(false);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -138,56 +129,6 @@ export default function GeneratorForm({
   const removeAiBackground = () => {
     onChange({ aiBackgroundUrl: null, composedSlipUrl: null });
     setAiPrompt("");
-    setComposeError(null);
-    setComposeSuccess(false);
-  };
-
-  const clearComposedSlip = () => {
-    onChange({ composedSlipUrl: null });
-    setComposeError(null);
-    setComposeSuccess(false);
-  };
-
-  // Main Premium Plan AI Slip Composer
-  const composeWithGemini = async () => {
-    if (!data.aiBackgroundUrl) return;
-
-    setComposing(true);
-    setComposeError(null);
-    setComposeSuccess(false);
-
-    try {
-      const res = await fetch("/api/compose-slip", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          backgroundBase64: data.aiBackgroundUrl,
-          studentPhotoBase64: data.photoUrl || undefined,
-          stylePrompt: data.stylePrompt || undefined,
-          studentDetails: {
-            studentName: data.studentName,
-            grade: data.grade,
-            section: data.section,
-            rollNo: data.rollNo,
-            subject: data.subject || (data.subjects?.[0] ?? ""),
-            schoolName: data.schoolName,
-          },
-        }),
-      });
-
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || "Gemini composition failed.");
-
-      if (result.composedSlipUrl) {
-        onChange({ composedSlipUrl: result.composedSlipUrl });
-        setComposeSuccess(true);
-      }
-    } catch (err: unknown) {
-      const error = err as Error;
-      setComposeError(error.message || "Failed to compose name slip.");
-    } finally {
-      setComposing(false);
-    }
   };
 
   return (
@@ -771,88 +712,6 @@ export default function GeneratorForm({
                   </div>
                 </div>
               </div>
-
-              {/* Feature 2: Gemini AI Name Slip Composer */}
-              {data.aiBackgroundUrl && (
-                <div className="bg-white/90 p-4 rounded-xl border border-indigo-100 space-y-3 shadow-2xs">
-                  <div className="flex items-center gap-2">
-                    <Zap className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                    <span className="text-xs font-black text-[#1a1f4b]">Gemini AI Name Slip Composer</span>
-                  </div>
-
-                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
-                    Optionally blend background, photo, and student typography into a unified generative image:
-                  </p>
-
-                  <div>
-                    <label className="block text-[10.5px] font-bold text-slate-600 mb-1">
-                      Style / Mood Instructions (optional)
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={data.stylePrompt}
-                      onChange={(e) => onChange({ stylePrompt: e.target.value })}
-                      placeholder="e.g. Make it dark and cosmic with glowing text. Ultra-vibrant colors..."
-                      className="w-full px-3 py-2 border border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-300/50 focus:border-indigo-400 outline-none transition-all text-slate-800 text-[11px] bg-white font-medium resize-none"
-                      disabled={composing}
-                    />
-                  </div>
-
-                  <button
-                    type="button"
-                    disabled={composing}
-                    onClick={composeWithGemini}
-                    className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:from-slate-300 disabled:to-slate-300 text-white text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99]"
-                  >
-                    {composing ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>Composing with Gemini...</span>
-                      </>
-                    ) : (
-                      <>
-                        <ImagePlus className="w-3.5 h-3.5" />
-                        <span>{data.composedSlipUrl ? 'Re-compose Slip with AI' : 'Compose Name Slip with AI'}</span>
-                      </>
-                    )}
-                  </button>
-
-                  {composeSuccess && data.composedSlipUrl && (
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-emerald-800 font-extrabold text-xs">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                          <span>Name Slip Composed!</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={clearComposedSlip}
-                          className="text-[10px] font-bold text-slate-500 hover:text-rose-500 bg-white border border-slate-200 px-2 py-0.5 rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
-                        >
-                          <RefreshCw className="w-2.5 h-2.5" /> Use HTML Layout
-                        </button>
-                      </div>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={data.composedSlipUrl}
-                        alt="Composed Name Slip"
-                        className="w-full rounded-lg border border-emerald-200 shadow-sm"
-                      />
-                    </div>
-                  )}
-
-                  {composeError && (
-                    <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-xs flex items-start gap-2">
-                      <AlertCircle className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
-                      <div>
-                        <span className="font-extrabold text-rose-700 block">Composition failed</span>
-                        <span className="text-rose-600 font-medium">{composeError}</span>
-                        <p className="text-rose-500 mt-0.5">Your HTML overlay layout is still active in the preview.</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           )}
         </section>

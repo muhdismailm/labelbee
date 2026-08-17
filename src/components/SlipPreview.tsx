@@ -76,9 +76,10 @@ export default function SlipPreview({ data }: Props) {
   const slips = Array.from({ length: copiesCount }, (_, i) => i);
 
   // Dynamic styles based on theme
-  const themeColor = data.colorTheme;
+  const themeColor = data.colorTheme || '#6366f1';
   const isLight = themeColor === '#f8fafc' || themeColor === '#ffffff';
   const textColor = isLight ? '#1e293b' : '#ffffff';
+  const typingDetailsColor = themeColor;
 
   // Helper to render backgrounds (AI or custom uploaded image)
   const renderBackground = () => {
@@ -100,15 +101,19 @@ export default function SlipPreview({ data }: Props) {
     }
 
     return (
-      <div className="w-full h-full relative overflow-hidden bg-white">
+      <div className="w-full h-full relative overflow-hidden bg-white select-none">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={data.photoUrl}
           alt="Student"
-          className="w-full h-full object-cover"
+          draggable={false}
+          onContextMenu={(e) => e.preventDefault()}
+          className="w-full h-full object-cover select-none pointer-events-none"
           style={{
             transform: `scale(${data.photoZoom / 100}) rotate(${data.photoTilt}deg) translate(${data.photoX}px, ${data.photoY}px)`,
-            transformOrigin: 'center center'
+            transformOrigin: 'center center',
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
           }}
         />
       </div>
@@ -116,7 +121,7 @@ export default function SlipPreview({ data }: Props) {
   };
 
   return (
-    <div className="flex flex-col items-center w-full">
+    <div className="flex flex-col items-center w-full select-none" onContextMenu={(e) => e.preventDefault()}>
       {/* Action & Zoom Controls Bar */}
       <div className="w-full max-w-[840px] flex flex-col sm:flex-row gap-2.5 sm:gap-3 justify-between items-start sm:items-center mb-3 sm:mb-5 bg-white p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-xs">
         <div>
@@ -168,21 +173,27 @@ export default function SlipPreview({ data }: Props) {
       {/* Outer responsive wrapper that scales the A4 print container with horizontal scroll support */}
       <div 
         ref={containerRef} 
-        className="w-full overflow-x-auto flex justify-center items-start transition-all duration-300 pb-12 px-0 sm:px-1"
+        className="w-full overflow-x-auto flex justify-center items-start transition-all duration-300 pb-12 px-0 sm:px-1 select-none"
+        onContextMenu={(e) => e.preventDefault()}
       >
         {/* Scaled bounding box that occupies exact layout dimensions */}
         <div
-          className="relative transition-all duration-300 flex justify-center"
+          className="relative transition-all duration-300 flex justify-center select-none"
           style={{
             width: `${794 * scale}px`,
             height: `${1123 * scale}px`,
             flexShrink: 0,
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            WebkitTouchCallout: 'none',
           }}
+          onContextMenu={(e) => e.preventDefault()}
+          onDragStart={(e) => e.preventDefault()}
         >
-          {/* A4 Paper Container with realistic PDF page shadow */}
+          {/* A4 Paper Container with realistic PDF page shadow (Captured for Clean PDF without Watermark) */}
           <div
             id="print-container"
-            className="bg-white shadow-[0_20px_50px_rgba(0,0,0,0.15)] ring-1 ring-slate-900/10 rounded-xs transition-all duration-300"
+            className="bg-white shadow-[0_20px_50px_rgba(0,0,0,0.15)] ring-1 ring-slate-900/10 rounded-xs transition-all duration-300 select-none"
             style={{
               width: '210mm',
               height: '297mm', // Standard A4 Size
@@ -201,6 +212,9 @@ export default function SlipPreview({ data }: Props) {
               position: 'absolute',
               top: 0,
               left: 0,
+              userSelect: 'none',
+              WebkitUserSelect: 'none',
+              WebkitTouchCallout: 'none',
             }}
           >
         {slips.map((index) => {
@@ -211,25 +225,15 @@ export default function SlipPreview({ data }: Props) {
           return (
           <div
             key={index}
-            className="break-inside-avoid relative w-full h-full"
+            className="break-inside-avoid relative w-full h-full select-none"
             style={{ 
               boxSizing: 'border-box',
               minWidth: 0,
-              minHeight: 0
+              minHeight: 0,
+              userSelect: 'none',
+              WebkitUserSelect: 'none',
             }}
           >
-            {/* ===== COMPOSED IMAGE (Gemini AI output — highest priority) ===== */}
-            {data.composedSlipUrl ? (
-              <div className="w-full h-full rounded-2xl overflow-hidden relative shadow-sm border border-slate-200">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={data.composedSlipUrl}
-                  alt={`Composed Name Slip — ${data.studentName || 'Student'}`}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            ) : (
-              <>
             {/* ==================== 1. PREMIUM UNICORN TEMPLATE ==================== */}
             {data.template === 'unicorn' && (
               <div className="w-full h-full rounded-2xl overflow-hidden border border-slate-200 relative bg-gradient-to-br from-pink-100/60 via-purple-50/40 to-blue-100/60 p-2 flex gap-3 shadow-md z-10">
@@ -287,7 +291,7 @@ export default function SlipPreview({ data }: Props) {
                       <div className="absolute bottom-0.5 left-0 right-0 border-b border-pink-300 border-dashed w-full z-0"></div>
                       <div className="relative z-10 flex w-full text-[8.5px] font-black leading-none" style={{ color: themeColor }}>
                         <span>Name:</span>
-                        <span className="text-[10.5px] text-slate-950 ml-2 font-black leading-none truncate w-[130px]">{data.studentName || ''}</span>
+                        <span className="text-[10.5px] ml-2 font-black leading-none truncate w-[130px]" style={{ color: typingDetailsColor }}>{data.studentName || ''}</span>
                       </div>
                     </div>
 
@@ -296,7 +300,7 @@ export default function SlipPreview({ data }: Props) {
                       <div className="absolute bottom-0.5 left-0 right-0 border-b border-pink-300 border-dashed w-full z-0"></div>
                       <div className="relative z-10 flex w-full text-[8.5px] font-black leading-none" style={{ color: themeColor }}>
                         <span>Subject:</span>
-                        <span className="text-[10px] text-slate-950 ml-2 font-black leading-none truncate">{slipSubject}</span>
+                        <span className="text-[10px] ml-2 font-black leading-none truncate" style={{ color: typingDetailsColor }}>{slipSubject}</span>
                       </div>
                     </div>
 
@@ -305,9 +309,9 @@ export default function SlipPreview({ data }: Props) {
                       <div className="absolute bottom-0.5 left-0 right-0 border-b border-pink-300 border-dashed w-full z-0"></div>
                       <div className="relative z-10 flex w-full text-[8.5px] font-black leading-none" style={{ color: themeColor }}>
                         <span>Class:</span>
-                        <span className="text-[10px] text-slate-950 ml-1.5 font-bold leading-none">{data.grade || ''}</span>
+                        <span className="text-[10px] ml-1.5 font-bold leading-none" style={{ color: typingDetailsColor }}>{data.grade || ''}</span>
                         <span className="ml-auto">Division:</span>
-                        <span className="text-[10px] text-slate-950 ml-1.5 pr-2 font-bold leading-none">{data.section || ''}</span>
+                        <span className="text-[10px] ml-1.5 pr-2 font-bold leading-none" style={{ color: typingDetailsColor }}>{data.section || ''}</span>
                       </div>
                     </div>
 
@@ -316,7 +320,7 @@ export default function SlipPreview({ data }: Props) {
                       <div className="absolute bottom-0.5 left-0 right-0 border-b border-pink-300 border-dashed w-full z-0"></div>
                       <div className="relative z-10 flex w-full text-[8.5px] font-black leading-none" style={{ color: themeColor }}>
                         <span>Roll No:</span>
-                        <span className="text-[10px] text-slate-950 ml-2 font-bold leading-none">{data.rollNo || ''}</span>
+                        <span className="text-[10px] ml-2 font-bold leading-none" style={{ color: typingDetailsColor }}>{data.rollNo || ''}</span>
                       </div>
                     </div>
                   </div>
@@ -356,24 +360,24 @@ export default function SlipPreview({ data }: Props) {
                       {/* 1. Name */}
                       <div className="relative pb-0.5 border-b border-slate-300/80">
                         <p className="text-[6.5px] font-black uppercase tracking-wider leading-none mb-0.5" style={{ color: themeColor }}>Name</p>
-                        <p className="font-black text-[11px] leading-none text-slate-950 truncate">{data.studentName || ''}</p>
+                        <p className="font-black text-[11px] leading-none truncate" style={{ color: typingDetailsColor }}>{data.studentName || ''}</p>
                       </div>
 
                       <div className="grid grid-cols-2 gap-x-2 gap-y-1">
                         {/* 2. Subject */}
                         <div className="col-span-2 relative pb-0.5 border-b border-slate-300/80">
                           <p className="text-[6.5px] font-black uppercase tracking-wider leading-none mb-0.5" style={{ color: themeColor }}>Subject</p>
-                          <p className="font-black text-[9.5px] leading-none truncate text-slate-950">{slipSubject || ''}</p>
+                          <p className="font-black text-[9.5px] leading-none truncate" style={{ color: typingDetailsColor }}>{slipSubject || ''}</p>
                         </div>
                         {/* 3. Class/Div */}
                         <div className="relative pb-0.5 border-b border-slate-300/80">
                           <p className="text-[6.5px] font-black uppercase tracking-wider leading-none mb-0.5" style={{ color: themeColor }}>Class / Div</p>
-                          <p className="font-black text-[9px] text-slate-950 leading-none truncate">{data.grade || ''}{data.section ? ` - ${data.section}` : ''}</p>
+                          <p className="font-black text-[9px] leading-none truncate" style={{ color: typingDetailsColor }}>{data.grade || ''}{data.section ? ` - ${data.section}` : ''}</p>
                         </div>
                         {/* 4. Roll No */}
                         <div className="relative pb-0.5 border-b border-slate-300/80">
                           <p className="text-[6.5px] font-black uppercase tracking-wider leading-none mb-0.5" style={{ color: themeColor }}>Roll No</p>
-                          <p className="font-black text-[9px] text-slate-950 leading-none">{data.rollNo || ''}</p>
+                          <p className="font-black text-[9px] leading-none" style={{ color: typingDetailsColor }}>{data.rollNo || ''}</p>
                         </div>
                       </div>
                     </div>
@@ -400,22 +404,22 @@ export default function SlipPreview({ data }: Props) {
                     {/* 1. Name */}
                     <div className="flex items-end border-b border-slate-300/80 border-dashed pb-0.5 h-5">
                       <span className="text-[8px] font-black w-14 shrink-0" style={{ color: themeColor }}>Name:</span>
-                      <span className="text-[10.5px] font-black text-slate-950 ml-1 truncate leading-none flex-1">{data.studentName || ''}</span>
+                      <span className="text-[10.5px] font-black ml-1 truncate leading-none flex-1" style={{ color: typingDetailsColor }}>{data.studentName || ''}</span>
                     </div>
                     {/* 2. Subject */}
                     <div className="flex items-end border-b border-slate-300/80 border-dashed pb-0.5 h-5">
                       <span className="text-[8px] font-black w-14 shrink-0" style={{ color: themeColor }}>Subject:</span>
-                      <span className="text-[10px] font-black text-slate-950 ml-1 leading-none truncate flex-1">{slipSubject || ''}</span>
+                      <span className="text-[10px] font-black ml-1 leading-none truncate flex-1" style={{ color: typingDetailsColor }}>{slipSubject || ''}</span>
                     </div>
                     {/* 3. Class/Div */}
                     <div className="flex items-end border-b border-slate-300/80 border-dashed pb-0.5 h-5">
                       <span className="text-[8px] font-black w-14 shrink-0" style={{ color: themeColor }}>Class/Div:</span>
-                      <span className="text-[9.5px] font-black text-slate-950 ml-1 leading-none flex-1">{data.grade || ''}{data.section ? ` - ${data.section}` : ''}</span>
+                      <span className="text-[9.5px] font-black ml-1 leading-none flex-1" style={{ color: typingDetailsColor }}>{data.grade || ''}{data.section ? ` - ${data.section}` : ''}</span>
                     </div>
                     {/* 4. Roll No */}
                     <div className="flex items-end border-b border-slate-300/80 border-dashed pb-0.5 h-5">
                       <span className="text-[8px] font-black w-14 shrink-0" style={{ color: themeColor }}>Roll No:</span>
-                      <span className="text-[9.5px] font-black text-slate-950 ml-1 leading-none flex-1">{data.rollNo || ''}</span>
+                      <span className="text-[9.5px] font-black ml-1 leading-none flex-1" style={{ color: typingDetailsColor }}>{data.rollNo || ''}</span>
                     </div>
                   </div>
 
@@ -464,22 +468,22 @@ export default function SlipPreview({ data }: Props) {
                     {/* 1. Name */}
                     <div className="border-b border-slate-300/80 pb-0.5">
                       <p className="text-[6.5px] font-extrabold uppercase leading-none mb-0.5" style={{ color: themeColor }}>Name</p>
-                      <p className="font-black text-[11px] text-slate-950 leading-none truncate">{data.studentName || ''}</p>
+                      <p className="font-black text-[11px] leading-none truncate" style={{ color: typingDetailsColor }}>{data.studentName || ''}</p>
                     </div>
 
                     {/* 2. Sub, 3. Std/Div, 4. Roll with clean underline rows */}
                     <div className="grid grid-cols-2 gap-x-2 gap-y-1">
                       <div className="col-span-2 border-b border-slate-300/80 pb-0.5">
                         <span className="text-[6.5px] font-extrabold uppercase block leading-none mb-0.5" style={{ color: themeColor }}>Subject</span>
-                        <span className="text-[9.5px] font-black text-slate-950 truncate block leading-none">{slipSubject || ''}</span>
+                        <span className="text-[9.5px] font-black truncate block leading-none" style={{ color: typingDetailsColor }}>{slipSubject || ''}</span>
                       </div>
                       <div className="border-b border-slate-300/80 pb-0.5">
                         <span className="text-[6.5px] font-extrabold uppercase block leading-none mb-0.5" style={{ color: themeColor }}>Class / Div</span>
-                        <span className="text-[9px] font-black text-slate-950 truncate block leading-none">{data.grade || ''}{data.section ? ` - ${data.section}` : ''}</span>
+                        <span className="text-[9px] font-black truncate block leading-none" style={{ color: typingDetailsColor }}>{data.grade || ''}{data.section ? ` - ${data.section}` : ''}</span>
                       </div>
                       <div className="border-b border-slate-300/80 pb-0.5">
                         <span className="text-[6.5px] font-extrabold uppercase block leading-none mb-0.5" style={{ color: themeColor }}>Roll No</span>
-                        <span className="text-[9px] font-black text-slate-950 block leading-none">{data.rollNo || ''}</span>
+                        <span className="text-[9px] font-black block leading-none" style={{ color: typingDetailsColor }}>{data.rollNo || ''}</span>
                       </div>
                     </div>
                   </div>
@@ -525,7 +529,7 @@ export default function SlipPreview({ data }: Props) {
                       {/* 1. Name */}
                       <div className="flex flex-col">
                         <span className="text-[6px] font-black text-slate-500 uppercase leading-none mb-0.5">My Name is:</span>
-                        <span className="text-[11px] font-black text-indigo-900 leading-none truncate block">{data.studentName || ''}</span>
+                        <span className="text-[11px] font-black leading-none truncate block" style={{ color: typingDetailsColor }}>{data.studentName || ''}</span>
                       </div>
                       
                       <div className="grid grid-cols-2 gap-x-1 gap-y-1 mt-0.5">
@@ -533,7 +537,7 @@ export default function SlipPreview({ data }: Props) {
                         <div className="col-span-2">
                           <span className="text-[5.5px] font-black text-slate-500 uppercase block mb-0.5">Subject</span>
                           {slipSubject ? (
-                            <span className="text-[9px] font-black text-rose-700 bg-rose-50 px-1 py-0.5 rounded block truncate leading-none">{slipSubject}</span>
+                            <span className="text-[9px] font-black px-1 py-0.5 rounded block truncate leading-none" style={{ color: typingDetailsColor, backgroundColor: `${themeColor}15` }}>{slipSubject}</span>
                           ) : (
                             <div className="h-2.5 border-b border-rose-300 border-dashed w-full"></div>
                           )}
@@ -541,12 +545,12 @@ export default function SlipPreview({ data }: Props) {
                         {/* 3. Class & Div */}
                         <div>
                           <span className="text-[5.5px] font-black text-slate-500 uppercase block mb-0.5">Class & Div</span>
-                          <span className="text-[8.5px] font-black text-amber-800 bg-amber-50 px-1 py-0.5 rounded block truncate leading-none">{data.grade || ''} {data.section ? `- ${data.section}` : ''}</span>
+                          <span className="text-[8.5px] font-black px-1 py-0.5 rounded block truncate leading-none" style={{ color: typingDetailsColor, backgroundColor: `${themeColor}15` }}>{data.grade || ''} {data.section ? `- ${data.section}` : ''}</span>
                         </div>
                         {/* 4. Roll No */}
                         <div>
                           <span className="text-[5.5px] font-black text-slate-500 uppercase block mb-0.5">Roll No</span>
-                          <span className="text-[8.5px] font-black text-emerald-800 bg-emerald-50 px-1 py-0.5 rounded block truncate leading-none">{data.rollNo || ''}</span>
+                          <span className="text-[8.5px] font-black px-1 py-0.5 rounded block truncate leading-none" style={{ color: typingDetailsColor, backgroundColor: `${themeColor}15` }}>{data.rollNo || ''}</span>
                         </div>
                       </div>
                     </div>
@@ -590,22 +594,22 @@ export default function SlipPreview({ data }: Props) {
                     {/* Name */}
                     <div className="border-b border-indigo-200/80 pb-0.5">
                       <span className="text-[6.5px] font-black uppercase text-indigo-600 block leading-none mb-0.5">Astronaut Name</span>
-                      <span className="text-[11px] font-black text-slate-950 leading-none truncate block">{data.studentName || ''}</span>
+                      <span className="text-[11px] font-black leading-none truncate block" style={{ color: typingDetailsColor }}>{data.studentName || ''}</span>
                     </div>
 
                     {/* Subject, Class, Roll */}
                     <div className="grid grid-cols-2 gap-x-2 gap-y-1 mt-0.5">
                       <div className="col-span-2 border-b border-indigo-200/80 pb-0.5">
                         <span className="text-[6.5px] font-black uppercase text-indigo-600 block leading-none mb-0.5">Subject</span>
-                        <span className="text-[9.5px] font-black text-slate-950 truncate block leading-none">{slipSubject || ''}</span>
+                        <span className="text-[9.5px] font-black truncate block leading-none" style={{ color: typingDetailsColor }}>{slipSubject || ''}</span>
                       </div>
                       <div className="border-b border-indigo-200/80 pb-0.5">
                         <span className="text-[6.5px] font-black uppercase text-indigo-600 block leading-none mb-0.5">Class / Div</span>
-                        <span className="text-[9px] font-black text-slate-950 truncate block leading-none">{data.grade || ''}{data.section ? ` - ${data.section}` : ''}</span>
+                        <span className="text-[9px] font-black truncate block leading-none" style={{ color: typingDetailsColor }}>{data.grade || ''}{data.section ? ` - ${data.section}` : ''}</span>
                       </div>
                       <div className="border-b border-indigo-200/80 pb-0.5">
                         <span className="text-[6.5px] font-black uppercase text-indigo-600 block leading-none mb-0.5">Roll No</span>
-                        <span className="text-[9px] font-black text-slate-950 block leading-none">{data.rollNo || ''}</span>
+                        <span className="text-[9px] font-black block leading-none" style={{ color: typingDetailsColor }}>{data.rollNo || ''}</span>
                       </div>
                     </div>
                   </div>
@@ -643,24 +647,24 @@ export default function SlipPreview({ data }: Props) {
                       {/* 1. Name */}
                       <div className="relative pb-0.5 border-b border-slate-300/80">
                         <p className="text-[6.5px] font-black uppercase tracking-wider leading-none mb-0.5" style={{ color: themeColor }}>Name</p>
-                        <p className="font-black text-[11px] leading-none text-slate-950 truncate">{data.studentName || ''}</p>
+                        <p className="font-black text-[11px] leading-none truncate" style={{ color: typingDetailsColor }}>{data.studentName || ''}</p>
                       </div>
 
                       <div className="grid grid-cols-2 gap-x-2 gap-y-1">
                         {/* 2. Subject */}
                         <div className="col-span-2 relative pb-0.5 border-b border-slate-300/80">
                           <p className="text-[6.5px] font-black uppercase tracking-wider leading-none mb-0.5" style={{ color: themeColor }}>Subject</p>
-                          <p className="font-black text-[9.5px] leading-none truncate text-slate-950">{slipSubject || ''}</p>
+                          <p className="font-black text-[9.5px] leading-none truncate" style={{ color: typingDetailsColor }}>{slipSubject || ''}</p>
                         </div>
                         {/* 3. Class/Div */}
                         <div className="relative pb-0.5 border-b border-slate-300/80">
                           <p className="text-[6.5px] font-black uppercase tracking-wider leading-none mb-0.5" style={{ color: themeColor }}>Class / Div</p>
-                          <p className="font-black text-[9px] text-slate-950 leading-none truncate">{data.grade || ''}{data.section ? ` - ${data.section}` : ''}</p>
+                          <p className="font-black text-[9px] leading-none truncate" style={{ color: typingDetailsColor }}>{data.grade || ''}{data.section ? ` - ${data.section}` : ''}</p>
                         </div>
                         {/* 4. Roll No */}
                         <div className="relative pb-0.5 border-b border-slate-300/80">
                           <p className="text-[6.5px] font-black uppercase tracking-wider leading-none mb-0.5" style={{ color: themeColor }}>Roll No</p>
-                          <p className="font-black text-[9px] text-slate-950 leading-none">{data.rollNo || ''}</p>
+                          <p className="font-black text-[9px] leading-none" style={{ color: typingDetailsColor }}>{data.rollNo || ''}</p>
                         </div>
                       </div>
                     </div>
@@ -675,12 +679,25 @@ export default function SlipPreview({ data }: Props) {
                 </div>
               </div>
             )}
-              </>
-            )}
           </div>
           );
         })}
           </div>
+
+          {/* ========================================================================= */}
+          {/* PREVIEW PROTECTION WATERMARK OVERLAY                                     */}
+          {/* Rendered only on-screen in the editor preview. Excluded from PDF export. */}
+          {/* ========================================================================= */}
+          <div
+            className="absolute inset-0 pointer-events-none z-30 overflow-hidden rounded-xs select-none"
+            style={{
+              width: `${794 * scale}px`,
+              height: `${1123 * scale}px`,
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='170' viewBox='0 0 280 170'%3E%3Ctext x='50%25' y='50%25' font-size='14' font-weight='900' font-family='system-ui, -apple-system, sans-serif' fill='%231a1f4b' fill-opacity='0.12' text-anchor='middle' transform='rotate(-28, 140, 85)' letter-spacing='2.5'%3ELABELBEE %E2%80%A2 PREVIEW%3C/text%3E%3C/svg%3E")`,
+              backgroundRepeat: 'repeat',
+            }}
+            aria-hidden="true"
+          />
         </div>
       </div>
     </div>
