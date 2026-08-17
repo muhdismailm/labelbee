@@ -116,11 +116,14 @@ export default function GeneratorForm({
       const newZoom = Math.min(300, Math.max(100, Math.round(photoPinchRef.current.zoom * scale)));
       onChange({ photoZoom: newZoom });
     } else if (photoPointersRef.current.size === 1 && photoDragStartRef.current) {
-      // 1-Finger / Mouse Drag to Pan
+      // 1-Finger / Mouse Drag to Pan (Normalized to percentage of container)
       const dx = e.clientX - photoDragStartRef.current.x;
       const dy = e.clientY - photoDragStartRef.current.y;
-      const newX = Math.min(80, Math.max(-80, Math.round(photoDragStartRef.current.photoX + dx)));
-      const newY = Math.min(80, Math.max(-80, Math.round(photoDragStartRef.current.photoY + dy)));
+      const zoomFactor = (data.photoZoom || 100) / 100;
+      const percentX = (dx / (144 * zoomFactor)) * 100;
+      const percentY = (dy / (144 * zoomFactor)) * 100;
+      const newX = Math.min(100, Math.max(-100, Math.round(photoDragStartRef.current.photoX + percentX)));
+      const newY = Math.min(100, Math.max(-100, Math.round(photoDragStartRef.current.photoY + percentY)));
       onChange({ photoX: newX, photoY: newY });
     }
   };
@@ -165,6 +168,99 @@ export default function GeneratorForm({
       photoX: 0,
       photoY: 0,
       photoFrameSize: 65,
+    });
+  };
+
+  // ─── Direct Interactive Background Image Manipulation Handlers ────────────────
+  const [isDraggingBg, setIsDraggingBg] = useState(false);
+  const bgDragStartRef = useRef<{ x: number; y: number; bgX: number; bgY: number } | null>(null);
+  const bgPinchRef = useRef<{ dist: number; zoom: number } | null>(null);
+  const bgPointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+
+  const handleBgPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!data.aiBackgroundUrl) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    bgPointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (bgPointersRef.current.size === 1) {
+      setIsDraggingBg(true);
+      bgDragStartRef.current = {
+        x: e.clientX,
+        y: e.clientY,
+        bgX: data.bgX || 0,
+        bgY: data.bgY || 0,
+      };
+    } else if (bgPointersRef.current.size === 2) {
+      const pts = Array.from(bgPointersRef.current.values());
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      bgPinchRef.current = { dist, zoom: data.bgZoom || 100 };
+    }
+  };
+
+  const handleBgPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!bgPointersRef.current.has(e.pointerId)) return;
+    bgPointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (bgPointersRef.current.size === 2 && bgPinchRef.current) {
+      // 2-Finger Pinch Zoom
+      const pts = Array.from(bgPointersRef.current.values());
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      const scale = dist / bgPinchRef.current.dist;
+      const newZoom = Math.min(300, Math.max(100, Math.round(bgPinchRef.current.zoom * scale)));
+      onChange({ bgZoom: newZoom });
+    } else if (bgPointersRef.current.size === 1 && bgDragStartRef.current) {
+      // 1-Finger / Mouse Drag to Pan
+      const dx = e.clientX - bgDragStartRef.current.x;
+      const dy = e.clientY - bgDragStartRef.current.y;
+      const zoomFactor = (data.bgZoom || 100) / 100;
+      // Container width is ~280px (16:9 box ~280x160), normalized percentage offset
+      const percentX = (dx / (280 * zoomFactor)) * 100;
+      const percentY = (dy / (160 * zoomFactor)) * 100;
+      const newX = Math.min(100, Math.max(-100, Math.round(bgDragStartRef.current.bgX + percentX)));
+      const newY = Math.min(100, Math.max(-100, Math.round(bgDragStartRef.current.bgY + percentY)));
+      onChange({ bgX: newX, bgY: newY });
+    }
+  };
+
+  const handleBgPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    bgPointersRef.current.delete(e.pointerId);
+    try {
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+    } catch {
+      // ignore
+    }
+
+    if (bgPointersRef.current.size === 0) {
+      setIsDraggingBg(false);
+      bgDragStartRef.current = null;
+      bgPinchRef.current = null;
+    } else if (bgPointersRef.current.size === 1) {
+      const pt = Array.from(bgPointersRef.current.values())[0];
+      bgDragStartRef.current = {
+        x: pt.x,
+        y: pt.y,
+        bgX: data.bgX || 0,
+        bgY: data.bgY || 0,
+      };
+    }
+  };
+
+  const handleBgWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (!data.aiBackgroundUrl) return;
+    e.preventDefault();
+    const delta = -Math.sign(e.deltaY) * 6;
+    const newZoom = Math.min(300, Math.max(100, (data.bgZoom || 100) + delta));
+    onChange({ bgZoom: Math.round(newZoom) });
+  };
+
+  const handleResetBgAdjustments = () => {
+    onChange({
+      bgZoom: 100,
+      bgTilt: 0,
+      bgX: 0,
+      bgY: 0,
     });
   };
 
@@ -432,7 +528,7 @@ export default function GeneratorForm({
                     draggable={false}
                     className="w-full h-full object-cover pointer-events-none select-none transition-transform duration-75"
                     style={{
-                      transform: `scale(${data.photoZoom / 100}) rotate(${data.photoTilt}deg) translate(${data.photoX}px, ${data.photoY}px)`,
+                      transform: `scale(${data.photoZoom / 100}) rotate(${data.photoTilt}deg) translate(${data.photoX}%, ${data.photoY}%)`,
                       transformOrigin: 'center center',
                     }}
                   />
@@ -735,20 +831,153 @@ export default function GeneratorForm({
 
           {data.aiBackgroundUrl && (
             <div className="space-y-3 pt-1">
-              <div className="relative w-full h-20 rounded-xl overflow-hidden border border-slate-200 shadow-inner">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={data.aiBackgroundUrl} alt="Active Background" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-between p-2">
-                  <span className="text-[11px] text-white font-bold flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Active Background
-                  </span>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[#1a1f4b] flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Active Background
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => templateBgInputRef.current?.click()}
+                    className="text-[11px] font-bold text-[#1a1f4b] hover:text-[#f59e0b] transition-colors cursor-pointer"
+                  >
+                    Change
+                  </button>
+                  <span className="text-slate-300">•</span>
                   <button
                     type="button"
                     onClick={removeAiBackground}
-                    className="text-white/80 hover:text-rose-300 transition-colors cursor-pointer p-0.5"
-                    title="Remove background"
+                    className="text-[11px] font-bold text-rose-500 hover:text-rose-700 transition-colors cursor-pointer"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    Remove
+                  </button>
+                </div>
+              </div>
+
+              {/* Interactive Direct Manipulation Canvas Workspace for Background */}
+              <div className="relative rounded-2xl bg-gradient-to-b from-slate-50 to-slate-100/90 border border-slate-200 p-3 flex flex-col items-center justify-center overflow-hidden select-none touch-none">
+                {/* 16:9 Landscape Target Frame */}
+                <div
+                  className="relative w-full max-w-[280px] h-32 rounded-xl border-2 border-white shadow-md overflow-hidden bg-slate-200 transition-all select-none"
+                  style={{
+                    cursor: isDraggingBg ? 'grabbing' : 'grab',
+                    touchAction: 'none',
+                  }}
+                  onPointerDown={handleBgPointerDown}
+                  onPointerMove={handleBgPointerMove}
+                  onPointerUp={handleBgPointerUp}
+                  onPointerCancel={handleBgPointerUp}
+                  onWheel={handleBgWheel}
+                  title="Drag background to pan • Mouse wheel or pinch to zoom"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={data.aiBackgroundUrl}
+                    alt="Background Preview"
+                    draggable={false}
+                    className="w-full h-full object-cover pointer-events-none select-none transition-transform duration-75"
+                    style={{
+                      transform: `scale(${(data.bgZoom || 100) / 100}) rotate(${data.bgTilt || 0}deg) translate(${data.bgX || 0}%, ${data.bgY || 0}%)`,
+                      transformOrigin: 'center center',
+                    }}
+                  />
+
+                  {/* Crosshair Guidelines when dragging */}
+                  {isDraggingBg && (
+                    <div className="absolute inset-0 pointer-events-none border border-indigo-400/40 grid grid-cols-3 grid-rows-3 opacity-60">
+                      <div className="border-r border-b border-indigo-400/40" />
+                      <div className="border-r border-b border-indigo-400/40" />
+                      <div className="border-b border-indigo-400/40" />
+                      <div className="border-r border-b border-indigo-400/40" />
+                      <div className="border-r border-b border-indigo-400/40" />
+                      <div className="border-b border-indigo-400/40" />
+                      <div className="border-r border-indigo-400/40" />
+                      <div className="border-r border-indigo-400/40" />
+                      <div />
+                    </div>
+                  )}
+                </div>
+
+                {/* Gesture Guidance Pill */}
+                <div className="mt-2.5 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/90 backdrop-blur-xs border border-slate-200/80 shadow-2xs text-[10px] font-semibold text-slate-600">
+                  <Move className="w-3 h-3 text-indigo-600" />
+                  <span>Drag to pan • Scroll or pinch to zoom</span>
+                </div>
+              </div>
+
+              {/* Compact Controls: Zoom, Rotate & Reset */}
+              <div className="bg-slate-50/70 p-3 rounded-2xl border border-slate-200/80 space-y-2.5">
+                {/* 1. Zoom Bar */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[11.5px] font-bold text-slate-700 flex items-center gap-1 min-w-[58px]">
+                    <ZoomIn className="w-3.5 h-3.5 text-indigo-600" /> Zoom
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onChange({ bgZoom: Math.max(100, (data.bgZoom || 100) - 10) })}
+                    className="w-6 h-6 rounded-md bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-extrabold flex items-center justify-center transition-all cursor-pointer text-xs shadow-2xs"
+                    title="Zoom Out"
+                  >
+                    −
+                  </button>
+                  <input
+                    type="range"
+                    min={100}
+                    max={300}
+                    value={data.bgZoom || 100}
+                    onChange={(e) => onChange({ bgZoom: Number(e.target.value) })}
+                    className="flex-1 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => onChange({ bgZoom: Math.min(300, (data.bgZoom || 100) + 10) })}
+                    className="w-6 h-6 rounded-md bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-extrabold flex items-center justify-center transition-all cursor-pointer text-xs shadow-2xs"
+                    title="Zoom In"
+                  >
+                    +
+                  </button>
+                  <span className="text-xs font-extrabold text-[#1a1f4b] min-w-[36px] text-right">
+                    {data.bgZoom || 100}%
+                  </span>
+                </div>
+
+                {/* 2. Rotate & Reset Row */}
+                <div className="flex items-center justify-between pt-1.5 border-t border-slate-200/60">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11.5px] font-bold text-slate-700 flex items-center gap-1 min-w-[58px]">
+                      <RotateCw className="w-3.5 h-3.5 text-indigo-600" /> Rotate
+                    </span>
+                    <div className="flex items-center bg-white border border-slate-200 rounded-xl p-0.5 shadow-2xs">
+                      <button
+                        type="button"
+                        onClick={() => onChange({ bgTilt: (((data.bgTilt || 0) - 15 + 180) % 360) - 180 })}
+                        className="px-2 py-0.5 text-[11px] font-bold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50/50 rounded-lg transition-all cursor-pointer"
+                        title="Rotate -15°"
+                      >
+                        ↶ -15°
+                      </button>
+                      <span className="px-1.5 text-xs font-black text-[#1a1f4b] border-x border-slate-100 min-w-[32px] text-center">
+                        {data.bgTilt || 0}°
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => onChange({ bgTilt: (((data.bgTilt || 0) + 15 + 180) % 360) - 180 })}
+                        className="px-2 py-0.5 text-[11px] font-bold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50/50 rounded-lg transition-all cursor-pointer"
+                        title="Rotate +15°"
+                      >
+                        +15° ↷
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleResetBgAdjustments}
+                    className="px-2.5 py-1 rounded-xl border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-600 text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+                    title="Reset background position, zoom, and rotation"
+                  >
+                    <RotateCcw className="w-3 h-3 text-slate-500" />
+                    <span>Reset</span>
                   </button>
                 </div>
               </div>

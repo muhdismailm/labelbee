@@ -84,11 +84,25 @@ export default function SlipPreview({ data }: Props) {
   // Helper to render backgrounds (AI or custom uploaded image)
   const renderBackground = () => {
     if (data.aiBackgroundUrl) {
+      const bgZoom = data.bgZoom ?? 100;
+      const bgTilt = data.bgTilt ?? 0;
+      const bgX = data.bgX ?? 0;
+      const bgY = data.bgY ?? 0;
+
       return (
-        <div
-          className="absolute inset-0 w-full h-full pointer-events-none bg-cover bg-center z-0"
-          style={{ backgroundImage: `url(${data.aiBackgroundUrl})` }}
-        />
+        <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden z-0 select-none">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={data.aiBackgroundUrl}
+            alt="Background"
+            draggable={false}
+            className="w-full h-full object-cover select-none pointer-events-none"
+            style={{
+              transform: `scale(${bgZoom / 100}) rotate(${bgTilt}deg) translate(${bgX}%, ${bgY}%)`,
+              transformOrigin: 'center center',
+            }}
+          />
+        </div>
       );
     }
     return null;
@@ -110,7 +124,7 @@ export default function SlipPreview({ data }: Props) {
           onContextMenu={(e) => e.preventDefault()}
           className="w-full h-full object-cover select-none pointer-events-none"
           style={{
-            transform: `scale(${data.photoZoom / 100}) rotate(${data.photoTilt}deg) translate(${data.photoX}px, ${data.photoY}px)`,
+            transform: `scale(${data.photoZoom / 100}) rotate(${data.photoTilt}deg) translate(${data.photoX}%, ${data.photoY}%)`,
             transformOrigin: 'center center',
             userSelect: 'none',
             WebkitUserSelect: 'none',

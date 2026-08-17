@@ -22,6 +22,10 @@ export interface SlipData {
   colorTheme: string;
   pattern?: 'none' | 'dots' | 'waves' | 'grid' | 'confetti';
   aiBackgroundUrl: string | null; // Added for Gemini AI or custom background image
+  bgZoom?: number; // Background zoom level (100% to 300%)
+  bgTilt?: number; // Background rotation angle (-180 to 180)
+  bgX?: number; // Background horizontal pan offset (-100 to 100 %)
+  bgY?: number; // Background vertical pan offset (-100 to 100 %)
   slipSize: '8' | '10' | 'large' | 'medium' | 'small'; // 8 or 10 slips per A4 sheet
   // Premium Plan AI Composer
   composedSlipUrl: string | null; // Final Gemini-composed name slip image (replaces HTML overlay)
@@ -51,6 +55,10 @@ export const defaultSlipData: SlipData = {
   template: 'unicorn',
   colorTheme: '#6366f1',
   aiBackgroundUrl: null,
+  bgZoom: 100,
+  bgTilt: 0,
+  bgX: 0,
+  bgY: 0,
   slipSize: '10',
   composedSlipUrl: null,
   stylePrompt: '',

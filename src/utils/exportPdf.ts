@@ -1,20 +1,8 @@
-import { toJpeg } from "html-to-image";
+import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
 /**
- * Checks if the current browser environment is running on iOS (iPhone, iPad, iPod)
- * or iPadOS (which identifies as MacIntel with touch points).
- */
-const isIOSDevice = (): boolean => {
-  if (typeof window === "undefined" || typeof navigator === "undefined") return false;
-  return (
-    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
-  );
-};
-
-/**
- * Ensures all image elements and fonts inside the target container are fully loaded and decoded.
+ * Ensures all image elements and fonts inside the target element are loaded before capture.
  */
 const ensureAssetsLoaded = async (element: HTMLElement): Promise<void> => {
   const images = Array.from(element.querySelectorAll("img"));
@@ -33,7 +21,7 @@ const ensureAssetsLoaded = async (element: HTMLElement): Promise<void> => {
     try {
       await document.fonts.ready;
     } catch {
-      // Ignore font loading errors
+      // Ignore font readiness errors
     }
   }
 };
@@ -45,90 +33,43 @@ export const exportToPdf = async (elementId: string, filename: string = "name-sl
     return;
   }
 
-  const isIOS = isIOSDevice();
-  // Standard A4 pixel metrics at 96 DPI: 794px width x 1123px height
-  const A4_WIDTH = 794;
-  const A4_HEIGHT = 1123;
-  const pixelRatio = isIOS ? 2 : 2.5;
-
-  // Create an isolated off-screen staging container
-  // This completely eliminates mobile viewport clipping, parent CSS transforms, and scale distortion
-  const offscreenContainer = document.createElement("div");
-  offscreenContainer.style.position = "fixed";
-  offscreenContainer.style.left = "-9999px";
-  offscreenContainer.style.top = "0";
-  offscreenContainer.style.width = `${A4_WIDTH}px`;
-  offscreenContainer.style.height = `${A4_HEIGHT}px`;
-  offscreenContainer.style.overflow = "hidden";
-  offscreenContainer.style.zIndex = "-9999";
-  offscreenContainer.style.pointerEvents = "none";
-  offscreenContainer.style.backgroundColor = "#ffffff";
-
-  // Deep clone the print container
-  const clone = element.cloneNode(true) as HTMLElement;
-  clone.id = "print-container-export-clone";
-  clone.style.transform = "none";
-  clone.style.transition = "none";
-  clone.style.position = "relative";
-  clone.style.top = "0";
-  clone.style.left = "0";
-  clone.style.width = `${A4_WIDTH}px`;
-  clone.style.height = `${A4_HEIGHT}px`;
-  clone.style.margin = "0";
-  clone.style.boxShadow = "none";
-  clone.style.borderRadius = "0";
-  clone.style.overflow = "hidden";
-  clone.style.boxSizing = "border-box";
-
-  // Remove any preview watermarks or overlays from the clone to guarantee clean output
-  clone.querySelectorAll(".preview-watermark, .preview-watermark-overlay, [aria-hidden='true']").forEach((el) => {
-    el.remove();
-  });
-
-  offscreenContainer.appendChild(clone);
-  document.body.appendChild(offscreenContainer);
-
   try {
-    // Wait for layout calculation and sub-assets in the clone
-    await new Promise((resolve) => setTimeout(resolve, 150));
-    await ensureAssetsLoaded(clone);
+    // Wait for all image bitmaps and fonts to be ready
+    await ensureAssetsLoaded(element);
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
-    // Warm-up pass for Safari/WebKit to bake foreignObject sub-resources into the rasterizer cache
-    try {
-      await toJpeg(clone, {
-        quality: 0.8,
-        pixelRatio: 1,
-        width: A4_WIDTH,
-        height: A4_HEIGHT,
-        backgroundColor: "#ffffff",
-      });
-    } catch {
-      // Warm-up pass is non-critical
-    }
-
-    // High-resolution capture from the isolated clone
-    let imgData = await toJpeg(clone, {
-      quality: 0.98,
-      pixelRatio,
-      width: A4_WIDTH,
-      height: A4_HEIGHT,
-      canvasWidth: Math.round(A4_WIDTH * pixelRatio),
-      canvasHeight: Math.round(A4_HEIGHT * pixelRatio),
+    // html2canvas renders directly to 2D Canvas context (immune to WebKit foreignObject sandbox image dropping)
+    const canvas = await html2canvas(element, {
+      scale: 2, // 2x DPI (~1588x2246 px) delivers crisp 300DPI-equivalent prints without exceeding mobile canvas memory
+      useCORS: true,
+      allowTaint: true,
       backgroundColor: "#ffffff",
-      cacheBust: true,
+      logging: false,
+      imageTimeout: 15000,
+      onclone: (clonedDoc) => {
+        const printNode = clonedDoc.getElementById(elementId);
+        if (printNode) {
+          // Reset transform and scaling on the clone for clean, unclipped A4 layout
+          printNode.style.transform = "none";
+          printNode.style.transition = "none";
+          printNode.style.position = "relative";
+          printNode.style.top = "0";
+          printNode.style.left = "0";
+          printNode.style.margin = "0";
+          printNode.style.boxShadow = "none";
+          printNode.style.borderRadius = "0";
+          printNode.style.width = "794px";
+          printNode.style.height = "1123px";
+
+          // Strip preview watermarks from the clone so output PDF is 100% clean
+          printNode.querySelectorAll(".preview-watermark, .preview-watermark-overlay").forEach((el) => {
+            el.remove();
+          });
+        }
+      },
     });
 
-    // If Safari returned an empty payload, retry once with fallback parameters
-    if (!imgData || imgData.length < 5000) {
-      console.warn("[exportToPdf] Retrying image capture for Safari/WebKit...");
-      imgData = await toJpeg(clone, {
-        quality: 0.95,
-        pixelRatio: 2,
-        width: A4_WIDTH,
-        height: A4_HEIGHT,
-        backgroundColor: "#ffffff",
-      });
-    }
+    const imgData = canvas.toDataURL("image/jpeg", 0.98);
 
     // Create a new jsPDF instance (A4 size: 210mm x 297mm, portrait)
     const pdf = new jsPDF({
@@ -141,39 +82,11 @@ export const exportToPdf = async (elementId: string, filename: string = "name-sl
     // Map 1:1 onto standard A4 page
     pdf.addImage(imgData, "JPEG", 0, 0, 210, 297, undefined, "FAST");
 
-    if (isIOS) {
-      // iOS Safari does not support the HTML5 <a download> attribute on asynchronous Blob URLs.
-      // We create an application/pdf Blob URL and open/navigate so Safari displays the native PDF reader
-      // with full Share, "Save to Files", Print, and AirDrop functionality.
-      const pdfBlob = pdf.output("blob");
-      const pdfBlobUrl = URL.createObjectURL(pdfBlob);
-
-      const downloadLink = document.createElement("a");
-      downloadLink.href = pdfBlobUrl;
-      downloadLink.target = "_blank";
-      downloadLink.rel = "noopener noreferrer";
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      document.body.removeChild(downloadLink);
-
-      // If popup blocker prevents opening a new tab, navigate current window to the PDF blob directly
-      setTimeout(() => {
-        if (typeof window !== "undefined") {
-          window.location.href = pdfBlobUrl;
-        }
-      }, 200);
-    } else {
-      // Desktop browsers (Chrome, Edge, Firefox, Desktop Safari)
-      pdf.save(filename);
-    }
+    // Standard pdf.save() triggers native browser download confirmation prompt on iOS Safari and Desktop
+    pdf.save(filename);
   } catch (error) {
     console.error("[exportToPdf] Error generating PDF:", error);
     throw error;
-  } finally {
-    // Always clean up offscreen container
-    if (offscreenContainer.parentNode) {
-      offscreenContainer.parentNode.removeChild(offscreenContainer);
-    }
   }
 };
 
