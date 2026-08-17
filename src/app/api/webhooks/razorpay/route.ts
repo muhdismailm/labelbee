@@ -45,7 +45,7 @@ export async function POST(req: Request) {
             credits: admin.firestore.FieldValue.increment(addedCredits)
           };
           if (packageId === "pack_10") {
-            updatePayload.plan = "business";
+            updatePayload.plan = "premium";
           }
           
           await userRef.set(

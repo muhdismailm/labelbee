@@ -23,7 +23,7 @@ export interface SlipData {
   pattern?: 'none' | 'dots' | 'waves' | 'grid' | 'confetti';
   aiBackgroundUrl: string | null; // Added for Gemini AI or custom background image
   slipSize: '8' | '10' | 'large' | 'medium' | 'small'; // 8 or 10 slips per A4 sheet
-  // Business Plan AI Composer
+  // Premium Plan AI Composer
   composedSlipUrl: string | null; // Final Gemini-composed name slip image (replaces HTML overlay)
   stylePrompt: string; // User's style/composition instructions for Gemini
 }

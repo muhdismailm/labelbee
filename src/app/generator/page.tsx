@@ -54,7 +54,7 @@ export default function Home() {
   // Standard functional states
   const [data, setData] = useState<SlipData>(defaultSlipData);
   const [credits, setCredits] = useState<number>(0);
-  const [userPlan, setUserPlan] = useState<'free' | 'starter' | 'popular' | 'business'>('free');
+  const [userPlan, setUserPlan] = useState<'free' | 'starter' | 'popular' | 'premium' | 'business'>('free');
   const [isPackModalOpen, setIsPackModalOpen] = useState<boolean>(false);
   const [loadingPayment, setLoadingPayment] = useState<boolean>(false);
   const [loadingDownload, setLoadingDownload] = useState<boolean>(false);
@@ -77,7 +77,7 @@ export default function Home() {
         if (docSnap.exists()) {
           const docData = docSnap.data();
           setCredits(docData.credits || 0);
-          setUserPlan(docData.plan || (docData.credits >= 50 ? 'business' : 'free'));
+          setUserPlan(docData.plan || (docData.credits >= 50 ? 'premium' : 'free'));
         } else {
           setCredits(0);
           setUserPlan('free');
@@ -287,8 +287,8 @@ export default function Home() {
                 credits: increment(addedCredits)
               };
               if (packageId === 'pack_10') {
-                updatePayload.plan = 'business';
-                setUserPlan('business');
+                updatePayload.plan = 'premium';
+                setUserPlan('premium');
               }
 
               // Write credits and plan directly to Firestore
@@ -331,7 +331,7 @@ export default function Home() {
     }
   };
 
-  // 1-Click Instant Business Plan Activator for Testing
+  // 1-Click Instant Premium Plan Activator for Testing
   const handleActivateTestBusinessPlan = async () => {
     if (!user) {
       setIsAuthModalOpen(true);
@@ -341,10 +341,10 @@ export default function Home() {
       setLoadingPayment(true);
       const userRef = doc(db, "users", user.uid);
       await setDoc(userRef, {
-        plan: "business",
+        plan: "premium",
         credits: (credits || 0) + 100
       }, { merge: true });
-      setUserPlan("business");
+      setUserPlan("premium");
       setIsPackModalOpen(false);
     } catch (err) {
       console.error("Test activation error:", err);
@@ -499,7 +499,7 @@ export default function Home() {
             data={data} 
             onChange={handleDataChange} 
             userPlan={userPlan}
-            onUpgradeBusiness={() => {
+            onUpgradePremium={() => {
               if (!user) {
                 setIsAuthModalOpen(true);
               } else {
@@ -783,10 +783,10 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Pack 10: Business (₹100 for 100 credits) */}
+              {/* Pack 10: Premium Plan (₹100 for 100 credits) */}
               <div className="border border-amber-300 rounded-2xl p-5 flex flex-col items-center text-center gap-4 bg-amber-50/15 relative hover:shadow-md transition-all duration-300">
                 <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold uppercase tracking-wide">
-                  Business Plan
+                  Premium Plan
                 </span>
                 <div className="my-1">
                   <div className="text-3xl font-black text-amber-500">100</div>
@@ -801,7 +801,7 @@ export default function Home() {
                   disabled={loadingPayment}
                   className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white text-sm font-bold hover:scale-[1.02] transition-all cursor-pointer shadow-amber-200 shadow-sm"
                 >
-                  Buy Business
+                  Buy Premium
                 </button>
               </div>
 
@@ -815,9 +815,9 @@ export default function Home() {
                 disabled={loadingPayment}
                 className="py-2 px-4 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-bold transition-all cursor-pointer flex items-center gap-2 hover:scale-[1.01]"
               >
-                <span>⚡ Instant Activate Business Plan (Free Testing)</span>
+                <span>⚡ Instant Activate Premium Plan (Free Testing)</span>
               </button>
-              <p className="text-[10px] text-slate-400 font-medium">Adds `plan: &quot;business&quot;` and 100 print credits to your Firestore document immediately.</p>
+              <p className="text-[10px] text-slate-400 font-medium">Adds `plan: &quot;premium&quot;` and 100 print credits to your Firestore document immediately.</p>
             </div>
 
             {/* Modal Footer loading indicator */}

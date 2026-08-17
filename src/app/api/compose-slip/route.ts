@@ -11,9 +11,11 @@ interface StudentDetails {
 
 // Candidate Gemini image-generation models in priority order
 const CANDIDATE_MODELS = [
-  'gemini-2.0-flash-preview-image-generation',
-  'gemini-2.0-flash-exp',
-  'gemini-2.0-flash',
+  'gemini-2.5-flash-image',
+  'gemini-3.1-flash-image',
+  'gemini-3-pro-image',
+  'imagen-4.0-generate-001',
+  'gemini-3.1-flash-image-preview',
 ];
 
 export async function POST(req: Request) {

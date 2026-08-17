@@ -347,13 +347,14 @@ export default function LandingPage() {
           }}
         >
           {/* Logo */}
-          <div style={{ display: "flex", alignItems: "center" }}>
+          <Link href="/" className="flex items-center gap-2 group cursor-pointer shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/logo.png"
               alt="LabelBee"
-              style={{ height: "70px", width: "auto", objectFit: "contain" }}
+              className="h-10 sm:h-12 w-auto object-contain transition-transform group-hover:scale-105"
             />
-          </div>
+          </Link>
 
           {/* Nav links */}
           <div className="hidden md:flex" style={{ alignItems: "center", gap: "32px" }}>
@@ -617,7 +618,7 @@ export default function LandingPage() {
                   zIndex: 2,
                 }}
               >
-                ✨ AI Merge
+                AI Merge
               </div>
             </div>
 
@@ -944,8 +945,8 @@ export default function LandingPage() {
                 cta: "Buy Popular",
               },
               {
-                name: "Business Plan",
-                emoji: "⚡",
+                name: "Premium Plan",
+                emoji: "👑",
                 price: "₹100",
                 priceNum: 100,
                 credits: 100,
@@ -957,12 +958,12 @@ export default function LandingPage() {
                 highlight: false,
                 perks: [
                   "100 A4 PDF sheet downloads",
-                  "Mega value: ₹1.00 / sheet",
-                  "Commercial & school use",
-                  "High-priority processing",
-                  "Bulk sheet export support",
+                  "AI Magic Background Generator",
+                  "Gemini AI Name Slip Composer",
+                  "Custom background upload (All plans)",
+                  "Commercial & bulk school use",
                 ],
-                cta: "Buy Business",
+                cta: "Buy Premium",
               },
             ].map(({ name, price, credits, unit, badge, accent, accentBg, borderColor, highlight, perks, cta }) => (
               <div
