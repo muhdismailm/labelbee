@@ -881,7 +881,7 @@ export default function LandingPage() {
                 priceNum: 100,
                 credits: 25,
                 unit: "₹4.0 / download",
-                badge: "AI Magic" as string | null,
+                badge: null,
                 accent: "#f59e0b",
                 accentBg: "#fffbe6",
                 borderColor: "#fcd34d",
@@ -1019,13 +1019,9 @@ export default function LandingPage() {
                               fontSize: "13px",
                               color: isAiMagic ? "#92400e" : highlight ? "#e2e8f0" : "#374151",
                               fontWeight: isAiMagic ? 800 : 500,
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "4px"
                             }}
                           >
-                            {isAiMagic && <span>✨</span>}
-                            <span>{perk}</span>
+                            {perk}
                           </span>
                         </li>
                       );

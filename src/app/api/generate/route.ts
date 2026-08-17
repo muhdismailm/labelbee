@@ -13,7 +13,78 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, ms = TIM
   }
 }
 
-// ─── Provider 1: Pollinations AI ─────────────────────────────────────────────
+// ─── Provider 1: Gemini AI Image Generation ─────────────────────────────────
+async function generateWithGemini(prompt: string): Promise<string> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error('GEMINI_API_KEY is not configured in environment variables');
+  }
+
+  const enhancedPrompt = `School notebook name slip sticker design for kids, ${prompt} theme, professional graphic stationery design, featuring cute cartoon character illustrations on corners and borders, a circular photo frame border on top-left, and a clean white rounded rectangular card box with horizontal lines on right, high resolution vector art, vibrant colors, child-friendly, clean and crisp.`;
+
+  // Gemini image-generation models in priority order
+  const geminiModels = [
+    'gemini-3.1-flash-image',
+    'gemini-2.5-flash-image',
+  ];
+
+  for (const model of geminiModels) {
+    try {
+      console.log(`[generate] Trying Gemini image generation model: "${model}"...`);
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const res = await fetchWithTimeout(
+        url,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: enhancedPrompt }] }],
+            generationConfig: {
+              responseModalities: ['IMAGE', 'TEXT'],
+              temperature: 0.7,
+            },
+          }),
+        },
+        15000
+      );
+
+      if (!res.ok) {
+        const errText = await res.text();
+        let parsedMessage = errText;
+        try {
+          const errJson = JSON.parse(errText);
+          parsedMessage = errJson?.error?.message || errText;
+        } catch {
+          // ignore JSON parse error
+        }
+        console.warn(`[generate] ✗ Gemini model "${model}" failed with HTTP ${res.status}: ${parsedMessage}`);
+        continue;
+      }
+
+      const data = await res.json();
+      const parts = data?.candidates?.[0]?.content?.parts || [];
+
+      for (const part of parts) {
+        // Handle inlineData (camelCase or snake_case)
+        const inline = part.inlineData || part.inline_data;
+        if (inline?.data) {
+          const mime = inline.mimeType || inline.mime_type || 'image/png';
+          console.log(`[generate] ✓ Gemini model "${model}" successfully generated image (${inline.data.length} chars, mime=${mime})`);
+          return `data:${mime};base64,${inline.data}`;
+        }
+      }
+
+      console.warn(`[generate] ✗ Gemini model "${model}" returned HTTP 200 but no image data part was found in response.`);
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      console.warn(`[generate] ✗ Error calling Gemini model "${model}": ${errorMsg}`);
+    }
+  }
+
+  throw new Error('All Gemini image-generation models failed.');
+}
+
+// ─── Provider 2: Pollinations AI (Secondary Fallback) ─────────────────────────
 async function generateWithPollinations(prompt: string): Promise<string> {
   const enhancedPrompt = `School notebook name slip sticker design for kids, ${prompt} theme, professional graphic stationery design, featuring cartoon character illustrations on corners, a circular photo frame border on top-left, and a clean white rounded rectangular card box with 4 blank horizontal lines for Name, Class, Subject, School on right, high resolution vector art, vibrant colors, child-friendly, no pre-printed text inside lines, clean white background inside the details box.`;
   const encodedPrompt = encodeURIComponent(enhancedPrompt);
@@ -484,7 +555,15 @@ export async function POST(req: Request) {
 
     const clean = prompt.trim();
 
-    // 1. Try Pollinations image generation
+    // 1. Primary: Try Gemini AI / Google Imagen Image Generation
+    try {
+      const imageUrl = await generateWithGemini(clean);
+      return NextResponse.json({ imageUrl });
+    } catch (err) {
+      console.warn('[generate] Gemini AI image generation unavailable, trying Pollinations fallback:', err);
+    }
+
+    // 2. Secondary: Try Pollinations image generation
     try {
       const imageUrl = await generateWithPollinations(clean);
       return NextResponse.json({ imageUrl });
@@ -492,7 +571,7 @@ export async function POST(req: Request) {
       console.warn('[generate] Pollinations AI unavailable, using procedural SVG engine fallback:', err);
     }
 
-    // 2. Fail-Safe SVG Background Engine (Guaranteed 100% Success)
+    // 3. Tertiary: Fail-Safe SVG Background Engine (Guaranteed 100% Success)
     console.log('[generate] Serving high-quality procedural SVG pattern background...');
     const svgUrl = generateThemedSVGBackground(clean);
     return NextResponse.json({ imageUrl: svgUrl });
