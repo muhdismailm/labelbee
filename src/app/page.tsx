@@ -105,67 +105,19 @@ function ArrowRight({ size = 18, className = "" }: { size?: number; className?: 
 }
 
 
-/* ---- Step connector dashes ---- */
-function StepConnector() {
-  return (
-    <div className="hidden md:flex flex-1 items-center justify-center" style={{ paddingBottom: "36px" }}>
-      <div style={{ borderTop: "2px dashed #d1d5db", flex: 1 }} />
-    </div>
-  );
-}
 
 /* ---- Name-slip hero card ---- */
 function NameSlipCard() {
   return (
     <div
-      className="animate-float-card"
-      style={{
-        background: "white",
-        borderRadius: "18px",
-        boxShadow: "0 20px 60px rgba(26,31,75,0.18)",
-        padding: "0",
-        width: "436px",
-        maxWidth: "100%",
-        overflow: "hidden",
-        position: "relative",
-      }}
+      className="animate-float-card w-full max-w-[436px] bg-white rounded-2xl shadow-[0_20px_60px_rgba(26,31,75,0.18)] overflow-hidden relative"
     >
-      {/* A4 badge */}
-      <div
-        style={{
-          position: "absolute",
-          top: "-12px",
-          right: "-12px",
-          background: "#8b5cf6",
-          color: "white",
-          borderRadius: "50%",
-          width: "72px",
-          height: "72px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          fontWeight: 800,
-          fontSize: "11px",
-          lineHeight: 1.3,
-          zIndex: 10,
-          textAlign: "center",
-          boxShadow: "0 4px 12px rgba(139,92,246,0.4)",
-        }}
-      >
-        A4 Size<br />PDF
-      </div>
-
       {/* Card background - Navy + yellow leaves */}
       <div
         style={{
           background: "linear-gradient(135deg, #f8f4e8 0%, #fff9e0 60%, #e8f0ff 100%)",
-          padding: "24px 26px",
-          display: "flex",
-          alignItems: "center",
-          gap: "22px",
-          position: "relative",
         }}
+        className="p-3.5 sm:p-6 flex items-center gap-3 sm:gap-5 relative"
       >
         {/* Decorative leaf blobs */}
         <div
@@ -195,30 +147,19 @@ function NameSlipCard() {
 
         {/* Photo circle */}
         <div
-          style={{
-            width: "92px",
-            height: "92px",
-            borderRadius: "50%",
-            border: "4px solid white",
-            boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
-            overflow: "hidden",
-            flexShrink: 0,
-            background: "linear-gradient(135deg, #e8d5b7, #c4a882)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
+          className="w-18 h-18 sm:w-22 sm:h-22 rounded-full border-3 sm:border-4 border-white shadow-md overflow-hidden shrink-0 flex items-center justify-center bg-slate-100"
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/student_portrait.jpg"
             alt="Student Photo"
-            style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }}
+            className="w-full h-full object-cover object-[center_20%]"
           />
         </div>
 
         {/* Info */}
-        <div style={{ flex: 1, zIndex: 2 }}>
-          <div style={{ fontWeight: 800, fontSize: "19px", color: "#1a1f4b", marginBottom: "10px" }}>
+        <div className="flex-1 min-w-0 z-10">
+          <div className="font-black text-base sm:text-lg text-[#1a1f4b] mb-1.5 sm:mb-2 truncate">
             Aarav Sharma
           </div>
           {[
@@ -226,9 +167,10 @@ function NameSlipCard() {
             ["Subject", "Mathematics"],
             ["School", "Green Valley School"],
           ].map(([label, value]) => (
-            <div key={label} style={{ display: "flex", gap: "8px", fontSize: "12.5px", marginBottom: "5px" }}>
-              <span style={{ color: "#6b7280", fontWeight: 600, width: "56px" }}>{label}</span>
-              <span style={{ color: "#374151", fontWeight: 500 }}>: {value}</span>
+            <div key={label} className="flex items-baseline gap-1 sm:gap-1.5 text-[11.5px] sm:text-[13px] mb-1 leading-snug">
+              <span className="text-slate-500 font-bold w-12 sm:w-14 shrink-0">{label}</span>
+              <span className="text-slate-400 font-bold shrink-0">:</span>
+              <span className="text-slate-800 font-semibold truncate flex-1">{value}</span>
             </div>
           ))}
         </div>
@@ -654,15 +596,7 @@ export default function LandingPage() {
           </h2>
 
           {/* Steps */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: "0",
-              flexWrap: "wrap",
-              justifyContent: "center",
-            }}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 sm:gap-8 lg:gap-4 relative max-w-5xl mx-auto">
             {[
               {
                 num: "1",
@@ -699,20 +633,11 @@ export default function LandingPage() {
             ].map(({ num, icon, bg, border, title, sub }, i, arr) => (
               <div
                 key={title}
-                style={{ display: "contents" }}
+                className="relative flex flex-col items-center"
               >
                 {/* Step card */}
                 <div
-                  className="card-hover"
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    textAlign: "center",
-                    width: "190px",
-                    flexShrink: 0,
-                    padding: "0 8px",
-                  }}
+                  className="card-hover flex flex-col items-center text-center w-full max-w-[220px] p-3 rounded-2xl bg-white/60 sm:bg-transparent"
                 >
                   {/* Icon box with number badge */}
                   <div style={{ position: "relative", marginBottom: "16px" }}>
@@ -746,22 +671,28 @@ export default function LandingPage() {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
+                        boxShadow: "0 2px 8px rgba(26,31,75,0.25)",
                       }}
                     >
                       {num}
                     </div>
                   </div>
 
-                  <div style={{ fontWeight: 700, fontSize: "14px", color: "#1a1f4b", marginBottom: "6px" }}>
+                  <div style={{ fontWeight: 700, fontSize: "15px", color: "#1a1f4b", marginBottom: "6px" }}>
                     {title}
                   </div>
-                  <div style={{ fontSize: "12px", color: "#6b7280", lineHeight: 1.5 }}>
+                  <div style={{ fontSize: "12.5px", color: "#6b7280", lineHeight: 1.5 }}>
                     {sub}
                   </div>
                 </div>
 
-                {/* Connector — only between steps */}
-                {i < arr.length - 1 && <StepConnector />}
+                {/* Desktop connector between steps */}
+                {i < arr.length - 1 && (
+                  <div
+                    className="hidden lg:block absolute top-[28px] -right-[calc(50%-36px)] w-[calc(100%-72px)] pointer-events-none z-0"
+                    style={{ borderTop: "2px dashed #d1d5db" }}
+                  />
+                )}
               </div>
             ))}
           </div>
@@ -806,14 +737,13 @@ export default function LandingPage() {
               {
                 emoji: "🪄",
                 title: "AI Magic Backgrounds",
-                desc: "Describe any scene — forests, space, underwater — and our AI generates a stunning background perfectly sized for your name slip.",
-                accent: "#8b5cf6",
+                desc: "Describe the background you imagine with a detailed prompt, and let our AI turn your vision into a magical name slip.", accent: "#8b5cf6",
                 bg: "#faf5ff",
               },
               {
                 emoji: "🖨️",
                 title: "Smart Auto-Layout",
-                desc: "No more manual alignment. LabelBee auto-arranges up to 21 slips on an A4 canvas, perfectly spaced for cutting.",
+                desc: "No more manual alignment. LabelBee auto-arranges up to 10 slips on an A4 canvas, perfectly spaced for cutting.",
                 accent: "#22c55e",
                 bg: "#f0fdf4",
               },
@@ -916,9 +846,9 @@ export default function LandingPage() {
                 highlight: false,
                 perks: [
                   "5 A4 PDF sheet downloads",
-                  "All AI background themes",
+                  "All background themes",
                   "Auto-alignment & cut guides",
-                  "Instant PDF download",
+                  "Custom backgroud upload",
                   "Standard processing speed",
                 ],
                 cta: "Buy Starter",
@@ -937,10 +867,10 @@ export default function LandingPage() {
                 highlight: true,
                 perks: [
                   "10 A4 PDF sheet downloads",
-                  "All AI backgrounds & themes",
+                  "All backgrounds & themes",
                   "Auto-alignment & cut guides",
-                  "Priority image generation",
-                  "Live preview & adjustments",
+                  "Custom background upload",
+                  "High speed processing"
                 ],
                 cta: "Buy Popular",
               },
@@ -949,19 +879,19 @@ export default function LandingPage() {
                 emoji: "👑",
                 price: "₹100",
                 priceNum: 100,
-                credits: 100,
-                unit: "₹1.0 / download (Mega Deal)",
-                badge: "Mega Deal · ₹1/sheet" as string | null,
+                credits: 25,
+                unit: "₹4.0 / download",
+                badge: "AI Magic" as string | null,
                 accent: "#f59e0b",
                 accentBg: "#fffbe6",
                 borderColor: "#fcd34d",
                 highlight: false,
                 perks: [
-                  "100 A4 PDF sheet downloads",
                   "AI Magic Background Generator",
-                  "Gemini AI Name Slip Composer",
-                  "Custom background upload (All plans)",
-                  "Commercial & bulk school use",
+                  "25 A4 PDF sheet downloads",
+                  "Custom background upload",
+                  "Commercial & bulk use",
+                  "Prioritized Processing"
                 ],
                 cta: "Buy Premium",
               },
@@ -1052,28 +982,54 @@ export default function LandingPage() {
 
                   {/* Perks */}
                   <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px 0", display: "flex", flexDirection: "column", gap: "10px" }}>
-                    {perks.map((perk) => (
-                      <li key={perk} style={{ display: "flex", alignItems: "center", gap: "9px" }}>
-                        <span
+                    {perks.map((perk) => {
+                      const isAiMagic = perk.includes("AI Magic");
+                      return (
+                        <li
+                          key={perk}
                           style={{
-                            width: "18px",
-                            height: "18px",
-                            borderRadius: "50%",
-                            background: highlight ? "rgba(99,102,241,0.20)" : accentBg,
-                            border: "1px solid " + (highlight ? "#6366f166" : accent + "55"),
-                            display: "inline-flex",
+                            display: "flex",
                             alignItems: "center",
-                            justifyContent: "center",
-                            flexShrink: 0,
+                            gap: "9px",
+                            background: isAiMagic ? "#fef3c7" : "transparent",
+                            padding: isAiMagic ? "6px 10px" : "0",
+                            borderRadius: isAiMagic ? "10px" : "0",
+                            border: isAiMagic ? "1px solid #fde68a" : "none",
                           }}
                         >
-                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={highlight ? "#a5b4fc" : accent} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                        </span>
-                        <span style={{ fontSize: "13px", color: highlight ? "#e2e8f0" : "#374151", fontWeight: 500 }}>{perk}</span>
-                      </li>
-                    ))}
+                          <span
+                            style={{
+                              width: "18px",
+                              height: "18px",
+                              borderRadius: "50%",
+                              background: isAiMagic ? "#f59e0b" : highlight ? "rgba(99,102,241,0.20)" : accentBg,
+                              border: "1px solid " + (isAiMagic ? "#d97706" : highlight ? "#6366f166" : accent + "55"),
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              flexShrink: 0,
+                            }}
+                          >
+                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={isAiMagic ? "white" : highlight ? "#a5b4fc" : accent} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                          </span>
+                          <span
+                            style={{
+                              fontSize: "13px",
+                              color: isAiMagic ? "#92400e" : highlight ? "#e2e8f0" : "#374151",
+                              fontWeight: isAiMagic ? 800 : 500,
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px"
+                            }}
+                          >
+                            {isAiMagic && <span>✨</span>}
+                            <span>{perk}</span>
+                          </span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
 

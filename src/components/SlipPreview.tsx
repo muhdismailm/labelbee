@@ -9,25 +9,34 @@ interface Props {
 
 export default function SlipPreview({ data }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
-  const [zoomMode, setZoomMode] = useState<'fit' | '100'>('100');
+  const [scale, setScale] = useState(0.5);
+  const [zoomMode, setZoomMode] = useState<'fit' | '100'>('fit');
 
   const calculateFitScale = () => {
     if (typeof window !== 'undefined') {
       const containerWidth = containerRef.current
-        ? containerRef.current.getBoundingClientRect().width
+        ? containerRef.current.clientWidth || containerRef.current.getBoundingClientRect().width
         : window.innerWidth;
-      const windowHeight = window.innerHeight;
-      const availableHeight = Math.max(350, windowHeight - 160);
       
-      const widthScale = (containerWidth - 20) / 794;
-      const heightScale = availableHeight / 1123;
-      
-      // Calculate scale so the entire A4 PDF is visible on screen without overflow
-      const fitScale = Math.max(0.3, Math.min(widthScale, heightScale, 1));
-      return Number(fitScale.toFixed(2));
+      const isMobile = window.innerWidth < 768;
+      // Subtract small padding so page has breathing room inside the canvas
+      const padding = isMobile ? 12 : 24;
+      const targetWidth = Math.max(260, (containerWidth || window.innerWidth) - padding);
+      const widthScale = targetWidth / 794;
+
+      if (isMobile) {
+        // On mobile, scale to fit the container width so the entire A4 sheet is visible and scrollable vertically
+        const fitScale = Math.min(widthScale, 1);
+        return Number(fitScale.toFixed(3));
+      } else {
+        // On desktop, fit within available screen height & width
+        const availableHeight = Math.max(350, window.innerHeight - 180);
+        const heightScale = availableHeight / 1123;
+        const fitScale = Math.max(0.25, Math.min(widthScale, heightScale, 1));
+        return Number(fitScale.toFixed(3));
+      }
     }
-    return 0.75;
+    return 0.5;
   };
 
   useEffect(() => {
@@ -40,12 +49,24 @@ export default function SlipPreview({ data }: Props) {
     };
 
     handleResize();
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        handleResize();
+      });
+      resizeObserver.observe(containerRef.current);
+    }
+
     window.addEventListener("resize", handleResize);
-    const timer = setTimeout(handleResize, 100);
+    const timer1 = setTimeout(handleResize, 50);
+    const timer2 = setTimeout(handleResize, 200);
 
     return () => {
       window.removeEventListener("resize", handleResize);
-      clearTimeout(timer);
+      if (resizeObserver) resizeObserver.disconnect();
+      clearTimeout(timer1);
+      clearTimeout(timer2);
     };
   }, [zoomMode, data.slipSize]);
 
@@ -97,7 +118,7 @@ export default function SlipPreview({ data }: Props) {
   return (
     <div className="flex flex-col items-center w-full">
       {/* Action & Zoom Controls Bar */}
-      <div className="w-full max-w-[840px] flex flex-col sm:flex-row gap-2.5 sm:gap-3 justify-between items-start sm:items-center mb-4 sm:mb-5 bg-white p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-xs">
+      <div className="w-full max-w-[840px] flex flex-col sm:flex-row gap-2.5 sm:gap-3 justify-between items-start sm:items-center mb-3 sm:mb-5 bg-white p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-xs">
         <div>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse"></span>
@@ -109,7 +130,7 @@ export default function SlipPreview({ data }: Props) {
         </div>
 
         {/* Interactive Fit & 100% Controls */}
-        <div className="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200">
+        <div className="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200 self-end sm:self-auto">
           <button
             type="button"
             onClick={() => {
@@ -147,29 +168,41 @@ export default function SlipPreview({ data }: Props) {
       {/* Outer responsive wrapper that scales the A4 print container with horizontal scroll support */}
       <div 
         ref={containerRef} 
-        className="w-full overflow-x-auto flex justify-center items-start transition-all duration-300 pb-12 px-1"
-        style={{ minHeight: `${1123 * scale}px` }}
+        className="w-full overflow-x-auto flex justify-center items-start transition-all duration-300 pb-12 px-0 sm:px-1"
       >
-        {/* A4 Paper Container with realistic PDF page shadow */}
+        {/* Scaled bounding box that occupies exact layout dimensions */}
         <div
-          id="print-container"
-          className="bg-white shadow-[0_20px_50px_rgba(0,0,0,0.15)] ring-1 ring-slate-900/10 rounded-xs transition-all origin-top duration-300"
+          className="relative transition-all duration-300 flex justify-center"
           style={{
-            width: '210mm',
-            height: '297mm', // Standard A4 Size
-            paddingTop: is8Slips ? '10mm' : '7.5mm',
-            paddingBottom: is8Slips ? '10mm' : '7.5mm',
-            paddingLeft: '7.5mm',
-            paddingRight: '7.5mm',
-            gap: is8Slips ? '5mm' : '3.5mm',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-            gridTemplateRows: is8Slips ? 'repeat(4, minmax(0, 1fr))' : 'repeat(5, minmax(0, 1fr))',
-            boxSizing: 'border-box',
-            overflow: 'hidden',
-            transform: `scale(${scale})`,
+            width: `${794 * scale}px`,
+            height: `${1123 * scale}px`,
+            flexShrink: 0,
           }}
         >
+          {/* A4 Paper Container with realistic PDF page shadow */}
+          <div
+            id="print-container"
+            className="bg-white shadow-[0_20px_50px_rgba(0,0,0,0.15)] ring-1 ring-slate-900/10 rounded-xs transition-all duration-300"
+            style={{
+              width: '210mm',
+              height: '297mm', // Standard A4 Size
+              paddingTop: is8Slips ? '10mm' : '7.5mm',
+              paddingBottom: is8Slips ? '10mm' : '7.5mm',
+              paddingLeft: '7.5mm',
+              paddingRight: '7.5mm',
+              gap: is8Slips ? '5mm' : '3.5mm',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+              gridTemplateRows: is8Slips ? 'repeat(4, minmax(0, 1fr))' : 'repeat(5, minmax(0, 1fr))',
+              boxSizing: 'border-box',
+              overflow: 'hidden',
+              transform: `scale(${scale})`,
+              transformOrigin: 'top left',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+            }}
+          >
         {slips.map((index) => {
           const slipSubject = data.subjectMode === 'custom' 
             ? (data.subjects?.[index] || "") 
@@ -647,8 +680,9 @@ export default function SlipPreview({ data }: Props) {
           </div>
           );
         })}
+          </div>
+        </div>
       </div>
     </div>
-  </div>
   );
 }

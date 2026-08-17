@@ -271,7 +271,7 @@ export default function Home() {
         amount: orderData.amount,
         currency: orderData.currency,
         name: "LabelBee Credits",
-        description: `${packageId === 'pack_1' ? '5 Downloads (Starter)' : packageId === 'pack_4' ? '10 Downloads (Popular)' : '100 Downloads (Business)'
+        description: `${packageId === 'pack_1' ? '5 Downloads (Starter)' : packageId === 'pack_4' ? '10 Downloads (Popular)' : '25 Downloads (Premium)'
           }`,
         image: "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=128&auto=format&fit=crop",
         order_id: orderData.id,
@@ -279,7 +279,7 @@ export default function Home() {
           let addedCredits = 0;
           if (packageId === 'pack_1') addedCredits = 5;
           if (packageId === 'pack_4') addedCredits = 10;
-          if (packageId === 'pack_10') addedCredits = 100;
+          if (packageId === 'pack_10') addedCredits = 25;
 
           try {
             if (addedCredits > 0) {
@@ -342,7 +342,7 @@ export default function Home() {
       const userRef = doc(db, "users", user.uid);
       await setDoc(userRef, {
         plan: "premium",
-        credits: (credits || 0) + 100
+        credits: (credits || 0) + 25
       }, { merge: true });
       setUserPlan("premium");
       setIsPackModalOpen(false);
@@ -510,7 +510,7 @@ export default function Home() {
         </aside>
 
         {/* Right Area - Preview */}
-        <section className={`flex-grow bg-[#FAF9F6] lg:overflow-y-auto lg:h-[calc(100vh-64px)] relative p-3 sm:p-6 lg:p-10 ${
+        <section className={`flex-grow bg-[#FAF9F6] lg:overflow-y-auto lg:h-[calc(100vh-64px)] relative p-2 sm:p-6 lg:p-10 ${
           mobileTab === 'preview' ? 'block' : 'hidden lg:block'
         }`}>
           <SlipPreview data={data} />
@@ -778,20 +778,22 @@ export default function Home() {
                 >
                   Buy Popular
                 </button>
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest shadow-md">
-                  Most Popular
-                </div>
               </div>
 
-              {/* Pack 10: Premium Plan (₹100 for 100 credits) */}
+              {/* Pack 10: Premium Plan (₹100 for 25 credits) */}
               <div className="border border-amber-300 rounded-2xl p-5 flex flex-col items-center text-center gap-4 bg-amber-50/15 relative hover:shadow-md transition-all duration-300">
-                <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold uppercase tracking-wide">
-                  Premium Plan
-                </span>
+                <div className="flex flex-col items-center gap-1">
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold uppercase tracking-wide">
+                    Premium Plan
+                  </span>
+                  <span className="text-[10.5px] font-extrabold text-amber-700 bg-amber-100/70 border border-amber-300/80 px-2 py-0.5 rounded-full">
+                    ✨ Includes AI Magic
+                  </span>
+                </div>
                 <div className="my-1">
-                  <div className="text-3xl font-black text-amber-500">100</div>
+                  <div className="text-3xl font-black text-amber-500">25</div>
                   <div className="text-xs text-amber-500 uppercase font-bold tracking-wider">Download Credits</div>
-                  <div className="text-[11px] text-amber-700 font-bold mt-0.5">₹1.00 / sheet (Mega Deal)</div>
+                  <div className="text-[11px] text-amber-700 font-bold mt-0.5">₹4.00 / sheet</div>
                 </div>
                 <div className="text-2xl font-extrabold text-slate-800">
                   ₹100 <span className="text-sm font-normal text-slate-400">INR</span>

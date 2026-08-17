@@ -95,11 +95,10 @@ export default function GeneratorForm({
     reader.onload = (event) => {
       const base64Url = event.target?.result as string;
       if (base64Url) {
-        const updates: Partial<SlipData> = { aiBackgroundUrl: base64Url };
-        if (data.template === 'unicorn' || data.template === 'doodle') {
-          updates.template = 'modern';
-        }
-        onChange(updates);
+        onChange({
+          aiBackgroundUrl: base64Url,
+          template: 'modern',
+        });
       }
     };
     reader.readAsDataURL(file);
@@ -124,15 +123,10 @@ export default function GeneratorForm({
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || "Failed to generate image.");
 
-      const updates: Partial<SlipData> = {
+      onChange({
         aiBackgroundUrl: result.imageUrl,
-      };
-
-      if (data.template === 'unicorn' || data.template === 'doodle') {
-        updates.template = 'modern';
-      }
-
-      onChange(updates);
+        template: 'modern',
+      });
     } catch (err: unknown) {
       const error = err as Error;
       console.error(error);
