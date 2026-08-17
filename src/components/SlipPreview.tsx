@@ -527,8 +527,68 @@ export default function SlipPreview({ data }: Props) {
               </div>
             )}
 
+            {/* ===== SPACE EXPLORER TEMPLATE ===== */}
+            {data.template === 'space' && (
+              <div className="w-full h-full relative overflow-hidden z-10 bg-gradient-to-br from-[#0b0f2a] via-[#1a1c4b] to-[#2e1065] rounded-xl shadow-md border border-indigo-500/40 p-2 flex gap-2.5 items-center font-sans">
+                {/* Cosmic decorative elements */}
+                <div className="absolute top-1 right-2 text-xs animate-pulse opacity-90">🪐</div>
+                <div className="absolute bottom-1 right-8 text-[10px] opacity-75">🚀</div>
+                <div className="absolute top-4 left-1/2 text-[8px] text-cyan-300 opacity-60">✨</div>
+                <div className="absolute bottom-4 left-3 text-[9px] text-yellow-300 opacity-70">⭐</div>
+                
+                {/* Photo Frame with glowing cosmic ring */}
+                <div
+                  className="relative shrink-0 flex items-center justify-center z-20 transition-all"
+                  style={{ width: `${data.photoFrameSize + 10}px`, height: '100%' }}
+                >
+                  <div
+                    className="rounded-full p-[3px] bg-gradient-to-tr from-cyan-400 via-indigo-400 to-fuchsia-500 shadow-lg shadow-cyan-500/20 flex items-center justify-center transition-all"
+                    style={{ width: `${data.photoFrameSize + 8}px`, height: `${data.photoFrameSize + 8}px` }}
+                  >
+                    <div className="w-full h-full rounded-full overflow-hidden border border-indigo-200/40 relative bg-slate-900">
+                      {renderPhoto()}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Content Box */}
+                <div className="flex-1 bg-white/95 backdrop-blur-md rounded-lg p-2 relative flex flex-col justify-between h-full shadow-md border border-indigo-200/60 z-10">
+                  <div className="flex-1 flex flex-col justify-evenly font-sans">
+                    {/* Name */}
+                    <div className="border-b border-indigo-200/80 pb-0.5">
+                      <span className="text-[6.5px] font-black uppercase text-indigo-600 block leading-none mb-0.5">Astronaut Name</span>
+                      <span className="text-[11px] font-black text-slate-950 leading-none truncate block">{data.studentName || ''}</span>
+                    </div>
+
+                    {/* Subject, Class, Roll */}
+                    <div className="grid grid-cols-2 gap-x-2 gap-y-1 mt-0.5">
+                      <div className="col-span-2 border-b border-indigo-200/80 pb-0.5">
+                        <span className="text-[6.5px] font-black uppercase text-indigo-600 block leading-none mb-0.5">Subject</span>
+                        <span className="text-[9.5px] font-black text-slate-950 truncate block leading-none">{slipSubject || ''}</span>
+                      </div>
+                      <div className="border-b border-indigo-200/80 pb-0.5">
+                        <span className="text-[6.5px] font-black uppercase text-indigo-600 block leading-none mb-0.5">Class / Div</span>
+                        <span className="text-[9px] font-black text-slate-950 truncate block leading-none">{data.grade || ''}{data.section ? ` - ${data.section}` : ''}</span>
+                      </div>
+                      <div className="border-b border-indigo-200/80 pb-0.5">
+                        <span className="text-[6.5px] font-black uppercase text-indigo-600 block leading-none mb-0.5">Roll No</span>
+                        <span className="text-[9px] font-black text-slate-950 block leading-none">{data.rollNo || ''}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* School Footer */}
+                  <div className="text-center pt-1 border-t border-indigo-100 mt-1 shrink-0 min-h-[15px]">
+                    <span className="text-[9.5px] font-black uppercase tracking-wider text-indigo-900 truncate block leading-tight">
+                      {data.schoolName || ''}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Fallback to Modern template if not matched */}
-            {!['unicorn', 'modern', 'classic', 'playful', 'doodle'].includes(data.template) && (
+            {!['unicorn', 'modern', 'classic', 'playful', 'doodle', 'space'].includes(data.template) && (
               <div className="w-full h-full rounded-xl overflow-hidden flex border border-slate-200/80 relative shadow-sm z-10">
                 {renderBackground()}
                 <div className="w-2.5 h-full shrink-0 z-10" style={{ backgroundColor: themeColor }} />

@@ -470,29 +470,28 @@ export default function GeneratorForm({
             <div className="grid grid-cols-2 gap-2">
               {[
                 { id: 'unicorn', name: 'Rainbow Unicorn', badge: 'Popular' },
-                { id: 'doodle', name: 'Rainbow Doodles', badge: 'Playful' },
+                { id: 'classic', name: 'Classic Certificate', badge: 'Playful' },
+                { id: 'space', name: 'Space Explorer', badge: null },
+                { id: 'doodle', name: 'Rainbow Doodles', badge: null },
                 { id: 'playful', name: 'Comic & Superhero', badge: null },
                 { id: 'modern', name: 'Modern Geometric', badge: null },
-                { id: 'classic', name: 'Classic Certificate', badge: null },
+
               ].map((t) => (
                 <button
                   key={t.id}
                   type="button"
                   onClick={() => onChange({ template: t.id as SlipData['template'] })}
-                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${data.template === t.id
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${data.template === t.id
                     ? 'border-[#1a1f4b] bg-amber-50/60 ring-2 ring-[#F5C42E]/50 shadow-sm'
                     : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
                     }`}
                 >
-                  <div className="flex items-center justify-between w-full mb-1">
-                    <span className="text-xs font-black text-[#1a1f4b]">{t.name}</span>
-                    {t.badge && (
-                      <span className="text-[9px] font-extrabold bg-[#1a1f4b] text-white px-1.5 py-0.5 rounded">
-                        {t.badge}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[10.5px] text-slate-500 font-medium leading-tight">{t.desc}</p>
+                  <span className="text-xs font-black text-[#1a1f4b]">{t.name}</span>
+                  {t.badge && (
+                    <span className="text-[9px] font-extrabold bg-[#1a1f4b] text-white px-1.5 py-0.5 rounded">
+                      {t.badge}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -515,8 +514,8 @@ export default function GeneratorForm({
                   type="button"
                   onClick={() => onChange({ colorTheme: theme.id })}
                   className={`w-7 h-7 rounded-full transition-transform cursor-pointer relative shadow-2xs border border-slate-300/80 ${data.colorTheme?.toLowerCase() === theme.id.toLowerCase()
-                      ? 'scale-115 ring-2 ring-offset-2 ring-[#1a1f4b]'
-                      : 'hover:scale-105'
+                    ? 'scale-115 ring-2 ring-offset-2 ring-[#1a1f4b]'
+                    : 'hover:scale-105'
                     }`}
                   style={{ backgroundColor: theme.id }}
                   title={theme.name}
@@ -527,8 +526,8 @@ export default function GeneratorForm({
               <label
                 title="Custom color picker"
                 className={`relative w-7 h-7 rounded-full cursor-pointer flex items-center justify-center transition-transform hover:scale-105 shadow-2xs border border-slate-300 overflow-hidden ${!THEMES.some((t) => t.id.toLowerCase() === data.colorTheme?.toLowerCase())
-                    ? 'scale-115 ring-2 ring-offset-2 ring-[#1a1f4b]'
-                    : ''
+                  ? 'scale-115 ring-2 ring-offset-2 ring-[#1a1f4b]'
+                  : ''
                   }`}
                 style={{
                   background: !THEMES.some((t) => t.id.toLowerCase() === data.colorTheme?.toLowerCase())
@@ -544,8 +543,8 @@ export default function GeneratorForm({
                 />
                 <Pipette
                   className={`w-3.5 h-3.5 pointer-events-none drop-shadow-sm ${!THEMES.some((t) => t.id.toLowerCase() === data.colorTheme?.toLowerCase())
-                      ? 'text-white'
-                      : 'text-slate-800'
+                    ? 'text-white'
+                    : 'text-slate-800'
                     }`}
                 />
               </label>
