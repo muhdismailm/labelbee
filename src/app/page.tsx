@@ -854,13 +854,13 @@ export default function LandingPage() {
                 cta: "Buy Starter",
               },
               {
-                name: "Popular Plan",
+                name: "Standard Plan",
                 emoji: "🔥",
                 price: "₹30",
                 priceNum: 30,
                 credits: 10,
                 unit: "₹3.0 / download",
-                badge: "Most Popular" as string | null,
+                badge: null as string | null,
                 accent: "#6366f1",
                 accentBg: "#eef2ff",
                 borderColor: "#6366f1",
@@ -872,7 +872,7 @@ export default function LandingPage() {
                   "Custom background upload",
                   "High speed processing"
                 ],
-                cta: "Buy Popular",
+                cta: "Buy Standard",
               },
               {
                 name: "Premium Plan",

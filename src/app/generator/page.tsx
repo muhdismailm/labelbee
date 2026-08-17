@@ -271,7 +271,7 @@ export default function Home() {
         amount: orderData.amount,
         currency: orderData.currency,
         name: "LabelBee Credits",
-        description: `${packageId === 'pack_1' ? '5 Downloads (Starter)' : packageId === 'pack_4' ? '10 Downloads (Popular)' : '25 Downloads (Premium)'
+        description: `${packageId === 'pack_1' ? '5 Downloads (Starter)' : packageId === 'pack_4' ? '10 Downloads (Standard)' : '25 Downloads (Premium)'
           }`,
         image: "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=128&auto=format&fit=crop",
         order_id: orderData.id,
@@ -758,10 +758,10 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* Pack 4: Popular (₹30 for 10 credits) */}
+              {/* Pack 4: Standard (₹30 for 10 credits) */}
               <div className="border-2 border-indigo-500 rounded-2xl p-5 flex flex-col items-center text-center gap-4 bg-indigo-50/25 relative shadow-indigo-100 shadow-lg hover:shadow-xl transition-all duration-300">
                 <span className="px-2.5 py-0.5 rounded-full bg-indigo-600 text-white text-xs font-bold uppercase tracking-wide">
-                  Popular Plan
+                  Standard Plan
                 </span>
                 <div className="my-1">
                   <div className="text-3xl font-black text-indigo-600">10</div>
@@ -776,7 +776,7 @@ export default function Home() {
                   disabled={loadingPayment}
                   className="w-full py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-sm font-bold hover:scale-[1.02] transition-all cursor-pointer"
                 >
-                  Buy Popular
+                  Buy Standard
                 </button>
               </div>
 
