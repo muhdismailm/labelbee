@@ -552,7 +552,7 @@ export default function Home() {
 
         {/* Right Area - Preview */}
         <section className={`flex-grow bg-[#FAF9F6] lg:overflow-y-auto lg:h-[calc(100vh-64px)] relative p-2 sm:p-6 lg:p-10 ${
-          mobileTab === 'preview' ? 'block' : 'hidden lg:block'
+          mobileTab === 'preview' ? 'block' : 'max-lg:fixed max-lg:-left-[9999px] max-lg:top-0 max-lg:opacity-0 max-lg:pointer-events-none'
         }`}>
           <SlipPreview data={data} />
         </section>
