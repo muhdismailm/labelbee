@@ -14,15 +14,26 @@ const isIOS = (): boolean => {
 };
 
 /**
- * Ensures all image elements and web fonts inside the target element are loaded before capture.
+ * Ensures all image elements and web fonts inside the target element are loaded and decoded before capture.
  */
 const ensureAssetsLoaded = async (element: HTMLElement): Promise<void> => {
   const images = Array.from(element.querySelectorAll("img"));
   await Promise.all(
     images.map((img) => {
-      if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+      if (img.complete && img.naturalHeight !== 0) {
+        if ("decode" in img) {
+          return img.decode().catch(() => true);
+        }
+        return Promise.resolve(true);
+      }
       return new Promise((resolve) => {
-        img.onload = () => resolve(true);
+        img.onload = () => {
+          if ("decode" in img) {
+            img.decode().then(() => resolve(true)).catch(() => resolve(true));
+          } else {
+            resolve(true);
+          }
+        };
         img.onerror = () => resolve(true);
         setTimeout(() => resolve(true), 3000);
       });
@@ -77,6 +88,36 @@ const captureWithHtml2Canvas = async (element: HTMLElement, elementId: string): 
           // Strip preview watermarks
           printNode.querySelectorAll(".preview-watermark, .preview-watermark-overlay").forEach((el) => {
             el.remove();
+          });
+
+          // FIX FOR IOS SAFARI IMAGE DROPPING:
+          // In WebKit (iOS Safari), <img> tags in cloned iframes often fail to re-decode.
+          // By converting each fully-loaded <img> from the live DOM into an in-memory <canvas>,
+          // html2canvas copies the pixel buffers directly with 100% reliability and exact transforms.
+          const sourceImages = Array.from(element.querySelectorAll("img"));
+          const clonedImages = Array.from(printNode.querySelectorAll("img"));
+
+          clonedImages.forEach((clonedImg, idx) => {
+            const sourceImg = sourceImages[idx];
+            if (sourceImg && sourceImg.complete && sourceImg.naturalWidth > 0) {
+              try {
+                const c = clonedDoc.createElement("canvas");
+                c.width = sourceImg.naturalWidth;
+                c.height = sourceImg.naturalHeight;
+                const ctx = c.getContext("2d");
+                if (ctx) {
+                  ctx.drawImage(sourceImg, 0, 0);
+                  // Retain className and style transforms (zoom, rotation, position offsets)
+                  c.className = clonedImg.className;
+                  c.style.cssText = clonedImg.style.cssText;
+                  if (!c.style.width) c.style.width = "100%";
+                  if (!c.style.height) c.style.height = "100%";
+                  clonedImg.parentNode?.replaceChild(c, clonedImg);
+                }
+              } catch (e) {
+                console.warn("[exportToPdf] Error converting image to canvas:", e);
+              }
+            }
           });
         }
       },
@@ -151,7 +192,7 @@ export const exportToPdf = async (
   let imgData: string | null = null;
 
   // On iOS, SVG foreignObject (html-to-image) drops images due to WebKit sandboxing.
-  // We use html2canvas direct 2D canvas rendering first for iOS.
+  // We use html2canvas direct 2D canvas rendering first for iOS with canvas-backed image inlining.
   if (ios) {
     imgData = await captureWithHtml2Canvas(element, elementId);
     if (!imgData) {
