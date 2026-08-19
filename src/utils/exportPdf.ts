@@ -3,6 +3,17 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
 /**
+ * Detects if the current device is running iOS (iPhone, iPad, iPod) or iPadOS.
+ */
+const isIOS = (): boolean => {
+  if (typeof navigator === "undefined") return false;
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+  );
+};
+
+/**
  * Ensures all image elements and web fonts inside the target element are loaded before capture.
  */
 const ensureAssetsLoaded = async (element: HTMLElement): Promise<void> => {
@@ -28,14 +39,68 @@ const ensureAssetsLoaded = async (element: HTMLElement): Promise<void> => {
 };
 
 /**
- * Capture using html-to-image (SVG foreignObject to Canvas / JPEG).
- * Excellent for maintaining high-fidelity text rendering and CSS styles without DOM mutation.
+ * Primary engine for iOS (and fallback for others): html2canvas.
+ * Directly renders DOM trees onto a 2D HTML5 canvas without SVG foreignObject,
+ * ensuring photos, text, and styles are preserved on iOS Safari.
+ */
+const captureWithHtml2Canvas = async (element: HTMLElement, elementId: string): Promise<string | null> => {
+  try {
+    const canvas = await html2canvas(element, {
+      scale: 2, // Crisp ~1588x2246 A4 print resolution
+      useCORS: true,
+      allowTaint: false,
+      backgroundColor: "#ffffff",
+      logging: false,
+      imageTimeout: 15000,
+      onclone: (clonedDoc) => {
+        const printNode = clonedDoc.getElementById(elementId);
+        if (printNode) {
+          // Normalize dimensions and reset CSS transforms for clean A4 capture
+          printNode.style.transform = "none";
+          printNode.style.transition = "none";
+          printNode.style.position = "relative";
+          printNode.style.top = "0";
+          printNode.style.left = "0";
+          printNode.style.margin = "0";
+          printNode.style.boxShadow = "none";
+          printNode.style.borderRadius = "0";
+          printNode.style.width = "794px";
+          printNode.style.height = "1123px";
+
+          if (printNode.parentElement) {
+            printNode.parentElement.style.width = "794px";
+            printNode.parentElement.style.height = "1123px";
+            printNode.parentElement.style.overflow = "visible";
+            printNode.parentElement.style.transform = "none";
+          }
+
+          // Strip preview watermarks
+          printNode.querySelectorAll(".preview-watermark, .preview-watermark-overlay").forEach((el) => {
+            el.remove();
+          });
+        }
+      },
+    });
+
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
+    if (dataUrl && dataUrl.length > 500) {
+      return dataUrl;
+    }
+  } catch (err) {
+    console.warn("[exportToPdf] html2canvas capture failed:", err);
+  }
+  return null;
+};
+
+/**
+ * Engine for Desktop and Android: html-to-image.
+ * Renders via SVG foreignObject with CSS style overrides.
  */
 const captureWithHtmlToImage = async (element: HTMLElement): Promise<string | null> => {
   try {
     const dataUrl = await toJpeg(element, {
       quality: 0.95,
-      pixelRatio: 2, // ~1588x2246 px crisp A4 resolution
+      pixelRatio: 2,
       backgroundColor: "#ffffff",
       cacheBust: true,
       style: {
@@ -63,58 +128,7 @@ const captureWithHtmlToImage = async (element: HTMLElement): Promise<string | nu
       return dataUrl;
     }
   } catch (err) {
-    console.warn("[exportToPdf] html-to-image failed, trying html2canvas fallback:", err);
-  }
-  return null;
-};
-
-/**
- * Capture using html2canvas as primary/fallback engine.
- * Direct 2D canvas drawing on cloned document.
- */
-const captureWithHtml2Canvas = async (element: HTMLElement, elementId: string): Promise<string | null> => {
-  try {
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: false,
-      backgroundColor: "#ffffff",
-      logging: false,
-      imageTimeout: 15000,
-      onclone: (clonedDoc) => {
-        const printNode = clonedDoc.getElementById(elementId);
-        if (printNode) {
-          printNode.style.transform = "none";
-          printNode.style.transition = "none";
-          printNode.style.position = "relative";
-          printNode.style.top = "0";
-          printNode.style.left = "0";
-          printNode.style.margin = "0";
-          printNode.style.boxShadow = "none";
-          printNode.style.borderRadius = "0";
-          printNode.style.width = "794px";
-          printNode.style.height = "1123px";
-
-          if (printNode.parentElement) {
-            printNode.parentElement.style.width = "794px";
-            printNode.parentElement.style.height = "1123px";
-            printNode.parentElement.style.overflow = "visible";
-            printNode.parentElement.style.transform = "none";
-          }
-
-          printNode.querySelectorAll(".preview-watermark, .preview-watermark-overlay").forEach((el) => {
-            el.remove();
-          });
-        }
-      },
-    });
-
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
-    if (dataUrl && dataUrl.length > 500) {
-      return dataUrl;
-    }
-  } catch (err) {
-    console.warn("[exportToPdf] html2canvas also threw an error:", err);
+    console.warn("[exportToPdf] html-to-image capture failed:", err);
   }
   return null;
 };
@@ -133,12 +147,22 @@ export const exportToPdf = async (
   await ensureAssetsLoaded(element);
   await new Promise((resolve) => setTimeout(resolve, 200));
 
-  // Try Engine 1: html-to-image
-  let imgData = await captureWithHtmlToImage(element);
+  const ios = isIOS();
+  let imgData: string | null = null;
 
-  // Try Engine 2: html2canvas fallback
-  if (!imgData) {
+  // On iOS, SVG foreignObject (html-to-image) drops images due to WebKit sandboxing.
+  // We use html2canvas direct 2D canvas rendering first for iOS.
+  if (ios) {
     imgData = await captureWithHtml2Canvas(element, elementId);
+    if (!imgData) {
+      imgData = await captureWithHtmlToImage(element);
+    }
+  } else {
+    // On Desktop and Android, try html-to-image first, then html2canvas fallback
+    imgData = await captureWithHtmlToImage(element);
+    if (!imgData) {
+      imgData = await captureWithHtml2Canvas(element, elementId);
+    }
   }
 
   if (!imgData) {
@@ -155,6 +179,6 @@ export const exportToPdf = async (
 
   pdf.addImage(imgData, "JPEG", 0, 0, 210, 297, undefined, "FAST");
 
-  // Save PDF - triggers browser download
+  // Save PDF - triggers native download / view prompt on iOS Safari and Desktop
   pdf.save(filename);
 };
