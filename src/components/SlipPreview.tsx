@@ -141,7 +141,7 @@ export default function SlipPreview({ data }: Props) {
         <div>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse"></span>
-            <h3 className="font-black text-xs sm:text-sm text-[#1a1f4b]">Full A4 PDF Sheet Preview</h3>
+            <h3 className="font-black text-xs sm:text-sm text-[#1a1f4b]">Full A4 Sheet Preview</h3>
           </div>
           <p className="text-[11px] sm:text-xs text-slate-500 font-medium mt-0.5">
             {is8Slips ? '8 Slips / Sheet (Large • 4 × 2 Grid)' : '10 Slips / Sheet (Standard • 5 × 2 Grid)'}

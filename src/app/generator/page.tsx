@@ -5,7 +5,8 @@ import { useState, useEffect } from "react";
 import { SlipData, defaultSlipData } from "@/types";
 import GeneratorForm from "@/components/GeneratorForm";
 import SlipPreview from "@/components/SlipPreview";
-import { exportToPdf } from "@/utils/exportPdf";
+import DownloadFormatModal from "@/components/DownloadFormatModal";
+import { exportToPdf, exportToPng, isIOS } from "@/utils/exportPdf";
 import {
   onAuthStateChanged,
   User,
@@ -56,9 +57,12 @@ export default function Home() {
   const [credits, setCredits] = useState<number>(0);
   const [userPlan, setUserPlan] = useState<'free' | 'starter' | 'popular' | 'premium' | 'business'>('free');
   const [isPackModalOpen, setIsPackModalOpen] = useState<boolean>(false);
+  const [isFormatModalOpen, setIsFormatModalOpen] = useState<boolean>(false);
   const [loadingPayment, setLoadingPayment] = useState<boolean>(false);
   const [loadingDownload, setLoadingDownload] = useState<boolean>(false);
+  const [downloadingFormat, setDownloadingFormat] = useState<'pdf' | 'png' | null>(null);
   const [showIosToast, setShowIosToast] = useState<boolean>(false);
+  const [iosToastFormat, setIosToastFormat] = useState<'pdf' | 'png'>('pdf');
 
   // Listen to active Firebase authentication session
   useEffect(() => {
@@ -208,7 +212,7 @@ export default function Home() {
 
 
 
-  const handlePrint = async () => {
+  const handleOpenDownloadModal = () => {
     // 1. Gate behind authentication
     if (!user) {
       setAuthError(null);
@@ -223,29 +227,61 @@ export default function Home() {
       return;
     }
 
-    // 3. Deduct credit, update state/local storage and trigger download
+    // 3. Open Format Selection Dialog
+    setIsFormatModalOpen(true);
+  };
+
+  const handleFormatDownload = async (format: 'pdf' | 'png') => {
+    if (!user) {
+      setIsFormatModalOpen(false);
+      setAuthError(null);
+      setAuthMode('login');
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    if (credits <= 0) {
+      setIsFormatModalOpen(false);
+      setIsPackModalOpen(true);
+      return;
+    }
+
     setLoadingDownload(true);
+    setDownloadingFormat(format);
+
     try {
+      // 1. Deduct 1 credit in Firestore
       const newCredits = credits - 1;
       await setDoc(doc(db, "users", user.uid), { credits: newCredits }, { merge: true });
       setCredits(newCredits);
 
-      await exportToPdf("print-container", `${data.studentName.replace(/\s+/g, '-').toLowerCase()}-slips.pdf`);
+      // 2. Compute filename
+      const rawName = data.studentName?.trim();
+      const sanitizedName = rawName ? rawName.replace(/\s+/g, '-').toLowerCase() : 'name';
 
-      // On iOS the PDF opens in a new tab instead of downloading directly.
-      // Show a short guidance toast so users know how to save it.
-      const isIosDevice =
-        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-        (navigator.userAgent.includes("Mac") && "ontouchend" in document);
-      if (isIosDevice) {
+      // 3. Trigger chosen export format
+      if (format === 'pdf') {
+        await exportToPdf("print-container", `${sanitizedName}-slips.pdf`);
+      } else {
+        await exportToPng("print-container", `${sanitizedName}-slips.png`);
+      }
+
+      // Close format modal after download starts
+      setIsFormatModalOpen(false);
+
+      // On iOS (Safari and Chrome), show guidance toast
+      if (isIOS()) {
+        setIosToastFormat(format);
         setShowIosToast(true);
         setTimeout(() => setShowIosToast(false), 7000);
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to generate PDF. Please try again.";
+      console.error(`[Download] Error generating ${format.toUpperCase()}:`, err);
+      const msg = err instanceof Error ? err.message : `Failed to generate ${format.toUpperCase()}. Please try again.`;
       alert(msg);
     } finally {
       setLoadingDownload(false);
+      setDownloadingFormat(null);
     }
   };
 
@@ -371,22 +407,28 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col font-sans">
-      {/* iOS Save Guidance Toast — shown only after PDF export on iPhone/iPad */}
+      {/* iOS Save Guidance Toast — shown after PDF or PNG export on iPhone/iPad (Safari, Chrome) */}
       {showIosToast && (
         <div
           role="alert"
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] flex items-start gap-3 bg-[#1a1f4b] text-white px-5 py-4 rounded-2xl shadow-2xl max-w-[340px] w-[calc(100%-2rem)] animate-fade-in"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] flex items-start gap-3 bg-[#1a1f4b] text-white px-5 py-4 rounded-2xl shadow-2xl max-w-[360px] w-[calc(100%-2rem)] animate-fade-in"
         >
-          {/* iPhone share icon */}
+          {/* iPhone share/save icon */}
           <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5C42E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5">
             <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
             <polyline points="16 6 12 2 8 6" />
             <line x1="12" y1="2" x2="12" y2="15" />
           </svg>
           <div>
-            <p className="font-extrabold text-sm leading-tight mb-1">PDF opened in new tab</p>
+            <p className="font-extrabold text-sm leading-tight mb-1">
+              {iosToastFormat === 'pdf' ? 'PDF ready to save' : 'PNG ready to save'}
+            </p>
             <p className="text-xs text-slate-300 leading-snug">
-              Tap the <strong className="text-white">Share</strong> button ↑ then choose <strong className="text-white">&ldquo;Save to Files&rdquo;</strong> to save your PDF to iPhone.
+              {iosToastFormat === 'pdf' ? (
+                <>Tap the <strong className="text-white">Share</strong> button ↑ or browser prompt to save the PDF to Files.</>
+              ) : (
+                <>Tap <strong className="text-white">Share</strong> ↑ or check browser downloads / tap & hold to save to Photos.</>
+              )}
             </p>
           </div>
           <button
@@ -458,7 +500,7 @@ export default function Home() {
 
             {/* Main Action CTA Button */}
             <button
-              onClick={handlePrint}
+              onClick={handleOpenDownloadModal}
               disabled={loadingPayment || loadingDownload}
               className={`px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 flex items-center gap-1.5 sm:gap-2 cursor-pointer shrink-0 ${loadingPayment || loadingDownload
                 ? "bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed"
@@ -473,7 +515,13 @@ export default function Home() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span>Generating PDF...</span>
+                  <span>
+                    {downloadingFormat === 'png'
+                      ? 'Generating PNG...'
+                      : downloadingFormat === 'pdf'
+                      ? 'Generating PDF...'
+                      : 'Preparing Download...'}
+                  </span>
                 </>
               ) : loadingPayment ? (
                 <>
@@ -486,13 +534,14 @@ export default function Home() {
               ) : user && credits > 0 ? (
                 <>
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                  <span className="hidden sm:inline">Download PDF (-1 Credit)</span>
+                  <span className="hidden sm:inline">Download Sheet (-1 Credit)</span>
                   <span className="sm:hidden">Download (-1)</span>
                 </>
               ) : (
                 <>
                   <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                  <span>Export PDF</span>
+                  <span className="hidden sm:inline">Download Sheet</span>
+                  <span className="sm:hidden">Download</span>
                 </>
               )}
             </button>
@@ -871,6 +920,20 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Download Format Selection Modal */}
+      <DownloadFormatModal
+        isOpen={isFormatModalOpen}
+        onClose={() => {
+          if (!loadingDownload) {
+            setIsFormatModalOpen(false);
+          }
+        }}
+        onSelectFormat={handleFormatDownload}
+        isLoading={loadingDownload}
+        loadingFormat={downloadingFormat}
+        credits={credits}
+      />
     </div>
   );
 }
