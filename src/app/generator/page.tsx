@@ -58,6 +58,7 @@ export default function Home() {
   const [isPackModalOpen, setIsPackModalOpen] = useState<boolean>(false);
   const [loadingPayment, setLoadingPayment] = useState<boolean>(false);
   const [loadingDownload, setLoadingDownload] = useState<boolean>(false);
+  const [showIosToast, setShowIosToast] = useState<boolean>(false);
 
   // Listen to active Firebase authentication session
   useEffect(() => {
@@ -230,8 +231,19 @@ export default function Home() {
       setCredits(newCredits);
 
       await exportToPdf("print-container", `${data.studentName.replace(/\s+/g, '-').toLowerCase()}-slips.pdf`);
-    } catch {
-      alert("Failed to generate PDF. Please try again.");
+
+      // On iOS the PDF opens in a new tab instead of downloading directly.
+      // Show a short guidance toast so users know how to save it.
+      const isIosDevice =
+        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+      if (isIosDevice) {
+        setShowIosToast(true);
+        setTimeout(() => setShowIosToast(false), 7000);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to generate PDF. Please try again.";
+      alert(msg);
     } finally {
       setLoadingDownload(false);
     }
@@ -359,6 +371,35 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#FAF9F6] flex flex-col font-sans">
+      {/* iOS Save Guidance Toast — shown only after PDF export on iPhone/iPad */}
+      {showIosToast && (
+        <div
+          role="alert"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] flex items-start gap-3 bg-[#1a1f4b] text-white px-5 py-4 rounded-2xl shadow-2xl max-w-[340px] w-[calc(100%-2rem)] animate-fade-in"
+        >
+          {/* iPhone share icon */}
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5C42E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+            <polyline points="16 6 12 2 8 6" />
+            <line x1="12" y1="2" x2="12" y2="15" />
+          </svg>
+          <div>
+            <p className="font-extrabold text-sm leading-tight mb-1">PDF opened in new tab</p>
+            <p className="text-xs text-slate-300 leading-snug">
+              Tap the <strong className="text-white">Share</strong> button ↑ then choose <strong className="text-white">&ldquo;Save to Files&rdquo;</strong> to save your PDF to iPhone.
+            </p>
+          </div>
+          <button
+            onClick={() => setShowIosToast(false)}
+            className="ml-auto shrink-0 text-slate-400 hover:text-white transition-colors cursor-pointer"
+            aria-label="Dismiss"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+      )}
       {/* Header */}
       <header className="bg-white/95 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
