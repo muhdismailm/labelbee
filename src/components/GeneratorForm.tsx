@@ -64,15 +64,55 @@ export default function GeneratorForm({
     onChange({ [name]: value });
   };
 
-  const handlePhotoUpload = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+  const optimizeImageFile = (file: File, maxDim = 1200, quality = 0.92): Promise<string> => {
+    return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = (event) => {
-        onChange({ photoUrl: event.target?.result as string });
+        const rawDataUrl = event.target?.result as string;
+        if (!rawDataUrl) {
+          resolve("");
+          return;
+        }
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL("image/jpeg", quality));
+          } else {
+            resolve(rawDataUrl);
+          }
+        };
+        img.onerror = () => resolve(rawDataUrl);
+        img.src = rawDataUrl;
       };
+      reader.onerror = () => resolve("");
       reader.readAsDataURL(file);
+    });
+  };
+
+  const handlePhotoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const optimizedUrl = await optimizeImageFile(file, 1200, 0.92);
+      if (optimizedUrl) {
+        onChange({ photoUrl: optimizedUrl });
+      }
     }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   // ─── Direct Interactive Photo Manipulation Handlers ──────────────────────────
@@ -262,21 +302,17 @@ export default function GeneratorForm({
   };
 
   // Handle custom background image upload (Available to ALL users)
-  const handleTemplateBgUpload = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleTemplateBgUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64Url = event.target?.result as string;
-      if (base64Url) {
-        onChange({
-          aiBackgroundUrl: base64Url,
-          template: 'modern',
-        });
-      }
-    };
-    reader.readAsDataURL(file);
+    const optimizedUrl = await optimizeImageFile(file, 1600, 0.92);
+    if (optimizedUrl) {
+      onChange({
+        aiBackgroundUrl: optimizedUrl,
+        template: 'modern',
+      });
+    }
     if (templateBgInputRef.current) templateBgInputRef.current.value = '';
   };
 
