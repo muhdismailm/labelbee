@@ -48,8 +48,17 @@ async function getExecutablePath(): Promise<string> {
     }
   }
 
-  // 4. Default to @sparticuz/chromium on Linux / Serverless / Production
-  return await chromium.executablePath();
+  // 4. Default to remote or local @sparticuz/chromium on Linux / Serverless / Production
+  const remoteChromiumUrl =
+    process.env.CHROMIUM_REMOTE_URL ||
+    "https://github.com/Sparticuz/chromium/releases/download/v147.0.0/chromium-v147.0.0-pack.tar";
+
+  try {
+    return await chromium.executablePath(remoteChromiumUrl);
+  } catch (err) {
+    console.warn("Remote chromium download fallback to local binary path:", err);
+    return await chromium.executablePath();
+  }
 }
 
 export async function POST(req: NextRequest) {
