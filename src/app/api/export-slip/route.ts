@@ -49,9 +49,11 @@ async function getExecutablePath(): Promise<string> {
   }
 
   // 4. Default to remote or local @sparticuz/chromium on Linux / Serverless / Production
+  const isArm = process.arch === "arm64";
+  const defaultArchTar = isArm ? "chromium-v147.0.0-pack.arm64.tar" : "chromium-v147.0.0-pack.x64.tar";
   const remoteChromiumUrl =
     process.env.CHROMIUM_REMOTE_URL ||
-    "https://github.com/Sparticuz/chromium/releases/download/v147.0.0/chromium-v147.0.0-pack.tar";
+    `https://github.com/Sparticuz/chromium/releases/download/v147.0.0/${defaultArchTar}`;
 
   try {
     return await chromium.executablePath(remoteChromiumUrl);
