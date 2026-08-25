@@ -1,3 +1,4 @@
+import { SlipData } from "@/types";
 import { toJpeg, toPng } from "html-to-image";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -53,9 +54,126 @@ const ensureAssetsLoaded = async (element: HTMLElement): Promise<void> => {
 };
 
 /**
- * Primary engine for iOS (Safari, Chrome) and fallback for others: html2canvas.
- * Directly renders DOM trees onto a 2D HTML5 canvas without SVG foreignObject,
- * ensuring photos, text, and styles are preserved on iOS WebKit browsers.
+ * Helper to download a Blob as a file in modern and mobile browsers.
+ */
+export const downloadBlob = (blob: Blob, filename: string): void => {
+  const blobUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = blobUrl;
+  link.download = filename;
+  link.rel = "noopener";
+  document.body.appendChild(link);
+  link.click();
+
+  setTimeout(() => {
+    if (document.body.contains(link)) {
+      document.body.removeChild(link);
+    }
+    URL.revokeObjectURL(blobUrl);
+  }, 2500);
+};
+
+/**
+ * Helper to download a base64 Data URL as a file.
+ */
+export const downloadDataUrl = (dataUrl: string, filename: string): void => {
+  try {
+    const parts = dataUrl.split(",");
+    const mimeMatch = parts[0].match(/:(.*?);/);
+    const mime = mimeMatch ? mimeMatch[1] : "image/png";
+    const byteString = atob(parts[1]);
+    const u8arr = new Uint8Array(byteString.length);
+    for (let i = 0; i < byteString.length; i++) {
+      u8arr[i] = byteString.charCodeAt(i);
+    }
+    const blob = new Blob([u8arr], { type: mime });
+    downloadBlob(blob, filename);
+  } catch (err) {
+    console.warn("[downloadDataUrl] Fallback to direct anchor download:", err);
+    const link = document.createElement("a");
+    link.href = dataUrl;
+    link.download = filename;
+    link.rel = "noopener";
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      if (document.body.contains(link)) {
+        document.body.removeChild(link);
+      }
+    }, 2000);
+  }
+};
+
+/**
+ * Server-Side Rendered (SSR) PDF Export.
+ * Sends the in-memory SlipData payload to `/api/export-slip` and downloads the resulting binary PDF.
+ */
+export const exportServerPdf = async (
+  data: SlipData,
+  filename: string = "name-slips.pdf"
+): Promise<void> => {
+  const res = await fetch("/api/export-slip", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      slipData: data,
+      format: "pdf",
+    }),
+  });
+
+  if (!res.ok) {
+    let errorMsg = "Server failed to generate PDF.";
+    try {
+      const errJson = await res.json();
+      if (errJson.error) errorMsg = errJson.error;
+    } catch {
+      // ignore
+    }
+    throw new Error(errorMsg);
+  }
+
+  const blob = await res.blob();
+  downloadBlob(blob, filename);
+};
+
+/**
+ * Server-Side Rendered (SSR) PNG Export.
+ * Sends the in-memory SlipData payload to `/api/export-slip` and downloads the resulting high-res PNG.
+ */
+export const exportServerPng = async (
+  data: SlipData,
+  filename: string = "name-slips.png"
+): Promise<void> => {
+  const res = await fetch("/api/export-slip", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      slipData: data,
+      format: "png",
+    }),
+  });
+
+  if (!res.ok) {
+    let errorMsg = "Server failed to generate PNG.";
+    try {
+      const errJson = await res.json();
+      if (errJson.error) errorMsg = errJson.error;
+    } catch {
+      // ignore
+    }
+    throw new Error(errorMsg);
+  }
+
+  const blob = await res.blob();
+  downloadBlob(blob, filename);
+};
+
+/**
+ * Client-Side Fallback Capture via html2canvas.
  */
 const captureWithHtml2Canvas = async (
   element: HTMLElement,
@@ -64,7 +182,7 @@ const captureWithHtml2Canvas = async (
 ): Promise<string | null> => {
   try {
     const canvas = await html2canvas(element, {
-      scale: 2, // Crisp ~1588x2246 A4 print resolution
+      scale: 2,
       useCORS: true,
       allowTaint: false,
       backgroundColor: "#ffffff",
@@ -73,7 +191,6 @@ const captureWithHtml2Canvas = async (
       onclone: (clonedDoc) => {
         const printNode = clonedDoc.getElementById(elementId);
         if (printNode) {
-          // Normalize dimensions and reset CSS transforms for clean A4 capture
           printNode.style.transform = "none";
           printNode.style.transition = "none";
           printNode.style.position = "relative";
@@ -92,15 +209,10 @@ const captureWithHtml2Canvas = async (
             printNode.parentElement.style.transform = "none";
           }
 
-          // Strip preview watermarks
           printNode.querySelectorAll(".preview-watermark, .preview-watermark-overlay").forEach((el) => {
             el.remove();
           });
 
-          // FIX FOR IOS SAFARI & IOS CHROME IMAGE DROPPING:
-          // In WebKit (iOS), <img> tags in cloned iframes often fail to re-decode.
-          // By converting each fully-loaded <img> from the live DOM into an in-memory <canvas>,
-          // html2canvas copies the pixel buffers directly with 100% reliability and exact transforms.
           const sourceImages = Array.from(element.querySelectorAll("img"));
           const clonedImages = Array.from(printNode.querySelectorAll("img"));
 
@@ -114,7 +226,6 @@ const captureWithHtml2Canvas = async (
                 const ctx = c.getContext("2d");
                 if (ctx) {
                   ctx.drawImage(sourceImg, 0, 0);
-                  // Retain className and style transforms (zoom, rotation, position offsets)
                   c.className = clonedImg.className;
                   c.style.cssText = clonedImg.style.cssText;
                   if (!c.style.width) c.style.width = "100%";
@@ -131,19 +242,15 @@ const captureWithHtml2Canvas = async (
     });
 
     const mimeType = format === "png" ? "image/png" : "image/jpeg";
-    const dataUrl = canvas.toDataURL(mimeType, format === "png" ? undefined : 0.95);
-    if (dataUrl && dataUrl.length > 500) {
-      return dataUrl;
-    }
+    return canvas.toDataURL(mimeType, format === "png" ? undefined : 0.95);
   } catch (err) {
     console.warn("[captureWithHtml2Canvas] html2canvas capture failed:", err);
+    return null;
   }
-  return null;
 };
 
 /**
- * Engine for Desktop and Android: html-to-image.
- * Renders via SVG foreignObject with CSS style overrides.
+ * Client-side fallback capture via html-to-image.
  */
 const captureWithHtmlToImage = async (
   element: HTMLElement,
@@ -151,7 +258,7 @@ const captureWithHtmlToImage = async (
 ): Promise<string | null> => {
   try {
     const captureFn = format === "png" ? toPng : toJpeg;
-    const dataUrl = await captureFn(element, {
+    return await captureFn(element, {
       quality: 0.95,
       pixelRatio: 2,
       backgroundColor: "#ffffff",
@@ -176,151 +283,101 @@ const captureWithHtmlToImage = async (
         return true;
       },
     });
-
-    if (dataUrl && dataUrl.length > 500) {
-      return dataUrl;
-    }
   } catch (err) {
     console.warn("[captureWithHtmlToImage] html-to-image capture failed:", err);
-  }
-  return null;
-};
-
-/**
- * Helper to download a base64 Data URL as a file across modern and mobile browsers (iOS Safari, iOS Chrome, Android, Desktop).
- */
-export const downloadDataUrl = (dataUrl: string, filename: string): void => {
-  try {
-    const parts = dataUrl.split(",");
-    const mimeMatch = parts[0].match(/:(.*?);/);
-    const mime = mimeMatch ? mimeMatch[1] : "image/png";
-    const byteString = atob(parts[1]);
-    const u8arr = new Uint8Array(byteString.length);
-    for (let i = 0; i < byteString.length; i++) {
-      u8arr[i] = byteString.charCodeAt(i);
-    }
-    const blob = new Blob([u8arr], { type: mime });
-    const blobUrl = URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = blobUrl;
-    link.download = filename;
-    link.rel = "noopener";
-    document.body.appendChild(link);
-    link.click();
-
-    setTimeout(() => {
-      if (document.body.contains(link)) {
-        document.body.removeChild(link);
-      }
-      URL.revokeObjectURL(blobUrl);
-    }, 2000);
-  } catch (err) {
-    console.warn("[downloadDataUrl] Blob download fallback to data URL link:", err);
-    const link = document.createElement("a");
-    link.href = dataUrl;
-    link.download = filename;
-    link.rel = "noopener";
-    document.body.appendChild(link);
-    link.click();
-    setTimeout(() => {
-      if (document.body.contains(link)) {
-        document.body.removeChild(link);
-      }
-    }, 2000);
+    return null;
   }
 };
 
 /**
- * Exports the specified DOM container as a standard portrait A4 PDF (210mm x 297mm).
+ * Primary PDF Export with Server-Side Rendering (SSR) & Client-Side Fallback.
  */
 export const exportToPdf = async (
-  elementId: string,
+  elementIdOrData: string | SlipData,
   filename: string = "name-slips.pdf"
 ): Promise<void> => {
-  const element = document.getElementById(elementId);
-  if (!element) {
-    console.error(`[exportToPdf] Element #${elementId} not found.`);
-    throw new Error("Preview element not found. Please refresh and try again.");
+  // If SlipData object is passed, attempt Server-Side Rendering first
+  if (typeof elementIdOrData === "object" && elementIdOrData !== null) {
+    try {
+      await exportServerPdf(elementIdOrData, filename);
+      return;
+    } catch (err) {
+      console.warn("[exportToPdf] SSR export failed, attempting client fallback:", err);
+    }
   }
 
-  // Preload assets & wait for settlement
+  // Fallback to DOM capture
+  const elementId = typeof elementIdOrData === "string" ? elementIdOrData : "print-container";
+  const element = document.getElementById(elementId);
+  if (!element) {
+    throw new Error("Could not find preview element to generate PDF.");
+  }
+
   await ensureAssetsLoaded(element);
   await new Promise((resolve) => setTimeout(resolve, 200));
 
-  const ios = isIOS();
   let imgData: string | null = null;
-
-  // On iOS (Safari & Chrome), SVG foreignObject (html-to-image) drops images due to WebKit sandboxing.
-  // We use html2canvas direct 2D canvas rendering first for iOS with canvas-backed image inlining.
-  if (ios) {
+  if (isIOS()) {
     imgData = await captureWithHtml2Canvas(element, elementId, "jpeg");
-    if (!imgData) {
-      imgData = await captureWithHtmlToImage(element, "jpeg");
-    }
+    if (!imgData) imgData = await captureWithHtmlToImage(element, "jpeg");
   } else {
-    // On Desktop and Android, try html-to-image first, then html2canvas fallback
     imgData = await captureWithHtmlToImage(element, "jpeg");
-    if (!imgData) {
-      imgData = await captureWithHtml2Canvas(element, elementId, "jpeg");
-    }
+    if (!imgData) imgData = await captureWithHtml2Canvas(element, elementId, "jpeg");
   }
 
   if (!imgData) {
-    throw new Error("Could not capture the name slip. Please check your internet connection or try again.");
+    throw new Error("Could not capture name slip.");
   }
 
-  // Build standard portrait A4 PDF (210mm x 297mm)
   const pdf = new jsPDF({
     orientation: "portrait",
     unit: "mm",
     format: "a4",
     compress: true,
   });
-
   pdf.addImage(imgData, "JPEG", 0, 0, 210, 297, undefined, "FAST");
-
-  // Save PDF - triggers native download / view prompt on iOS Safari/Chrome and Desktop
   pdf.save(filename);
 };
 
 /**
- * Exports the specified DOM container as a high-resolution A4 PNG image (~1588x2246 px).
+ * Primary PNG Export with Server-Side Rendering (SSR) & Client-Side Fallback.
  */
 export const exportToPng = async (
-  elementId: string,
+  elementIdOrData: string | SlipData,
   filename: string = "name-slips.png"
 ): Promise<void> => {
-  const element = document.getElementById(elementId);
-  if (!element) {
-    console.error(`[exportToPng] Element #${elementId} not found.`);
-    throw new Error("Preview element not found. Please refresh and try again.");
+  // If SlipData object is passed, attempt Server-Side Rendering first
+  if (typeof elementIdOrData === "object" && elementIdOrData !== null) {
+    try {
+      await exportServerPng(elementIdOrData, filename);
+      return;
+    } catch (err) {
+      console.warn("[exportToPng] SSR export failed, attempting client fallback:", err);
+    }
   }
 
-  // Preload assets & wait for settlement
+  // Fallback to DOM capture
+  const elementId = typeof elementIdOrData === "string" ? elementIdOrData : "print-container";
+  const element = document.getElementById(elementId);
+  if (!element) {
+    throw new Error("Could not find preview element to generate PNG.");
+  }
+
   await ensureAssetsLoaded(element);
   await new Promise((resolve) => setTimeout(resolve, 200));
 
-  const ios = isIOS();
   let imgData: string | null = null;
-
-  // On iOS (Safari & Chrome), use html2canvas with direct pixel inlining first
-  if (ios) {
+  if (isIOS()) {
     imgData = await captureWithHtml2Canvas(element, elementId, "png");
-    if (!imgData) {
-      imgData = await captureWithHtmlToImage(element, "png");
-    }
+    if (!imgData) imgData = await captureWithHtmlToImage(element, "png");
   } else {
     imgData = await captureWithHtmlToImage(element, "png");
-    if (!imgData) {
-      imgData = await captureWithHtml2Canvas(element, elementId, "png");
-    }
+    if (!imgData) imgData = await captureWithHtml2Canvas(element, elementId, "png");
   }
 
   if (!imgData) {
-    throw new Error("Could not generate PNG image. Please try again.");
+    throw new Error("Could not generate PNG image.");
   }
 
   downloadDataUrl(imgData, filename);
 };
-

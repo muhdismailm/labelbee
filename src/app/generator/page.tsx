@@ -259,11 +259,11 @@ export default function Home() {
       const rawName = data.studentName?.trim();
       const sanitizedName = rawName ? rawName.replace(/\s+/g, '-').toLowerCase() : 'name';
 
-      // 3. Trigger chosen export format
+      // 3. Trigger chosen export format (SSR with client fallback)
       if (format === 'pdf') {
-        await exportToPdf("print-container", `${sanitizedName}-slips.pdf`);
+        await exportToPdf(data, `${sanitizedName}-slips.pdf`);
       } else {
-        await exportToPng("print-container", `${sanitizedName}-slips.png`);
+        await exportToPng(data, `${sanitizedName}-slips.png`);
       }
 
       // Close format modal after download starts

@@ -11,16 +11,13 @@ import {
   Move,
   RotateCw,
   ZoomIn,
-  ZoomOut,
   Maximize2,
   Upload,
   Crown,
   Lock,
   CheckCircle2,
-  Wand2,
   PenTool,
   FileText,
-  Trash2,
   Pipette,
   RotateCcw,
 } from "lucide-react";
@@ -558,98 +555,72 @@ export default function GeneratorForm({
 
               {/* Streamlined Simple Controls */}
               <div className="bg-slate-50/70 p-3.5 rounded-2xl border border-slate-200/80 space-y-3">
-                {/* 1. Zoom Bar */}
-                <div className="flex items-center gap-2.5">
-                  <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5 min-w-[62px]">
+                {/* 1. Zoom Slider */}
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5 w-18 shrink-0">
                     <ZoomIn className="w-3.5 h-3.5 text-indigo-600" /> Zoom
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => onChange({ photoZoom: Math.max(100, data.photoZoom - 10) })}
-                    className="w-7 h-7 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-extrabold flex items-center justify-center transition-all cursor-pointer text-sm shadow-2xs"
-                    title="Zoom Out"
-                  >
-                    −
-                  </button>
                   <input
                     type="range"
                     min={100}
                     max={300}
                     value={data.photoZoom}
                     onChange={(e) => onChange({ photoZoom: Number(e.target.value) })}
-                    className="flex-1 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                    className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                   />
-                  <button
-                    type="button"
-                    onClick={() => onChange({ photoZoom: Math.min(300, data.photoZoom + 10) })}
-                    className="w-7 h-7 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-extrabold flex items-center justify-center transition-all cursor-pointer text-sm shadow-2xs"
-                    title="Zoom In"
-                  >
-                    +
-                  </button>
-                  <span className="text-xs font-extrabold text-[#1a1f4b] min-w-[40px] text-right">
+                  <span className="text-xs font-extrabold text-[#1a1f4b] w-12 text-right shrink-0 py-0.5 px-1.5 bg-white border border-slate-200 rounded-md shadow-2xs">
                     {data.photoZoom}%
                   </span>
                 </div>
 
-                {/* 2. Rotate & Reset Row */}
-                <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5 min-w-[62px]">
-                      <RotateCw className="w-3.5 h-3.5 text-indigo-600" /> Rotate
-                    </span>
-                    <div className="flex items-center bg-white border border-slate-200 rounded-xl p-0.5 shadow-2xs">
-                      <button
-                        type="button"
-                        onClick={() => onChange({ photoTilt: ((data.photoTilt - 15 + 180) % 360) - 180 })}
-                        className="px-2.5 py-1 text-xs font-bold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50/50 rounded-lg transition-all cursor-pointer"
-                        title="Rotate -15°"
-                      >
-                        ↶ -15°
-                      </button>
-                      <span className="px-2 text-xs font-black text-[#1a1f4b] border-x border-slate-100 min-w-[36px] text-center">
-                        {data.photoTilt}°
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => onChange({ photoTilt: ((data.photoTilt + 15 + 180) % 360) - 180 })}
-                        className="px-2.5 py-1 text-xs font-bold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50/50 rounded-lg transition-all cursor-pointer"
-                        title="Rotate +15°"
-                      >
-                        +15° ↷
-                      </button>
-                    </div>
-                  </div>
+                {/* 2. Rotate Slider */}
+                <div className="flex items-center gap-3 pt-2.5 border-t border-slate-200/60">
+                  <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5 w-18 shrink-0">
+                    <RotateCw className="w-3.5 h-3.5 text-indigo-600" /> Rotate
+                  </span>
+                  <input
+                    type="range"
+                    min={-180}
+                    max={180}
+                    step={1}
+                    value={data.photoTilt || 0}
+                    onChange={(e) => onChange({ photoTilt: Number(e.target.value) })}
+                    className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                  />
+                  <span className="text-xs font-extrabold text-[#1a1f4b] w-12 text-right shrink-0 py-0.5 px-1.5 bg-white border border-slate-200 rounded-md shadow-2xs">
+                    {data.photoTilt || 0}°
+                  </span>
+                </div>
 
+                {/* 3. Frame Size Slider */}
+                <div className="flex items-center gap-3 pt-2.5 border-t border-slate-200/60">
+                  <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5 w-18 shrink-0">
+                    <Maximize2 className="w-3.5 h-3.5 text-indigo-600" /> Size
+                  </span>
+                  <input
+                    type="range"
+                    min={40}
+                    max={95}
+                    value={data.photoFrameSize}
+                    onChange={(e) => onChange({ photoFrameSize: Number(e.target.value) })}
+                    className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                  />
+                  <span className="text-xs font-extrabold text-[#1a1f4b] w-12 text-right shrink-0 py-0.5 px-1.5 bg-white border border-slate-200 rounded-md shadow-2xs">
+                    {data.photoFrameSize}px
+                  </span>
+                </div>
+
+                {/* 4. Reset Adjustments Action */}
+                <div className="pt-2 border-t border-slate-200/60 flex justify-end">
                   <button
                     type="button"
                     onClick={handleResetPhotoAdjustments}
                     className="px-3 py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-600 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
-                    title="Reset photo position, zoom, and rotation"
+                    title="Reset photo position, zoom, rotation, and size"
                   >
                     <RotateCcw className="w-3 h-3 text-slate-500" />
-                    <span>Reset</span>
+                    <span>Reset Adjustments</span>
                   </button>
-                </div>
-
-                {/* 3. Frame Size Row */}
-                <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
-                  <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                    <Maximize2 className="w-3.5 h-3.5 text-indigo-600" /> Frame Size
-                  </span>
-                  <div className="flex items-center gap-2 w-48">
-                    <input
-                      type="range"
-                      min={40}
-                      max={95}
-                      value={data.photoFrameSize}
-                      onChange={(e) => onChange({ photoFrameSize: Number(e.target.value) })}
-                      className="flex-1 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                    />
-                    <span className="text-xs font-extrabold text-[#1a1f4b] min-w-[36px] text-right">
-                      {data.photoFrameSize}px
-                    </span>
-                  </div>
                 </div>
               </div>
             </div>
