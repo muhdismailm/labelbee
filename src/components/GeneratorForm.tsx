@@ -385,23 +385,23 @@ export default function GeneratorForm({
               />
             </div>
 
-            <div className="bg-slate-50/80 border border-slate-200/90 rounded-xl p-3.5 space-y-2.5">
-              <div className="flex items-center justify-between">
+            <div className="bg-slate-50/80 border border-slate-200/90 rounded-xl p-3 sm:p-3.5 space-y-2.5">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <label className="text-xs font-extrabold text-[#1a1f4b] flex items-center gap-1.5">
-                  <BookOpen className="w-3.5 h-3.5 text-amber-600" />
+                  <BookOpen className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                   <span>2. Subject Mode</span>
                 </label>
-                <div className="flex items-center gap-1 bg-white p-0.5 rounded-lg border border-slate-200 text-[11px] font-bold">
+                <div className="grid grid-cols-2 sm:flex items-center gap-1 bg-white p-0.5 rounded-lg border border-slate-200 text-[11px] font-bold w-full sm:w-auto">
                   <button
                     type="button"
                     onClick={() => onChange({ subjectMode: 'blank' })}
-                    className={`px-2.5 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${data.subjectMode === 'blank'
+                    className={`px-2 py-1.5 sm:px-2.5 sm:py-1 rounded-md transition-all cursor-pointer flex items-center justify-center gap-1.5 touch-manipulation ${data.subjectMode === 'blank'
                       ? 'bg-[#1a1f4b] text-white shadow-sm'
                       : 'text-slate-600 hover:text-slate-900'
                       }`}
                   >
-                    <PenTool className="w-3 h-3" />
-                    <span>Blank (Handwritten)</span>
+                    <PenTool className="w-3 h-3 shrink-0" />
+                    <span className="truncate">Blank (Handwritten)</span>
                   </button>
                   <button
                     type="button"
@@ -410,13 +410,13 @@ export default function GeneratorForm({
                       const initial = Array.from({ length: count }, (_, i) => data.subjects?.[i] || "");
                       onChange({ subjectMode: 'custom', subjects: initial });
                     }}
-                    className={`px-2.5 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${data.subjectMode === 'custom'
+                    className={`px-2 py-1.5 sm:px-2.5 sm:py-1 rounded-md transition-all cursor-pointer flex items-center justify-center gap-1.5 touch-manipulation ${data.subjectMode === 'custom'
                       ? 'bg-[#1a1f4b] text-white shadow-sm'
                       : 'text-slate-600 hover:text-slate-900'
                       }`}
                   >
-                    <FileText className="w-3 h-3" />
-                    <span>Typed Per-Slip</span>
+                    <FileText className="w-3 h-3 shrink-0" />
+                    <span className="truncate">Typed Per-Slip</span>
                   </button>
                 </div>
               </div>

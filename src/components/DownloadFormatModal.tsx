@@ -30,7 +30,7 @@ export default function DownloadFormatModal({
         }
       }}
     >
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 max-h-[95vh] overflow-y-auto max-w-md w-full shadow-2xl relative flex flex-col gap-4 animate-scale-up">
+      <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 max-h-[95vh] overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden max-w-md w-full shadow-2xl relative flex flex-col gap-4 animate-scale-up">
         {/* Close Button */}
         <button
           type="button"

@@ -98,7 +98,7 @@ export default function PhotoCropper({ imageUrl, onCropComplete, onCancel }: Pro
             <X className="w-5 h-5" />
           </button>
         </div>
-        
+
         {/* Live Cropper view */}
         <div className="relative w-full h-[320px] bg-slate-900">
           <Cropper
@@ -113,7 +113,7 @@ export default function PhotoCropper({ imageUrl, onCropComplete, onCancel }: Pro
             onRotationChange={setRotation}
           />
         </div>
-        
+
         <div className="p-5 space-y-4">
           {/* Zoom Control */}
           <div>
@@ -152,13 +152,13 @@ export default function PhotoCropper({ imageUrl, onCropComplete, onCancel }: Pro
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button 
+            <button
               onClick={onCancel}
               className="flex-1 py-2.5 rounded-lg border border-slate-200 text-slate-600 font-medium hover:bg-slate-50 transition-colors"
             >
               Cancel
             </button>
-            <button 
+            <button
               onClick={handleSave}
               className="flex-1 py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors flex justify-center items-center gap-2"
             >

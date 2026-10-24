@@ -444,22 +444,22 @@ export default function Home() {
       )}
       {/* Header */}
       <header className="bg-white/95 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
-          <Link href="/" className="flex items-center gap-2 group cursor-pointer shrink-0">
+        <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 h-15 sm:h-16 flex items-center justify-between gap-1.5 sm:gap-2">
+          <Link href="/" className="flex items-center gap-1.5 group cursor-pointer shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/logo.png"
               alt="LabelBee"
-              className="h-10 sm:h-12 w-auto object-contain transition-transform group-hover:scale-105"
+              className="h-8 sm:h-11 w-auto max-w-[105px] sm:max-w-none object-contain transition-transform group-hover:scale-105"
             />
           </Link>
 
-          <nav className="flex items-center gap-2 sm:gap-4">
+          <nav className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {/* Authenticated user UI */}
             {authLoaded && (
               <>
                 {user ? (
-                  <div className="flex items-center gap-1.5 sm:gap-3">
+                  <div className="flex items-center gap-1.5 sm:gap-2.5">
                     <span className="hidden md:inline text-sm text-slate-600 font-semibold">
                       Hi, {user.displayName || "Parent"}!
                     </span>
@@ -467,18 +467,19 @@ export default function Home() {
                     {/* Interactive credit balance badge */}
                     <button
                       onClick={() => setIsPackModalOpen(true)}
-                      className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-extrabold transition-all shadow-sm cursor-pointer hover:scale-[1.02] shrink-0"
+                      className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-[11px] sm:text-xs font-extrabold transition-all shadow-sm cursor-pointer hover:scale-[1.02] shrink-0 touch-manipulation"
                       title="Click to buy more credits"
                     >
-                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                      <span>{credits} <span className="hidden sm:inline">{credits === 1 ? 'Credit' : 'Credits'}</span></span>
+                      <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
+                      <span>{credits} <span className="hidden md:inline">{credits === 1 ? 'Credit' : 'Credits'}</span></span>
                     </button>
 
                     {/* Simple Custom Sign Out Button */}
                     <button
                       onClick={handleSignOut}
-                      className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-100 transition-all cursor-pointer shrink-0"
+                      className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-100 transition-all cursor-pointer shrink-0 touch-manipulation"
                       title="Sign Out"
+                      aria-label="Sign Out"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
                     </button>
@@ -490,7 +491,7 @@ export default function Home() {
                       setAuthMode('login');
                       setIsAuthModalOpen(true);
                     }}
-                    className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#1a1f4b] text-xs sm:text-sm font-bold transition-all shadow-sm cursor-pointer shrink-0"
+                    className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#1a1f4b] text-xs sm:text-sm font-bold transition-all shadow-sm cursor-pointer shrink-0 touch-manipulation"
                   >
                     Sign In
                   </button>
@@ -502,7 +503,7 @@ export default function Home() {
             <button
               onClick={handleOpenDownloadModal}
               disabled={loadingPayment || loadingDownload}
-              className={`px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 flex items-center gap-1.5 sm:gap-2 cursor-pointer shrink-0 ${loadingPayment || loadingDownload
+              className={`px-2.5 sm:px-5 py-2 sm:py-2.5 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-200 flex items-center gap-1.5 sm:gap-2 cursor-pointer shrink-0 touch-manipulation select-none ${loadingPayment || loadingDownload
                 ? "bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed"
                 : user && credits > 0
                   ? "bg-[#22c55e] hover:bg-[#16a34a] text-white shadow-[0_4px_14px_rgba(34,197,94,0.35)] hover:scale-[1.02] active:scale-[0.98]"
@@ -511,35 +512,39 @@ export default function Home() {
             >
               {loadingDownload ? (
                 <>
-                  <svg className="animate-spin -ml-1 mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-400 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span>
+                  <span className="hidden sm:inline">
                     {downloadingFormat === 'png'
                       ? 'Generating PNG...'
                       : downloadingFormat === 'pdf'
                       ? 'Generating PDF...'
                       : 'Preparing Download...'}
                   </span>
+                  <span className="sm:hidden">
+                    {downloadingFormat === 'png' ? 'PNG...' : downloadingFormat === 'pdf' ? 'PDF...' : 'Loading...'}
+                  </span>
                 </>
               ) : loadingPayment ? (
                 <>
-                  <svg className="animate-spin -ml-1 mr-1 h-3.5 w-3.5 sm:h-4.5 sm:w-4.5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin h-3.5 w-3.5 sm:h-4.5 sm:w-4.5 text-slate-400 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span>Securing checkout...</span>
+                  <span className="hidden sm:inline">Securing checkout...</span>
+                  <span className="sm:hidden">Checkout...</span>
                 </>
               ) : user && credits > 0 ? (
                 <>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                   <span className="hidden sm:inline">Download Sheet (-1 Credit)</span>
-                  <span className="sm:hidden">Download (-1)</span>
+                  <span className="sm:hidden">Download</span>
                 </>
               ) : (
                 <>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                   <span className="hidden sm:inline">Download Sheet</span>
                   <span className="sm:hidden">Download</span>
                 </>
@@ -610,7 +615,7 @@ export default function Home() {
       {/* Custom Glassmorphic Firebase Auth Modal */}
       {isAuthModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white border border-slate-100 rounded-[32px] p-6 sm:p-8 max-h-[95vh] overflow-y-auto max-w-md w-full shadow-2xl relative flex flex-col gap-4 animate-scale-up">
+          <div className="bg-white border border-slate-100 rounded-[32px] p-6 sm:px-8 sm:py-7 max-h-[95vh] overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden max-w-md w-full shadow-2xl relative flex flex-col gap-3.5 animate-scale-up">
 
             {/* Close Button */}
             <button
@@ -624,16 +629,16 @@ export default function Home() {
             {/* Custom Premium Brand Logo Badge */}
             <div className="flex justify-start">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.png" alt="LabelBee" className="h-12 w-auto object-contain" />
+              <img src="/logo.png" alt="LabelBee" className="h-11 w-auto object-contain" />
             </div>
 
             {/* Modal Title */}
-            <div className="relative text-left w-full mt-1">
-              <h3 className="text-[28px] font-black text-[#1a1f4b] leading-[1.15] tracking-tight">
+            <div className="relative text-left w-full mt-0.5">
+              <h3 className="text-[26px] sm:text-[28px] font-black text-[#1a1f4b] leading-[1.15] tracking-tight">
                 Welcome<br />
                 To {authMode === 'login' ? 'LabelBee!' : 'Registration!'}
               </h3>
-              <p className="text-xs font-semibold text-slate-500 mt-1.5">
+              <p className="text-xs font-semibold text-slate-500 mt-1">
                 {authMode === 'login' ? 'Log in to your account to manage credits & print' : 'Create your account to start generating student name slips'}
               </p>
             </div>
@@ -678,7 +683,7 @@ export default function Home() {
             </div>
 
             {/* Auth Form */}
-            <form onSubmit={handleAuthSubmit} className="flex flex-col gap-3.5">
+            <form onSubmit={handleAuthSubmit} className="flex flex-col gap-3">
 
               {/* Name Field (Sign Up Mode Only) */}
               {authMode === 'signup' && (
@@ -799,7 +804,7 @@ export default function Home() {
       {/* Credit Package Selector Modal */}
       {isPackModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-fade-in">
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-h-[95vh] overflow-y-auto max-w-3xl w-full shadow-2xl relative flex flex-col gap-5 animate-scale-up">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-h-[95vh] overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden max-w-3xl w-full shadow-2xl relative flex flex-col gap-5 animate-scale-up">
 
             {/* Close Button */}
             <button
