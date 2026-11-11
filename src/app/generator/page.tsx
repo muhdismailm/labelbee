@@ -379,29 +379,6 @@ export default function Home() {
     }
   };
 
-  // 1-Click Instant Premium Plan Activator for Testing
-  const handleActivateTestBusinessPlan = async () => {
-    if (!user) {
-      setIsAuthModalOpen(true);
-      return;
-    }
-    try {
-      setLoadingPayment(true);
-      const userRef = doc(db, "users", user.uid);
-      await setDoc(userRef, {
-        plan: "premium",
-        credits: (credits || 0) + 25
-      }, { merge: true });
-      setUserPlan("premium");
-      setIsPackModalOpen(false);
-    } catch (err) {
-      console.error("Test activation error:", err);
-      alert("Failed to activate test plan: " + (err as Error).message);
-    } finally {
-      setLoadingPayment(false);
-    }
-  };
-
   // Mobile tab toggle: 'form' | 'preview'
   const [mobileTab, setMobileTab] = useState<'form' | 'preview'>('form');
 
@@ -897,19 +874,6 @@ export default function Home() {
                 </button>
               </div>
 
-            </div>
-
-            {/* Instant 1-Click Test Button for Developer Testing */}
-            <div className="pt-2 border-t border-slate-100 flex flex-col items-center gap-1.5">
-              <button
-                type="button"
-                onClick={handleActivateTestBusinessPlan}
-                disabled={loadingPayment}
-                className="py-2 px-4 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-bold transition-all cursor-pointer flex items-center gap-2 hover:scale-[1.01]"
-              >
-                <span>⚡ Instant Activate Premium Plan (Free Testing)</span>
-              </button>
-              <p className="text-[10px] text-slate-400 font-medium">Adds `plan: &quot;premium&quot;` and 100 print credits to your Firestore document immediately.</p>
             </div>
 
             {/* Modal Footer loading indicator */}
